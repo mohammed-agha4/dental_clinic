@@ -242,14 +242,14 @@
                                 <div class="col-md-3">
                                     <div class="form-group">
                                         <label>Date</label>
-                                        <input type="date" class="form-control date" name="transaction_date[]"
+                                        <input type="date" class="form-control date" name="transaction_date"
                                             value="{{ date('Y-m-d') }}" required>
                                     </div>
                                 </div>
                             </div>
                             <div class="form-group mt-2">
                                 <label>Notes</label>
-                                <textarea class="form-control" name="transaction_notes[]" rows="1"></textarea>
+                                <textarea class="form-control" name="transaction_notes" rows="1"></textarea>
                             </div>
                             <button type="button" class="btn btn-sm btn-danger mt-2" onclick="removeTransaction(this)">
                                 <i class="fas fa-trash"></i> Remove

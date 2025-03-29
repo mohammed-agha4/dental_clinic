@@ -41,20 +41,21 @@ class InventoryController extends Controller
 {
 
 
-    $request->validate([
-        'category_id' => 'required|exists:categories,id',
-        'supplier_id' => 'required|exists:suppliers,id',
-        'name' => 'required|string|max:255',
-        'SKU' => 'required|string|max:255|unique:inventories,SKU',
-        'description' => 'nullable|string',
-        'quantity' => 'required|integer|min:1',
-        'reorder_level' => 'required|integer|min:0',
-        'unit_price' => 'required|numeric|min:1',
-        'expiry_date' => 'nullable|date',
-        'is_active' => 'required|in:0,1',
-        'transaction_date' => 'required|date',
-        'transaction_notes' => 'nullable|string',
-    ]);
+    // $request->validate([
+    //     'category_id' => 'required|exists:categories,id',
+    //     'supplier_id' => 'required|exists:suppliers,id',
+    //     'name' => 'required|string|max:255',
+    //     'SKU' => 'required|string|max:255|unique:inventories,SKU',
+    //     'description' => 'nullable|string',
+    //     'quantity' => 'required|integer|min:1',
+    //     'reorder_level' => 'required|integer|min:0',
+    //     'unit_price' => 'required|numeric|min:1',
+    //     'expiry_date' => 'nullable|date',
+    //     'is_active' => 'required|in:0,1',
+    //     'transaction_date' => 'required|date',
+    //     'transaction_notes' => 'nullable|string',
+    // ]);
+
 
 
     DB::beginTransaction();
@@ -73,6 +74,9 @@ class InventoryController extends Controller
             'is_active' => $request->is_active,
         ]);
 
+
+        // $inventory->checkReorderLevel(); // for the notifications
+
         $user = auth()->user();
 
         if ($user) {
@@ -82,7 +86,7 @@ class InventoryController extends Controller
         if (!$staff) {
             \Log::warning('User ID ' . ($user ? $user->id : 'null') . ' attempted to create inventory but has no associated staff record.');
         }
-
+        // dd($staff);
         InventoryTransaction::create([
             'inventory_id' => $inventory->id,
             'staff_id' => $staff ? $staff->id : null,
@@ -91,25 +95,29 @@ class InventoryController extends Controller
             'unit_price' => $request->unit_price,
             'transaction_date' => $request->transaction_date,
             'notes' => $request->transaction_notes,
+            // dd($request->transaction_date)
         ]);
+        // dd();
+
+
 
         // Handle additional transactions if they exist
-        if ($request->has('transaction_type') && is_array($request->transaction_type)) {
-            foreach ($request->transaction_type as $key => $type) {
-                // Skip if this is an empty entry
-                if (empty($type)) continue;
+        // if ($request->has('transaction_type') && is_array($request->transaction_type)) {
+        //     foreach ($request->transaction_type as $key => $type) {
+        //         // Skip if this is an empty entry
+        //         if (empty($type)) continue;
 
-                InventoryTransaction::create([
-                    'inventory_id' => $inventory->id,
-                    'staff_id' => $staff ? $staff->id : null,
-                    'type' => $type,
-                    'quantity' => $request->transaction_quantity[$key] ?? $request->quantity,
-                    'unit_price' => $request->transaction_price[$key] ?? $request->unit_price,
-                    'transaction_date' => $request->transaction_date[$key] ?? now(),
-                    'notes' => $request->transaction_notes[$key] ?? null,
-                ]);
-            }
-        }
+        //         InventoryTransaction::create([
+        //             'inventory_id' => $inventory->id,
+        //             'staff_id' => $staff ? $staff->id : null,
+        //             'type' => $type,
+        //             'quantity' => $request->transaction_quantity[$key] ?? $request->quantity,
+        //             'unit_price' => $request->transaction_price[$key] ?? $request->unit_price,
+        //             'transaction_date' => $request->transaction_date[$key] ?? now(),
+        //             'notes' => $request->transaction_notes[$key] ?? null,
+        //         ]);
+        //     }
+        // }
 
         DB::commit();
 
@@ -117,8 +125,8 @@ class InventoryController extends Controller
             ->with('success', 'Tool Added Successfully');
 
     } catch (\Exception $e) {
-        DB::rollBack();
-        return redirect()->back()->with('error', 'Failed to add tool: ' . $e->getMessage())
+        // DB::rollBack();
+        dd('error', 'Failed to add tool: ' . $e->getMessage())
             ->withInput();
     }
 }
@@ -149,23 +157,25 @@ class InventoryController extends Controller
     public function update(Request $request, Inventory $inventory)
     {
 
-        $validated = $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'supplier_id' => 'required|exists:suppliers,id',
-            'name' => 'required|string',
-            'SKU' => 'required|string|unique:inventories,SKU',
-            'description' => 'nullable|string',
-            'quantity' => 'required|integer|min:0',
-            'reorder_level' => 'required|integer|min:0',
-            'unit_price' => 'required|numeric|min:0',
-            'expiry_date' => 'nullable|date',
-            'is_active' => 'required|in:0,1',
-            'transaction_date' => 'required|date',
-            'transaction_notes' => 'nullable|string',
-        ]);
+        // $validated = $request->validate([
+        //     'category_id' => 'nullable|exists:categories,id',
+        //     'supplier_id' => 'nullable|exists:suppliers,id',
+        //     'name' => 'required|string',
+        //     'SKU' => 'required|string',
+        //     'description' => 'nullable|string',
+        //     'quantity' => 'required|integer|min:0',
+        //     'reorder_level' => 'required|integer|min:0',
+        //     'unit_price' => 'required|numeric|min:0',
+        //     'expiry_date' => 'nullable|date',
+        //     'is_active' => 'required|in:0,1',
+        //     'transaction_date' => 'required|date',
+        //     'transaction_notes' => 'nullable|string',
+        // ]);
+        // dd();
 
 
-        $inventory->update($validated);
+        $inventory->update($request->all());
+        // for the notifications
         return redirect()->route('dashboard.inventory.inventory.index')->with('success', 'Tool nformation Updated Successfuly');
     }
 

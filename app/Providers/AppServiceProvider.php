@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Inventory;
+use App\Observers\InventoryObserver;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
 
@@ -21,5 +23,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Paginator::UseBootstrapFive();
+        Inventory::observe(InventoryObserver::class);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\User;
 use App\Models\Visit;
 use App\Models\Category;
 use App\Models\Supplier;
@@ -39,6 +40,29 @@ class Inventory extends Model
     }
 
 
+    // public function checkAndNotifyReorderLevel()
+    // {
+    //     // Check if the current quantity is less than or equal to the reorder level
+    //     if ($this->quantity <= $this->reorder_level) {
+    //         try {
+    //             // Send notification to users with inventory management role
+    //             $users = User::whereHas('roles', function($query) {
+    //                 $query->where('name', 'inventory_manager');
+    //             })->orWhere('is_admin', true)->get();
+
+    //             foreach ($users as $user) {
+    //                 $user->notify(new ReorderNotification($this));
+    //             }
+
+    //             // Log the low inventory notification
+    //             Log::info("Low inventory alert for {$this->name}. Current quantity: {$this->quantity}, Reorder level: {$this->reorder_level}");
+    //         } catch (\Exception $e) {
+    //             Log::error("Failed to send reorder level notification: " . $e->getMessage());
+    //         }
+    //     }
+
+    //     return $this;
+    // }
 
 
     // protected static function booted() {

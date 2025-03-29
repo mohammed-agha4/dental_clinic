@@ -7,6 +7,7 @@ use App\Models\Patient;
 use App\Models\Service;
 use App\Models\Inventory;
 use App\Models\Appointment;
+use App\Models\InventoryVisit;
 use Illuminate\Database\Eloquent\Model;
 
 class Visit extends Model
@@ -40,6 +41,8 @@ class Visit extends Model
                     ->withPivot('quantity_used', 'notes')
                     ->withTimestamps();
     }
+
+   
 
 
 }

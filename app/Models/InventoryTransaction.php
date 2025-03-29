@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Staff;
 use App\Models\Inventory;
+use App\Models\InventoryVisit;
 use Illuminate\Database\Eloquent\Model;
 
 class InventoryTransaction extends Model
@@ -25,4 +26,5 @@ class InventoryTransaction extends Model
         return $this->belongsTo(Staff::class)->withDefault();
     }
 
+    
 }
