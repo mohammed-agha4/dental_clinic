@@ -25,7 +25,7 @@ class ReorderNotification extends Notification
             'message' => "Low stock alert: {$this->inventory->name} (SKU: {$this->inventory->SKU})",
             'quantity' => $this->inventory->quantity,
             'reorder_level' => $this->inventory->reorder_level,
-            'url' => route('dashboard.inventory.inventory.edit', $this->inventory->id),
+            'url' => route('notifications.index', $this->inventory->id),
             'icon' => 'fas fa-boxes',
             'inventory_id' => $this->inventory->id
         ];
