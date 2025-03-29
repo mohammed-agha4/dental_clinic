@@ -16,6 +16,7 @@ class NotificationsDropdown extends Component
     public function __construct($maxNotifications = 5)
     {
         $this->maxNotifications = $maxNotifications;
+        
     }
 
     /**
