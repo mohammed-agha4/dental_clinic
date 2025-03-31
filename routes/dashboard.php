@@ -87,4 +87,6 @@ Route::prefix('notifications')->middleware('auth')->group(function() {
     Route::get('/', [NotificationsController::class, 'index'])->name('notifications.index');
     Route::post('/mark-all-read', [NotificationsController::class, 'markAllRead'])->name('notifications.markAllRead');
     Route::get('/mark-as-read/{id}', [NotificationsController::class, 'markAsRead'])->name('notifications.markAsRead');
+    Route::delete('/delete/{id}', [NotificationsController::class, 'deleteNotification'])->name('notifications.delete');
+    Route::delete('/delete-all', [NotificationsController::class, 'deleteAllNotifications'])->name('notifications.deleteAll');
 });

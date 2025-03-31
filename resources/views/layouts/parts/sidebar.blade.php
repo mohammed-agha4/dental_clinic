@@ -8,14 +8,14 @@
 
     <!-- Patient Care Section -->
     <li class="nav-item">
-        <a class="nav-link dropdown-toggle {{ request()->is('dashboard/patients*') || request()->is('dashboard/appointments*') || request()->is('dashboard/visits*') ? 'active' : '' }}" 
-           href="#patientCareSubmenu" 
-           data-bs-toggle="collapse" 
+        <a class="nav-link dropdown-toggle {{ request()->is('dashboard/patients*') || request()->is('dashboard/appointments*') || request()->is('dashboard/visits*') ? 'active' : '' }}"
+           href="#patientCareSubmenu"
+           data-bs-toggle="collapse"
            aria-expanded="{{ request()->is('dashboard/patients*') || request()->is('dashboard/appointments*') || request()->is('dashboard/visits*') ? 'true' : 'false' }}">
             <i class="side-icon fas fa-user-md me-2"></i>Patient Care
         </a>
-        <ul class="collapse list-unstyled ps-3 {{ request()->is('dashboard/patients*') || request()->is('dashboard/appointments*') || request()->is('dashboard/visits*') ? 'show' : '' }}" 
-            id="patientCareSubmenu" 
+        <ul class="collapse list-unstyled ps-3 {{ request()->is('dashboard/patients*') || request()->is('dashboard/appointments*') || request()->is('dashboard/visits*') ? 'show' : '' }}"
+            id="patientCareSubmenu"
             data-bs-parent="#sidebarAccordion">
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('dashboard.patients.index') ? 'active' : '' }}"
@@ -40,14 +40,14 @@
 
     <!-- Clinic Management Section -->
     <li class="nav-item">
-        <a class="nav-link dropdown-toggle {{ request()->is('dashboard/services*') || request()->is('dashboard/staff*') || request()->is('dashboard/service-staff*') ? 'active' : '' }}" 
-           href="#clinicSubmenu" 
-           data-bs-toggle="collapse" 
+        <a class="nav-link dropdown-toggle {{ request()->is('dashboard/services*') || request()->is('dashboard/staff*') || request()->is('dashboard/service-staff*') ? 'active' : '' }}"
+           href="#clinicSubmenu"
+           data-bs-toggle="collapse"
            aria-expanded="{{ request()->is('dashboard/services*') || request()->is('dashboard/staff*') || request()->is('dashboard/service-staff*') ? 'true' : 'false' }}">
             <i class="side-icon fa-solid fa-tooth me-2"></i>Clinic Management
         </a>
-        <ul class="collapse list-unstyled ps-3 {{ request()->is('dashboard/services*') || request()->is('dashboard/staff*') || request()->is('dashboard/service-staff*') ? 'show' : '' }}" 
-            id="clinicSubmenu" 
+        <ul class="collapse list-unstyled ps-3 {{ request()->is('dashboard/services*') || request()->is('dashboard/staff*') || request()->is('dashboard/service-staff*') ? 'show' : '' }}"
+            id="clinicSubmenu"
             data-bs-parent="#sidebarAccordion">
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('dashboard.services.index') ? 'active' : '' }}"
@@ -72,14 +72,14 @@
 
     <!-- Inventory Section -->
     <li class="nav-item">
-        <a class="nav-link dropdown-toggle {{ request()->is('dashboard/inventory*') ? 'active' : '' }}" 
-           href="#inventorySubmenu" 
-           data-bs-toggle="collapse" 
+        <a class="nav-link dropdown-toggle {{ request()->is('dashboard/inventory*') ? 'active' : '' }}"
+           href="#inventorySubmenu"
+           data-bs-toggle="collapse"
            aria-expanded="{{ request()->is('dashboard/inventory*') ? 'true' : 'false' }}">
             <i class="side-icon fas fa-boxes me-2"></i>Inventory
         </a>
-        <ul class="collapse list-unstyled ps-3 {{ request()->is('dashboard/inventory*') ? 'show' : '' }}" 
-            id="inventorySubmenu" 
+        <ul class="collapse list-unstyled ps-3 {{ request()->is('dashboard/inventory*') ? 'show' : '' }}"
+            id="inventorySubmenu"
             data-bs-parent="#sidebarAccordion">
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('dashboard.inventory.suppliers.index') ? 'active' : '' }}"
@@ -110,14 +110,14 @@
 
     <!-- Finance Section -->
     <li class="nav-item">
-        <a class="nav-link dropdown-toggle {{ request()->is('dashboard/payments*') || request()->is('dashboard/expenses*') ? 'active' : '' }}" 
-           href="#financeSubmenu" 
-           data-bs-toggle="collapse" 
+        <a class="nav-link dropdown-toggle {{ request()->is('dashboard/payments*') || request()->is('dashboard/expenses*') ? 'active' : '' }}"
+           href="#financeSubmenu"
+           data-bs-toggle="collapse"
            aria-expanded="{{ request()->is('dashboard/payments*') || request()->is('dashboard/expenses*') ? 'true' : 'false' }}">
             <i class="side-icon fas fa-money-bill-wave me-2"></i>Finance
         </a>
-        <ul class="collapse list-unstyled ps-3 {{ request()->is('dashboard/payments*') || request()->is('dashboard/expenses*') ? 'show' : '' }}" 
-            id="financeSubmenu" 
+        <ul class="collapse list-unstyled ps-3 {{ request()->is('dashboard/payments*') || request()->is('dashboard/expenses*') ? 'show' : '' }}"
+            id="financeSubmenu"
             data-bs-parent="#sidebarAccordion">
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('dashboard.payments.index') ? 'active' : '' }}"

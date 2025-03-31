@@ -23,11 +23,17 @@
                 <a class="dropdown-item py-2 border-bottom"
                     href="{{ route('notifications.markAsRead', $notification->id) }}">
                     <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0 me-3 notification-icon">
-                            <i class="{{ $notification->data['icon'] ?? 'fas fa-bell' }} fa-lg text-primary"></i>
+                        <div class="flex-shrink-0 me-3">
+                            @if(Str::contains($notification->type, 'ReorderNotification'))
+                                <i class="fas fa-boxes fa-lg text-warning"></i>
+                            @elseif(Str::contains($notification->type, 'NewAppointmentNotification'))
+                                <i class="fas fa-calendar-check fa-lg text-primary"></i>
+                            @else
+                                <i class="fas fa-bell fa-lg"></i>
+                            @endif
                         </div>
                         <div class="flex-grow-1 overflow-hidden">
-                            <p class="mb-0 text-truncate @if ($notification->unread()) fw-bold @endif">
+                            <p class="mb-0 text-truncate @if($notification->unread()) fw-bold @endif">
                                 {{ $notification->data['message'] }}
                             </p>
                             <div class="d-flex justify-content-between align-items-center">
@@ -35,6 +41,10 @@
                                 @if (isset($notification->data['quantity']) && isset($notification->data['reorder_level']))
                                     <span class="badge bg-warning text-dark">
                                         {{ $notification->data['quantity'] }}/{{ $notification->data['reorder_level'] }}
+                                    </span>
+                                @elseif (isset($notification->data['status']))
+                                    <span class="badge bg-info text-dark">
+                                        {{ $notification->data['status'] }}
                                     </span>
                                 @endif
                             </div>

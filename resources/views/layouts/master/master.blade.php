@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -133,12 +134,14 @@
             width: 18px;
             margin-right: 10px !important;
         }
+
         hr {
             margin: 10px 0 8px 0;
         }
     </style>
     @yield('css')
 </head>
+
 <body>
     <!-- Overlay for mobile -->
     <div class="sidebar-overlay" onclick="closeSidebar()"></div>
@@ -147,18 +150,20 @@
         <div class="row">
             <!-- Sidebar -->
             @auth
-            <div class="col-md-3 col-lg-2 d-md-block sidebar collapse">
-                <div class="position-sticky pt-3">
-                    <div class="text-center mb-4">
-                        <h4>OralOasis</h4>
-                        <hr>
-                        <img src="https://placehold.co/30x30" alt="" style="height: 30px; width: 30px; border-radius: 50%">
-                        <strong class="small">{{ Auth::User()->name }}</strong>
-                        <hr>
+
+                <div class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                    <div class="position-sticky pt-3" style="top: 0; height: 100vh; overflow-y: auto">
+                        <div class="text-center mb-4">
+                            <h4>OralOasis</h4>
+                            <hr>
+                            <img src="https://placehold.co/30x30" alt=""
+                                style="height: 30px; width: 30px; border-radius: 50%">
+                            <strong class="small">{{ Auth::User()->name }}</strong>
+                            <hr>
+                        </div>
+                        @include('layouts.parts.sidebar')
                     </div>
-                    @include('layouts/parts/sidebar')
                 </div>
-            </div>
             @endauth
 
             <!-- Main Content Area with Navbar -->
@@ -188,13 +193,16 @@
 
 
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button"
+                                    data-bs-toggle="dropdown">
                                     <i class="fas fa-user-circle"></i>
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li><a class="dropdown-item" href="#">Profile</a></li>
                                     <li><a class="dropdown-item" href="#">Settings</a></li>
-                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
                                     <li>
                                         <form action="{{ route('logout') }}" method="post">
                                             @csrf
@@ -231,16 +239,16 @@
 
     <script>
         let appointmentDateInput = document.querySelectorAll('.date');
-            let today = new Date();
-            let yyyy = today.getFullYear();
-            let mm = String(today.getMonth() + 1).padStart(2, '0');
-            let dd = String(today.getDate()).padStart(2, '0');
-            let formattedToday = `${yyyy}-${mm}-${dd}`;
+        let today = new Date();
+        let yyyy = today.getFullYear();
+        let mm = String(today.getMonth() + 1).padStart(2, '0');
+        let dd = String(today.getDate()).padStart(2, '0');
+        let formattedToday = `${yyyy}-${mm}-${dd}`;
 
         appointmentDateInput.forEach(element => {
             element.min = formattedToday;
         });
-
     </script>
 </body>
+
 </html>
