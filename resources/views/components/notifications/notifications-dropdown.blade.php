@@ -11,7 +11,7 @@
         </a>
         <div class="dropdown-menu dropdown-menu-end shadow-sm" style="width: 320px; max-height: 400px; overflow-y: auto;">
             <div class="d-flex justify-content-between align-items-center px-3 py-2 bg-light border-bottom">
-                <h6 class="mb-0">Notifications</h6>
+                <h6 class="mb-0">Unread Notifications</h6>
                 @if (auth()->user()->unreadNotifications->count())
                     <a href="{{ route('notifications.markAllRead') }}" class="text-decoration-none small">
                         Mark all as read
@@ -19,7 +19,7 @@
                 @endif
             </div>
 
-            @forelse(auth()->user()->notifications->take($maxNotifications) as $notification)
+            @forelse(auth()->user()->unreadNotifications->take($maxNotifications) as $notification)
                 <a class="dropdown-item py-2 border-bottom"
                     href="{{ route('notifications.markAsRead', $notification->id) }}">
                     <div class="d-flex align-items-center">
@@ -33,7 +33,7 @@
                             @endif
                         </div>
                         <div class="flex-grow-1 overflow-hidden">
-                            <p class="mb-0 text-truncate @if($notification->unread()) fw-bold @endif">
+                            <p class="mb-0 text-truncate fw-bold">
                                 {{ $notification->data['message'] }}
                             </p>
                             <div class="d-flex justify-content-between align-items-center">
@@ -54,14 +54,14 @@
             @empty
                 <div class="dropdown-item text-center py-4">
                     <i class="fas fa-check-circle text-success mb-2" style="font-size: 2rem;"></i>
-                    <p class="mb-0 text-muted">No new notifications</p>
+                    <p class="mb-0 text-muted">No unread notifications</p>
                 </div>
             @endforelse
 
-            @if (auth()->user()->notifications->count() > 5)
+            @if (auth()->user()->unreadNotifications->count() > $maxNotifications)
                 <div class="dropdown-divider my-0"></div>
                 <div class="text-center text-muted small py-2 bg-light">
-                    {{ auth()->user()->notifications->count() - 5 }} more notification(s)
+                    {{ auth()->user()->unreadNotifications->count() - $maxNotifications }} more unread notification(s)
                 </div>
             @endif
 

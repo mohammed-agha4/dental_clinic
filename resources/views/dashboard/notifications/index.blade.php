@@ -99,7 +99,7 @@
                                 <div class="mt-2">
                                     @if(isset($notification->data['url']))
                                         <a href="{{ route('notifications.markAsRead', $notification->id) }}"
-                                           class="btn btn-sm btn-outline-secondary">
+                                            class="btn btn-sm btn-outline-secondary">
                                             <i class="fas fa-eye me-1"></i> View Details
                                         </a>
                                     @endif
