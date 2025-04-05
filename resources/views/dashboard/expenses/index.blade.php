@@ -17,9 +17,7 @@
                                 <a href="{{ route('dashboard.expenses.create') }}" class="btn btn-dark btn-sm">
                                     <i class="fas fa-plus"></i> Add New Expense
                                 </a>
-                                <a href="{{ route('dashboard.expenses.trash') }}" class="btn btn-dark btn-sm">
-                                    <i class="fas fa-plus"></i> Trash
-                                </a>
+
                             </div>
                         </div>
                         <div class="card-body">
@@ -38,8 +36,11 @@
                             @endif
 
                             <!-- Expenses Table -->
-                            <div class="table-responsive">
+                            <div class="table-responsive ">
                                 <table class="table small table-striped">
+                                    <a href="{{ route('dashboard.expenses.trash') }}" class="btn btn-dark btn-sm mb-2">
+                                        <i class="fas fa-plus"></i> Trash
+                                    </a>
                                     <thead>
                                         <tr>
                                             <th>ID</th>

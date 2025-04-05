@@ -7,9 +7,7 @@
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
             <h4 class="mb-0">Visits</h4>
-            <a href="{{ route('dashboard.visits.trash') }}" class="btn btn-dark">
-                <i class="fas fa-plus"></i> Trash
-            </a>
+
         </div>
 
         <div class="card-body">
@@ -26,8 +24,11 @@
                 </div>
             @endif
 
-            <div class="table-responsive">
+            <div class="table-responsive mx-3">
                 <table class="table table-striped table-hover small">
+                    <a href="{{ route('dashboard.visits.trash') }}" class="btn btn-sm mb-2 btn-dark">
+                        <i class="fas fa-plus"></i> Trash
+                    </a>
                     <thead class="table-light">
                         <tr class="text-center">
                             <th>ID</th>

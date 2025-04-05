@@ -11,9 +11,7 @@
                 <i class="fas fa-plus fa-sm"></i> New Staff
             </a>
 
-            <a href="{{ route('dashboard.staff.trash') }}" class="btn btn-dark btn-sm">
-                <i class="fas fa-plus fa-sm"></i> Trash
-            </a>
+
 
         </div>
 
@@ -31,8 +29,11 @@
             @endif
 
 
-            <div class="table-responsive">
+            <div class="table-responsive mx-3">
                 <table class="table table-striped table-hover">
+                    <a href="{{ route('dashboard.staff.trash') }}" class="btn btn-dark btn-sm my-2">
+                        <i class="fas fa-plus fa-sm"></i> Trash
+                    </a>
                     <thead class="table-light">
                         <tr class="text-center">
                             <th>ID</th>

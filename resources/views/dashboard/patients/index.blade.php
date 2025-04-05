@@ -7,7 +7,6 @@
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
             <h4 class="mb-0">Patients</h4>
-            <a href="{{ route('dashboard.patients.trash') }}" class="btn btn-dark">Trash</a>
         </div>
 
         <div class="card-body">
@@ -24,8 +23,10 @@
                 </div>
             @endif
 
-            <div class="table-responsive">
+            <div class="table-responsive ">
                 <table class="table table-striped table-hover small">
+                    <a href="{{ route('dashboard.patients.trash') }}" class="btn btn-sm btn-dark mb-2">Trash</a>
+
                     <thead class="table-light">
                         <tr class="text-center">
                             <th>ID</th>

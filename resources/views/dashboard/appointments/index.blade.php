@@ -29,6 +29,8 @@
 
             <div class="table-responsive">
                 <table class="table table-striped table-hover small">
+                    <a href="{{ route('dashboard.appointments.trash') }}" class="btn btn-dark btn-sm mb-2"> Trash
+                    </a>
                     <thead class="table-light">
                         <tr class="text-center">
                             <th>ID</th>
@@ -75,9 +77,7 @@
                             </tr>
                         @endforelse
                     </tbody>
-                    <a href="{{ route('dashboard.appointments.trash') }}" class="btn btn-dark btn-sm">
-                        <i class="fas fa-plus fa-sm"></i> trash
-                    </a>
+
                 </table>
             </div>
 
