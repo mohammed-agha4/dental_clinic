@@ -4,14 +4,17 @@ namespace App\Models;
 
 use App\Models\Staff;
 use App\Models\Patient;
+use App\Models\Payment;
 use App\Models\Service;
 use App\Models\Inventory;
 use App\Models\Appointment;
 use App\Models\InventoryVisit;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Visit extends Model
 {
+    use SoftDeletes;
     protected $guarded = [];
 
 
@@ -42,7 +45,13 @@ class Visit extends Model
                     ->withTimestamps();
     }
 
-   
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+
 
 
 }

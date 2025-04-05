@@ -10,6 +10,11 @@
             <a href="{{ route('dashboard.staff.create') }}" class="btn btn-dark btn-sm">
                 <i class="fas fa-plus fa-sm"></i> New Staff
             </a>
+
+            <a href="{{ route('dashboard.staff.trash') }}" class="btn btn-dark btn-sm">
+                <i class="fas fa-plus fa-sm"></i> Trash
+            </a>
+
         </div>
 
             @if (session()->has('success'))

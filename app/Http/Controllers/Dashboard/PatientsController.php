@@ -81,11 +81,12 @@ class PatientsController extends Controller
                 $activeAppointments = Appointment::where('patient_id', $patient->id)
                     ->where('status', ['scheduled', 'rescheduled'])
                     ->exists();
-                $activeVisits = Visit::where('patient_id', $patient->id);
+                $activeVisits = Visit::where('patient_id', $patient->id)->exists();
 
+                // dd($activeVisits);
 
                 if ($activeAppointments || $activeVisits) {
-                    // dd('d');
+                    dd('d');
                     DB::rollBack();
                     return redirect()->route('dashboard.patients.index')
                         ->with('error', 'Cannot delete patient. They have active appointments or a visitation.');
@@ -104,4 +105,57 @@ class PatientsController extends Controller
 
     }
 
+
+    public function trash()
+    {
+        $patients = Patient::onlyTrashed()
+            ->latest('deleted_at')
+            ->paginate(10);
+
+        return view('dashboard.patients.trash', compact('patients'));
+    }
+
+    /**
+     * Restore a soft-deleted patient
+     */
+    public function restore($id)
+    {
+        try {
+            $patient = Patient::onlyTrashed()->findOrFail($id);
+            $patient->restore();
+
+            return redirect()->route('dashboard.patients.trash')
+                ->with('success', 'Patient restored successfully');
+
+        } catch (\Exception $e) {
+            return redirect()->route('dashboard.patients.trash')
+                ->with('error', 'Error restoring patient: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Permanently delete a patient
+     */
+    public function forceDelete($id)
+    {
+        try {
+            $patient = Patient::onlyTrashed()->findOrFail($id);
+
+            // Check for existing appointments before permanent deletion
+            if ($patient->appointments()->count() > 0) {
+                return redirect()->route('dashboard.patients.trash')
+                    ->with('error', 'Cannot permanently delete - patient has existing appointments');
+            }
+
+            $patientName = $patient->fname . ' ' . $patient->lname;
+            $patient->forceDelete();
+
+            return redirect()->route('dashboard.patients.trash')
+                ->with('success', "Patient $patientName permanently deleted");
+
+        } catch (\Exception $e) {
+            return redirect()->route('dashboard.patients.trash')
+                ->with('error', 'Error deleting patient: ' . $e->getMessage());
+        }
+    }
 }

@@ -7,9 +7,9 @@
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
             <h4 class="mb-0">Visits</h4>
-            {{-- <a href="{{ route('dashboard.visits.create') }}" class="btn btn-dark">
-                <i class="fas fa-plus"></i> Add Visitation
-            </a> --}}
+            <a href="{{ route('dashboard.visits.trash') }}" class="btn btn-dark">
+                <i class="fas fa-plus"></i> Trash
+            </a>
         </div>
 
         <div class="card-body">

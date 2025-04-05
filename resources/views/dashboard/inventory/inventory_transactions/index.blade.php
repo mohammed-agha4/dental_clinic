@@ -46,7 +46,7 @@
                             <tr class="text-center">
                                 <td>{{ $loop->iteration }}</td>
                                 <td>{{ $inventory_transaction->inventory->name }}</td>
-                                <td>{{ $inventory_transaction->staff->user->name }}</td>
+                                <td>{{ $inventory_transaction->staff->user->name  ?? '' }}</td>
                                 <td>{{ $inventory_transaction->type }}</td>
                                 <td>{{ $inventory_transaction->quantity }}</td>
                                 <td>{{ $inventory_transaction->unit_price }}</td>

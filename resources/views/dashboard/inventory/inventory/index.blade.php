@@ -10,6 +10,9 @@
                 <a href="{{ route('dashboard.inventory.inventory.create') }}" class="btn btn-dark btn-sm">
                     <i class="fas fa-plus fa-sm"></i> New Tool
                 </a>
+                <a href="{{ route('dashboard.inventory.inventory.trash') }}" class="btn btn-dark btn-sm">
+                    <i class="fas fa-plus fa-sm"></i> Trash
+                </a>
             </div>
 
             <div class="card-body">

@@ -7,6 +7,7 @@
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
             <h4 class="mb-0">Patients</h4>
+            <a href="{{ route('dashboard.patients.trash') }}" class="btn btn-dark">Trash</a>
         </div>
 
         <div class="card-body">

@@ -31,9 +31,27 @@ Route::prefix('dashboard')->middleware('auth')->name('dashboard')->group(functio
 
 Route::prefix('dashboard')->middleware('auth')->name('dashboard.')->group(function() {
 
+
+
+    Route::get('/patients/trash', [PatientsController::class, 'trash'])->name('patients.trash');
+    Route::put('/patients/{patient}/restore', [PatientsController::class, 'restore'])->name('patients.restore');
+    Route::delete('/patients/{patient}/force-delete', [PatientsController::class, 'forceDelete'])->name('patients.force-delete');
+
+    Route::get('/staff/trash', [StaffController::class, 'trash'])->name('staff.trash');
+    Route::put('/staff/{staff}/restore', [StaffController::class, 'restore'])->name('staff.restore');
+    Route::delete('/staff/{staff}/force-delete', [StaffController::class, 'forceDelete'])->name('staff.force-delete');
+
+
+
+
+
+
     Route::resource('/patients', PatientsController::class);
     Route::resource('/staff', StaffController::class);
     Route::resource('/services', ServicesController::class);
+
+
+
 
     Route::get('/appointments/get-available-slots', [AppointmentsController::class, 'getAvailableSlots'])
     ->name('appointments.getAvailableSlots');
@@ -41,6 +59,10 @@ Route::prefix('dashboard')->middleware('auth')->name('dashboard.')->group(functi
     Route::get('/appointments/get-available-dentists', [AppointmentsController::class, 'getAvailableDentists'])
     ->name('appointments.getAvailableDentists');
     Route::get('/dashboard/appointments/get-available-staff', [AppointmentsController::class, 'getAvailableStaff']);
+
+    Route::get('/appointments/trash', [AppointmentsController::class, 'trash'])->name('appointments.trash');
+    Route::put('/appointments/{appointment}/restore', [AppointmentsController::class, 'restore'])->name('appointments.restore');
+    Route::delete('/appointments/{appointment}/force-delete', [AppointmentsController::class, 'forceDelete'])->name('appointments.force-delete');
     Route::resource('/appointments', AppointmentsController::class);
 
     Route::resource('/service-staff', ServiceStaffController::class);
@@ -53,8 +75,14 @@ Route::prefix('dashboard')->middleware('auth')->name('dashboard.')->group(functi
 
 Route::prefix('dashboard/inventory')->middleware('auth')->name('dashboard.inventory.')->group(function() {
 
+
+
+
     Route::resource('/suppliers', SuppliersController::class);
     Route::resource('/categories', CategoriesController::class);
+    Route::get('/inventory/trash', [InventoryController::class, 'trash'])->name('inventory.trash');
+    Route::put('/inventory/{inventory}/restore', [InventoryController::class, 'restore'])->name('inventory.restore');
+    Route::delete('/inventory/{inventory}/force-delete', [InventoryController::class, 'forceDelete'])->name('inventory.force-delete');
     Route::resource('/inventory', InventoryController::class);
     Route::resource('/inventory-transactions', InventoryTransactionsController::class);
 
@@ -69,14 +97,24 @@ Route::prefix('dashboard/inventory')->middleware('auth')->name('dashboard.invent
 
 Route::prefix('dashboard')->middleware('auth')->name('dashboard.')->group(function() {
 
+    Route::get('/visits/trash', [VisitsController::class, 'trash'])->name('visits.trash');
+    Route::put('/visits/{visits}/restore', [VisitsController::class, 'restore'])->name('visits.restore');
+    Route::delete('/visits/{visits}/force-delete', [VisitsController::class, 'forceDelete'])->name('visits.force-delete');
+
     Route::resource('/visits', VisitsController::class)->except(['create']);
     Route::get('visits/create/{appointment}', [VisitsController::class, 'create'])->name('visits.create');
-
 
 });
 
 Route::prefix('dashboard')->middleware('auth')->name('dashboard.')->group(function() {
     Route::resource('/payments', PaymentsController::class);
+
+
+    Route::get('/expenses/trash', [ExpensesController::class, 'trash'])->name('expenses.trash');
+    Route::put('/expenses/{expenses}/restore', [ExpensesController::class, 'restore'])->name('expenses.restore');
+    Route::delete('/expenses/{expenses}/force-delete', [ExpensesController::class, 'forceDelete'])->name('expenses.force-delete');
+
+
     Route::resource('/expenses', ExpensesController::class);
     Route::get('expense-report', [ExpensesController::class, 'report'])->name('expenses.report');
 });

@@ -91,40 +91,204 @@ class StaffController extends Controller
      * Remove the specified resource from storage.
      */
 
+     public function destroy($id)
+     {
+         try {
+             DB::beginTransaction();
+     
+             $staff = Staff::with(['user', 'appointments', 'expenses', 'visits', 'inventoryTransactions', 'payments'])
+                 ->findOrFail($id);
+             $staffName = $staff->user->name ?? 'Staff Member';
+     
+             // Check for active dentist appointments
+             if ($staff->role === 'dentist') {
+                 $hasActiveAppointments = $staff->appointments()
+                     ->whereIn('status', ['scheduled', 'rescheduled', 'walk_in'])
+                     ->exists();
+     
+                 if ($hasActiveAppointments) {
+                     throw new Exception('Cannot delete dentist with active appointments (scheduled/rescheduled/walk-in)');
+                 }
+             }
+     
+             // Check all foreign key constraints
+             $errorMessages = [];
+     
+             // 1. Check appointments (any status)
+             if ($staff->appointments()->exists()) {
+                 $errorMessages[] = 'has historical appointment records';
+             }
+     
+             // 2. Check visits (restrict)
+             if ($staff->visits()->exists()) {
+                 $errorMessages[] = 'has patient visit records';
+             }
+     
+             // 3. Check expenses (restrict)
+             if ($staff->expenses()->exists()) {
+                 $errorMessages[] = 'has expense records';
+             }
+     
+             // 4. Check payments (set null, but we might want to track)
+             if ($staff->payments()->exists()) {
+                 $errorMessages[] = 'has payment processing records';
+             }
+     
+             // 5. Check inventory transactions
+             if ($staff->inventoryTransactions()->exists()) {
+                 $errorMessages[] = 'has inventory transaction records';
+             }
+     
+             // 6. Check service_staff pivot table (cascade)
+             // No check needed as it cascades
+     
+             if (!empty($errorMessages)) {
+                 throw new Exception(
+                     'Cannot delete staff member who ' . implode(', ', $errorMessages) . 
+                     '. Please reassign these records first.'
+                 );
+             }
+     
+             // Soft delete the staff member if no constraints violated
+             $staff->delete();
+     
+             DB::commit();
+     
+             return redirect()
+                 ->route('dashboard.staff.index')
+                 ->with('success', "{$staffName} has been deactivated (soft deleted)");
+     
+         } catch (\Exception $e) {
+             DB::rollBack();
+             logger()->error("Staff deletion failed: " . $e->getMessage());
+     
+             return redirect()
+                 ->route('dashboard.staff.index')
+                 ->with('error', $e->getMessage());
+         }
+     }
 
-    public function destroy($id)
+
+
+
+
+    public function trash()
+    {
+        $staff = Staff::onlyTrashed()
+            ->with('user')
+            ->latest('deleted_at')
+            ->paginate(8);
+
+        return view('dashboard.staff.trash', compact('staff'));
+    }
+
+    /**
+     * Restore a soft-deleted staff member
+     */
+    public function restore($id)
     {
         try {
-            $staff = Staff::findOrFail($id);
+            DB::beginTransaction();
 
+            $staff = Staff::onlyTrashed()->findOrFail($id);
 
-            $catchDentists = $staff->role === 'dentist';
-            $catchActiveAppointment = Appointment::where('staff_id', $id)
-            ->whereIn('status', ['scheduled', 'rescheduled', 'walk_in'])
-            ->exists();
-
-            // Check if staff has active appointments
-            if ($catchDentists && $catchActiveAppointment) {
-                return redirect()
-                    ->route('dashboard.staff.index')
-                    ->with('error', 'Cannot delete staff member with active appointments.');
+            // Check if the associated user exists
+            if (!$staff->user) {
+                throw new Exception('Associated user account not found');
             }
 
-            // Delete staff if no issues
-            DB::beginTransaction();
-            $staff->delete();
+            $staff->restore();
+
             DB::commit();
 
-            return redirect()
-                ->route('dashboard.staff.index')
-                ->with('success', 'Staff member deleted successfully.');
+            return redirect()->route('dashboard.staff.trash')
+                ->with('success', 'Staff member restored successfully');
+
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()
-                ->route('dashboard.staff.index')
-                ->with('error', 'An error occurred: ' . $e->getMessage());
+            return redirect()->route('dashboard.staff.trash')
+                ->with('error', 'Error restoring staff: ' . $e->getMessage());
         }
     }
 
+    /**
+     * Permanently delete a staff member
+     */
+    public function forceDelete($id)
+{
+    try {
+        DB::beginTransaction();
 
-}
+        $staff = Staff::onlyTrashed()
+            ->with(['user', 'appointments', 'visits', 'expenses', 'payments', 'transactions'])
+            ->findOrFail($id);
+        
+        $staffName = $staff->user->name ?? 'Deleted Staff';
+        $errorMessages = [];
+
+        // Check for active dentist appointments (scheduled/rescheduled/walk-in)
+        if ($staff->role === 'dentist') {
+            $hasActiveAppointments = $staff->appointments()
+                ->whereIn('status', ['scheduled', 'rescheduled', 'walk_in'])
+                ->exists();
+
+            if ($hasActiveAppointments) {
+                $errorMessages[] = 'has active appointments (scheduled/rescheduled/walk-in)';
+            }
+        }
+
+        // Check all restricted foreign key relationships
+        if ($staff->visits()->exists()) {
+            $errorMessages[] = 'has associated patient visits';
+        }
+
+        if ($staff->expenses()->exists()) {
+            $errorMessages[] = 'has expense records';
+        }
+
+        if ($staff->payments()->exists()) {
+            // Payments has set null, but we should still warn
+            $errorMessages[] = 'has payment records (these will be unassigned)';
+        }
+
+
+        // Check inventory transactions
+        if ($staff->transactions()->exists()) {
+            $errorMessages[] = 'has inventory transaction records';
+        }
+
+        if (!empty($errorMessages)) {
+            $message = 'Cannot permanently delete staff member who ' . implode(', ', $errorMessages);
+            
+            // Add specific instructions for each case
+            if (in_array('has associated patient visits', $errorMessages)) {
+                $message .= '. Please reassign visits first.';
+            }
+            elseif (in_array('has expense records', $errorMessages)) {
+                $message .= '. Please reassign expenses first.';
+            }
+            else {
+                $message .= '. Please resolve these dependencies first.';
+            }
+            
+            throw new Exception($message);
+        }
+
+        // If we get here, safe to force delete
+        $staff->forceDelete();
+
+        DB::commit();
+
+        return redirect()
+            ->route('dashboard.staff.trash')
+            ->with('success', "{$staffName} has been permanently deleted");
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        logger()->error("Staff forceDelete failed: " . $e->getMessage());
+        
+        return redirect()
+            ->route('dashboard.staff.trash')
+            ->with('error', $e->getMessage());
+    }
+}}

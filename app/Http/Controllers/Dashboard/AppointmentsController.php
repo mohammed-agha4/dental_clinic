@@ -25,7 +25,7 @@ class AppointmentsController extends Controller
     {
         $appointments = Appointment::with(['patient', 'dentist.user', 'service'])
             ->orderBy('appointment_date', 'desc')
-            ->paginate(15);
+            ->paginate(10);
 
         return view('dashboard.appointments.index', compact('appointments'));
     }
@@ -306,112 +306,116 @@ class AppointmentsController extends Controller
     // }
 
     public function getAvailableSlots(Request $request)
-{
-    $serviceId = $request->service_id;
-    $date = $request->date;
-    $duration = $request->duration;
-    $currentAppointmentId = $request->current_appointment_id ?? null;
+    {
+        $serviceId = $request->service_id;
+        $date = $request->date;
+        $duration = $request->duration;
+        $currentAppointmentId = $request->current_appointment_id ?? null;
 
-    // Validate inputs
-    if (!$serviceId || !$date || !$duration) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Missing required parameters'
-        ]);
-    }
-
-    try {
-        // Parse the date
-        $dateObj = Carbon::parse($date);
-
-        // Get clinic opening hours (customize based on your needs)
-        $openingTime = Carbon::parse($date . ' 09:00:00');
-        $closingTime = Carbon::parse($date . ' 17:00:00');
-
-        // Don't allow booking in the past
-        $now = Carbon::now();
-        if ($dateObj->isToday() && $now->greaterThan($openingTime)) {
-            $openingTime = $now->copy()->addHours(1)->startOfHour();
-        }
-
-        // Get all staff that can perform this service
-        $staffIds = Staff::where('is_active', true)
-            ->whereHas('services', function($query) use ($serviceId) {
-                $query->where('service_id', $serviceId);
-            })
-            ->pluck('id');
-
-        if ($staffIds->isEmpty()) {
+        // Validate inputs
+        if (!$serviceId || !$date || !$duration) {
             return response()->json([
                 'success' => false,
-                'message' => 'No staff available for this service'
+                'message' => 'Missing required parameters'
             ]);
         }
 
-        // Get all appointments for this date, excluding the current appointment if editing
-        $appointmentsQuery = Appointment::whereDate('appointment_date', $dateObj)
-            ->whereIn('staff_id', $staffIds)
-            ->where('status', '!=', 'canceled');
-            
-        // Exclude current appointment if we're editing
-        if ($currentAppointmentId) {
-            $appointmentsQuery->where('id', '!=', $currentAppointmentId);
-        }
-        
-        $existingAppointments = $appointmentsQuery->with('service')->get();
+        try {
+            // Parse the date
+            $dateObj = Carbon::parse($date);
 
-        // Generate time slots
-        $slots = [];
-        $currentTime = $openingTime->copy();
-        $durationInMinutes = (int)$duration;
+            // Get clinic opening hours (customize based on your needs)
+            $openingTime = Carbon::parse($date . ' 09:00:00');
+            $closingTime = Carbon::parse($date . ' 17:00:00');
 
-        while ($currentTime->lessThan($closingTime)) {
-            $slotEndTime = $currentTime->copy()->addMinutes($durationInMinutes);
-
-            if ($slotEndTime->greaterThan($closingTime)) {
-                break;
+            // Don't allow booking in the past
+            $now = Carbon::now();
+            if ($dateObj->isToday() && $now->greaterThan($openingTime)) {
+                $openingTime = $now->copy()->addHours(1)->startOfHour();
             }
 
-            $timeString = $currentTime->format('H:i');
+            \Log::info('Parsed date: ' . $dateObj->toDateTimeString());
+            \Log::info('Opening time: ' . $openingTime->toDateTimeString());
+            \Log::info('Closing time: ' . $closingTime->toDateTimeString());
 
-            // Check if this specific slot is available
-            $available = true;
-            foreach ($existingAppointments as $appointment) {
-                $appointmentStart = Carbon::parse($appointment->appointment_date);
-                
-                // Get the service duration safely
-                $appointmentDuration = $appointment->service ? $appointment->service->duration : $durationInMinutes;
-                $appointmentEnd = Carbon::parse($appointment->appointment_date)->addMinutes($appointmentDuration);
+            // Get all staff that can perform this service
+            $staffIds = Staff::where('is_active', true)
+                ->whereHas('services', function($query) use ($serviceId) {
+                    $query->where('service_id', $serviceId);
+                })
+                ->pluck('id');
 
-                // Simple overlap check
-                if ($appointmentStart->lt($slotEndTime) && $appointmentEnd->gt($currentTime)) {
-                    $available = false;
+            if ($staffIds->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No staff available for this service'
+                ]);
+            }
+
+            // Get all appointments for this date, excluding the current appointment if editing
+            $appointmentsQuery = Appointment::whereDate('appointment_date', $dateObj)
+                ->whereIn('staff_id', $staffIds)
+                ->where('status', '!=', 'canceled');
+
+            // Exclude current appointment if we're editing
+            if ($currentAppointmentId) {
+                $appointmentsQuery->where('id', '!=', $currentAppointmentId);
+            }
+
+            $existingAppointments = $appointmentsQuery->with('service')->get();
+
+            // Generate time slots
+            $slots = [];
+            $currentTime = $openingTime->copy();
+            $durationInMinutes = (int)$duration;
+
+            while ($currentTime->lessThan($closingTime)) {
+                $slotEndTime = $currentTime->copy()->addMinutes($durationInMinutes);
+
+                if ($slotEndTime->greaterThan($closingTime)) {
                     break;
                 }
+
+                $timeString = $currentTime->format('H:i');
+
+                // Check if this specific slot is available
+                $available = true;
+                foreach ($existingAppointments as $appointment) {
+                    $appointmentStart = Carbon::parse($appointment->appointment_date);
+
+                    // Get the service duration safely
+                    $appointmentDuration = $appointment->service ? $appointment->service->duration : $durationInMinutes;
+                    $appointmentEnd = Carbon::parse($appointment->appointment_date)->addMinutes($appointmentDuration);
+
+                    // Simple overlap check
+                    if ($appointmentStart->lt($slotEndTime) && $appointmentEnd->gt($currentTime)) {
+                        $available = false;
+                        break;
+                    }
+                }
+
+                $slots[] = [
+                    'time' => $timeString,
+                    'available' => $available
+                ];
+
+                // Move to next slot
+                $currentTime->addMinutes($durationInMinutes);
             }
 
-            $slots[] = [
-                'time' => $timeString,
-                'available' => $available
-            ];
+            return response()->json([
+                'success' => true,
+                'slots' => $slots
+            ]);
 
-            // Move to next slot
-            $currentTime->addMinutes($durationInMinutes);
+        } catch (\Exception $e) {
+            \Log::error('Error in getAvailableSlots: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error generating time slots: ' . $e->getMessage()
+            ]);
         }
-
-        return response()->json([
-            'success' => true,
-            'slots' => $slots
-        ]);
-
-    } catch (\Exception $e) {
-        \Log::error('Error in getAvailableSlots: ' . $e->getMessage());
-        return response()->json([
-            'success' => false,
-            'message' => 'Error generating time slots: ' . $e->getMessage()
-        ]);
     }
-}
 
 
 
@@ -530,62 +534,62 @@ class AppointmentsController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, Appointment $appointment)
-{
-    // Similar validation as store method
-    $validator = Validator::make($request->all(), [
-        'patient_id' => 'required|exists:patients,id',
-        'service_id' => 'required|exists:services,id',
-        'staff_id' => 'required|exists:staff,id',
-        'appointment_date_time' => 'required|date',
-        'status' => 'required|in:scheduled,rescheduled,completed,canceled,walk_in',
-    ]);
-    
-    if ($validator->fails()) {
-        return redirect()->back()
-            ->withErrors($validator)
-            ->withInput()
-            ->with('error', 'Please fix the errors below.');
-    }
-    
-    try {
-        DB::beginTransaction();
-        
-        // Update appointment
-        $appointment->patient_id = $request->patient_id;
-        $appointment->staff_id = $request->staff_id;
-        $appointment->service_id = $request->service_id;
-        
-        // Get service duration
-        $service = Service::findOrFail($request->service_id);
-        $appointment->duration = $service->duration;
-        
-        // Use the date_time from time slot selection
-        $appointment->appointment_date = $request->appointment_date_time;
-        $appointment->status = $request->status;
-        $appointment->notes = $request->notes;
-        
-        // If status changed to canceled, record the cancellation reason
-        if ($request->status === 'canceled' && $appointment->getOriginal('status') !== 'canceled') {
-            if (empty($request->cancellation_reason)) {
-                return redirect()->back()
-                    ->withInput()
-                    ->with('error', 'Cancellation reason is required when canceling an appointment.');
-            }
-            $appointment->cancellation_reason = $request->cancellation_reason;
+    {
+        // Similar validation as store method
+        $validator = Validator::make($request->all(), [
+            'patient_id' => 'required|exists:patients,id',
+            'service_id' => 'required|exists:services,id',
+            'staff_id' => 'required|exists:staff,id',
+            'appointment_date_time' => 'required|date',
+            'status' => 'required|in:scheduled,rescheduled,completed,canceled,walk_in',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('error', 'Please fix the errors below.');
         }
-        
-        $appointment->save();
-        
-        DB::commit();
-        return redirect()->route('dashboard.appointments.index')
-            ->with('success', 'Appointment updated successfully.');
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return redirect()->back()
-            ->withInput()
-            ->with('error', 'Error updating appointment: ' . $e->getMessage());
+
+        try {
+            DB::beginTransaction();
+
+            // Update appointment
+            $appointment->patient_id = $request->patient_id;
+            $appointment->staff_id = $request->staff_id;
+            $appointment->service_id = $request->service_id;
+
+            // Get service duration
+            $service = Service::findOrFail($request->service_id);
+            $appointment->duration = $service->duration;
+
+            // Use the date_time from time slot selection
+            $appointment->appointment_date = $request->appointment_date_time;
+            $appointment->status = $request->status;
+            $appointment->notes = $request->notes;
+
+            // If status changed to canceled, record the cancellation reason
+            if ($request->status === 'canceled' && $appointment->getOriginal('status') !== 'canceled') {
+                if (empty($request->cancellation_reason)) {
+                    return redirect()->back()
+                        ->withInput()
+                        ->with('error', 'Cancellation reason is required when canceling an appointment.');
+                }
+                $appointment->cancellation_reason = $request->cancellation_reason;
+            }
+
+            $appointment->save();
+
+            DB::commit();
+            return redirect()->route('dashboard.appointments.index')
+                ->with('success', 'Appointment updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error updating appointment: ' . $e->getMessage());
+        }
     }
-}
 
     /**
      * Remove the specified appointment from storage.
@@ -594,25 +598,34 @@ class AppointmentsController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function destroy($id)
-    {
-        try {
-            $appointment = Appointment::findOrFail($id);
+{
+    try {
+        $appointment = Appointment::with('patient')->findOrFail($id);
 
-            // Check if there are any visits associated with this appointment
-            if ($appointment->visits()->count() > 0) {
-                return redirect()->back()
-                    ->with('error', 'Cannot delete this appointment because it has associated visits.');
-            }
-
-            $appointment->delete();
-
-            return redirect()->route('dashboard.appointments.index')
-                ->with('success', 'Appointment deleted successfully.');
-        } catch (\Exception $e) {
+        // Check if there are any visits associated with this appointment
+        if ($appointment->visits()->count() > 0) {
             return redirect()->back()
-                ->with('error', 'Error deleting appointment: ' . $e->getMessage());
+                ->with('error', 'Cannot delete this appointment because it has associated visits.');
         }
+
+        // Get the patient before deleting appointment
+        $patient = $appointment->patient;
+        $patientName = $patient->fname . ' ' . $patient->lname;
+
+        // Delete the appointment
+        $appointment->delete();
+
+        // Delete the patient (soft delete if using SoftDeletes)
+        $patient->delete();
+
+        return redirect()->route('dashboard.appointments.index')
+            ->with('success', "Appointment and patient ($patientName) deleted successfully.");
+
+    } catch (\Exception $e) {
+        return redirect()->back()
+            ->with('error', 'Error deleting appointment: ' . $e->getMessage());
     }
+}
 
     /**
      * Change the status of an appointment.
@@ -666,85 +679,133 @@ class AppointmentsController extends Controller
 
 
     public function getAvailableStaff(Request $request)
-{
-    $serviceId = $request->service_id;
-    $dateTime = $request->date_time;
-    $currentAppointmentId = $request->current_appointment_id ?? null;
-    
-    // Validate inputs
-    if (!$serviceId || !$dateTime) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Missing required parameters'
-        ]);
-    }
-    
-    try {
-        // Parse the datetime
-        $appointmentDateTime = Carbon::parse($dateTime);
-        
-        // Get service details
-        $service = Service::findOrFail($serviceId);
-        $duration = $service->duration;
-        
-        // Calculate appointment end time
-        $appointmentEndTime = $appointmentDateTime->copy()->addMinutes($duration);
-        
-        // Get all staff that can perform this service
-        $staffQuery = Staff::where('is_active', true)
-            ->whereHas('services', function($query) use ($serviceId) {
-                $query->where('service_id', $serviceId);
-            });
-        
-        $allStaff = $staffQuery->with('user')->get();
-        
-        // Get all appointments for this time
-        $conflictingAppointmentsQuery = Appointment::where(function($query) use ($appointmentDateTime, $appointmentEndTime) {
-            $query->where(function($q) use ($appointmentDateTime, $appointmentEndTime) {
-                // Appointment starts during our slot
-                $q->where('appointment_date', '>=', $appointmentDateTime)
-                  ->where('appointment_date', '<', $appointmentEndTime);
-            })->orWhere(function($q) use ($appointmentDateTime, $appointmentEndTime) {
-                // Appointment ends during our slot
-                $q->whereRaw("DATE_ADD(appointment_date, INTERVAL duration MINUTE) > ?", [$appointmentDateTime])
-                  ->whereRaw("DATE_ADD(appointment_date, INTERVAL duration MINUTE) <= ?", [$appointmentEndTime]);
-            })->orWhere(function($q) use ($appointmentDateTime, $appointmentEndTime) {
-                // Appointment contains our slot
-                $q->where('appointment_date', '<=', $appointmentDateTime)
-                  ->whereRaw("DATE_ADD(appointment_date, INTERVAL duration MINUTE) >= ?", [$appointmentEndTime]);
-            });
-        })->where('status', '!=', 'canceled');
-        
-        // Exclude current appointment if we're editing
-        if ($currentAppointmentId) {
-            $conflictingAppointmentsQuery->where('id', '!=', $currentAppointmentId);
+    {
+        $serviceId = $request->service_id;
+        $dateTime = $request->date_time;
+        $currentAppointmentId = $request->current_appointment_id ?? null;
+
+        // Validate inputs
+        if (!$serviceId || !$dateTime) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Missing required parameters'
+            ]);
         }
-        
-        // Get staff IDs that are busy
-        $busyStaffIds = $conflictingAppointmentsQuery->pluck('staff_id')->toArray();
-        
-        // Filter available staff
-        $availableStaff = $allStaff->filter(function($staff) use ($busyStaffIds) {
-            return !in_array($staff->id, $busyStaffIds);
-        })->map(function($staff) {
-            return [
-                'id' => $staff->id,
-                'name' => $staff->user->name
-            ];
-        })->values();
-        
-        return response()->json([
-            'success' => true,
-            'staff' => $availableStaff
-        ]);
-        
+
+        try {
+            // Parse the datetime
+            $appointmentDateTime = Carbon::parse($dateTime);
+
+            // Get service details
+            $service = Service::findOrFail($serviceId);
+            $duration = $service->duration;
+
+            // Calculate appointment end time
+            $appointmentEndTime = $appointmentDateTime->copy()->addMinutes($duration);
+
+            // Get all staff that can perform this service
+            $staffQuery = Staff::where('is_active', true)
+                ->whereHas('services', function($query) use ($serviceId) {
+                    $query->where('service_id', $serviceId);
+                });
+
+            $allStaff = $staffQuery->with('user')->get();
+
+            // Get all appointments for this time
+            $conflictingAppointmentsQuery = Appointment::where(function($query) use ($appointmentDateTime, $appointmentEndTime) {
+                $query->where(function($q) use ($appointmentDateTime, $appointmentEndTime) {
+                    // Appointment starts during our slot
+                    $q->where('appointment_date', '>=', $appointmentDateTime)
+                    ->where('appointment_date', '<', $appointmentEndTime);
+                })->orWhere(function($q) use ($appointmentDateTime, $appointmentEndTime) {
+                    // Appointment ends during our slot
+                    $q->whereRaw("DATE_ADD(appointment_date, INTERVAL duration MINUTE) > ?", [$appointmentDateTime])
+                    ->whereRaw("DATE_ADD(appointment_date, INTERVAL duration MINUTE) <= ?", [$appointmentEndTime]);
+                })->orWhere(function($q) use ($appointmentDateTime, $appointmentEndTime) {
+                    // Appointment contains our slot
+                    $q->where('appointment_date', '<=', $appointmentDateTime)
+                    ->whereRaw("DATE_ADD(appointment_date, INTERVAL duration MINUTE) >= ?", [$appointmentEndTime]);
+                });
+            })->where('status', '!=', 'canceled');
+
+            // Exclude current appointment if we're editing
+            if ($currentAppointmentId) {
+                $conflictingAppointmentsQuery->where('id', '!=', $currentAppointmentId);
+            }
+
+            // Get staff IDs that are busy
+            $busyStaffIds = $conflictingAppointmentsQuery->pluck('staff_id')->toArray();
+
+            // Filter available staff
+            $availableStaff = $allStaff->filter(function($staff) use ($busyStaffIds) {
+                return !in_array($staff->id, $busyStaffIds);
+            })->map(function($staff) {
+                return [
+                    'id' => $staff->id,
+                    'name' => $staff->user->name
+                ];
+            })->values();
+
+            return response()->json([
+                'success' => true,
+                'staff' => $availableStaff
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error finding available staff: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+
+    public function trash()
+{
+    $appointments = Appointment::onlyTrashed()
+        ->with([
+            'patient' => function($query) {
+                $query->withTrashed(); // Include trash patients
+            },
+            'dentist.user',
+            'service'
+        ])
+        ->latest()
+        ->paginate(10);
+
+    return view('dashboard.appointments.trash', compact('appointments'));
+}
+
+    public function restore(Request $request, $id) {
+        $appointment = Appointment::onlyTrashed()->findOrFail($id);
+        $appointment->restore();
+        return redirect()->route('dashboard.appointments.trash')->with('success', 'Appointment Restored.');
+    }
+
+    public function forceDelete($id)
+{
+    try {
+        $appointment = Appointment::withTrashed()->with('patient')->findOrFail($id);
+
+        // Get the patient (including trash patients)
+        $patient = $appointment->patient()->withTrashed()->first();
+        $patientName = $patient->fname . ' ' . $patient->lname;
+
+        // Permanently delete the appointment
+        $appointment->forceDelete();
+
+        // Permanently delete the patient
+        $patient->forceDelete();
+
+        return redirect()->route('dashboard.appointments.trash')
+            ->with('success', "Appointment and patient ($patientName) permanently deleted.");
+
     } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Error finding available staff: ' . $e->getMessage()
-        ]);
+        return redirect()->route('dashboard.appointments.trash')
+            ->with('error', 'Error permanently deleting: ' . $e->getMessage());
     }
 }
+
 
 
 

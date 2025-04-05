@@ -4,9 +4,13 @@ namespace App\Models;
 
 use App\Models\Staff;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Expense extends Model
 {
+
+    use SoftDeletes;
+
     protected $fillable = [
         'title',
         'staff_id',

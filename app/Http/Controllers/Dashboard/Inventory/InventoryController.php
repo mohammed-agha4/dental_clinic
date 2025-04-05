@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Dashboard\Inventory;
 
+use Exception;
 use App\Models\Staff;
 use App\Models\Category;
 use App\Models\Supplier;
@@ -184,9 +185,92 @@ class InventoryController extends Controller
      */
     public function destroy(Inventory $inventory)
     {
-        dd('v');
         $inventory->delete();
         return redirect()->route('dashboard.inventory.inventory.index')->with('success', 'Staff Deleted Successfuly');
 
+    }
+
+
+    public function trash()
+    {
+
+        $inventories = Inventory::onlyTrashed()
+            ->with(['category', 'supplier'])
+            ->latest('deleted_at')
+            ->paginate(10);
+
+
+
+        return view('dashboard.inventory.inventory.trash', compact('inventories'));
+    }
+
+    /**
+     * Restore a soft-deleted inventory item
+     */
+    public function restore($id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $inventory = Inventory::onlyTrashed()->findOrFail($id);
+            $inventory->restore();
+
+            DB::commit();
+
+            return redirect()->route('dashboard.inventory.inventory.trash')
+                ->with('success', 'Inventory item restored successfully');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('dashboard.inventory.inventory.trash')
+                ->with('error', 'Error restoring inventory: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Permanently delete an inventory item
+     */
+    public function forceDelete($id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $inventory = Inventory::onlyTrashed()
+                ->with(['transactions', 'visits'])
+                ->findOrFail($id);
+
+            $itemName = $inventory->name;
+
+            // Check for related records
+            $errorMessages = [];
+
+            if ($inventory->transactions()->exists()) {
+                $errorMessages[] = 'has transaction records';
+            }
+
+            if ($inventory->visits()->exists()) {
+                $errorMessages[] = 'was used in patient visits';
+            }
+
+            if (!empty($errorMessages)) {
+                throw new Exception(
+                    'Cannot permanently delete inventory item that ' .
+                    implode(' and ', $errorMessages) .
+                    '. Please delete these records first.'
+                );
+            }
+
+            $inventory->forceDelete();
+
+            DB::commit();
+
+            return redirect()->route('dashboard.inventory.inventory.trash')
+                ->with('success', "Inventory item '{$itemName}' permanently deleted");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('dashboard.inventory.inventory.trash')
+                ->with('error', 'Permanent deletion failed: ' . $e->getMessage());
+        }
     }
 }

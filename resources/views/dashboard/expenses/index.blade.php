@@ -17,6 +17,9 @@
                                 <a href="{{ route('dashboard.expenses.create') }}" class="btn btn-dark btn-sm">
                                     <i class="fas fa-plus"></i> Add New Expense
                                 </a>
+                                <a href="{{ route('dashboard.expenses.trash') }}" class="btn btn-dark btn-sm">
+                                    <i class="fas fa-plus"></i> Trash
+                                </a>
                             </div>
                         </div>
                         <div class="card-body">
@@ -53,7 +56,7 @@
                                             <tr>
                                                 <td>{{ $loop->iteration }}</td>
                                                 <td>{{ $expense->title }}</td>
-                                                <td>{{ $expense->staff->user->name }}</td>
+                                                <td>{{ $expense->staff->user->name ?? '' }}</td>
                                                 <td>{{ number_format($expense->amount, 2) }}</td>
                                                 <td>{{ $expense->category }}</td>
                                                 <td>{{ $expense->expense_date->format('M d, Y') }}</td>

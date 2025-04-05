@@ -602,4 +602,78 @@ class VisitsController extends Controller
                 ->with('error', 'Failed to delete visit: ' . $e->getMessage());
         }
     }
+
+    public function trash()
+    {
+        $visits = Visit::onlyTrashed()
+            ->with(['patient', 'staff.user', 'appointment'])
+            ->latest('deleted_at')
+            ->paginate(10);
+
+        return view('dashboard.visits.trash', compact('visits'));
+    }
+
+    /**
+     * Restore a soft-deleted visit
+     */
+    public function restore($id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $visit = Visit::onlyTrashed()->findOrFail($id);
+            $visit->restore();
+
+            // Restore related appointment if exists and was deleted
+            if ($visit->appointment_id && $visit->appointment?->trashed()) {
+                $visit->appointment->restore();
+            }
+
+            DB::commit();
+
+            return redirect()->route('dashboard.visits.trash')
+                ->with('success', 'Visit restored successfully');
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            return redirect()->route('dashboard.visits.trash')
+                ->with('error', 'Error restoring visit: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Permanently delete a visit
+     */
+    public function forceDelete($id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $visit = Visit::onlyTrashed()
+                ->with(['payments', 'inventoryItems'])
+                ->findOrFail($id);
+
+            // Check for related records
+            if ($visit->payments()->exists()) {
+                throw new Exception('Cannot delete - visit has payment records');
+            }
+
+            if ($visit->inventoryItems()->exists()) {
+                // Detach inventory items rather than blocking
+                $visit->inventoryItems()->detach();
+            }
+
+            $visit->forceDelete();
+
+            DB::commit();
+
+            return redirect()->route('dashboard.visits.trash')
+                ->with('success', 'Visit permanently deleted');
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            return redirect()->route('dashboard.visits.trash')
+                ->with('error', 'Permanent deletion failed: ' . $e->getMessage());
+        }
+    }
 }

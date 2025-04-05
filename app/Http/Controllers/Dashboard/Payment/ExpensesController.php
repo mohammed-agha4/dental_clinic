@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Dashboard\Payment;
 
+use Exception;
 use App\Models\Staff;
 use App\Models\Expense;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 
 class ExpensesController extends Controller
@@ -176,5 +178,62 @@ class ExpensesController extends Controller
             'totalAmount',
             'categoryTotals'
         ));
+    }
+
+
+    public function trash()
+    {
+        $expenses = Expense::onlyTrashed()
+            ->with(['staff.user'])
+            ->latest('deleted_at')
+            ->paginate(10);
+
+        return view('dashboard.expenses.trash', compact('expenses'));
+    }
+
+    /**
+     * Restore a soft-deleted expense
+     */
+    public function restore($id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $expense = Expense::onlyTrashed()->findOrFail($id);
+            $expense->restore();
+
+            DB::commit();
+
+            return redirect()->route('dashboard.expenses.trash')
+                ->with('success', 'Expense restored successfully');
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            return redirect()->route('dashboard.expenses.trash')
+                ->with('error', 'Error restoring expense: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Permanently delete an expense
+     */
+    public function forceDelete($id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $expense = Expense::onlyTrashed()->findOrFail($id);
+            $expense->forceDelete();
+
+            DB::commit();
+
+            return redirect()->route('dashboard.expenses.trash')
+                ->with('success', 'Expense permanently deleted');
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            return redirect()->route('dashboard.expenses.trash')
+                ->with('error', 'Permanent deletion failed: ' . $e->getMessage());
+        }
     }
 }

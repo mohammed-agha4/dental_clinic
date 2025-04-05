@@ -8,9 +8,11 @@ use App\Models\Service;
 use App\Models\Appointment;
 use App\Models\InventoryTransaction;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Staff extends Model
 {
+    use SoftDeletes;
 
     protected $table = 'staff';
 
@@ -26,7 +28,7 @@ class Staff extends Model
 
     public function visits()
     {
-        return $this->hasMany(Visit::class);
+        return $this->hasMany(Visit::class, 'staff_id');
     }
 
     public function services()
@@ -36,7 +38,7 @@ class Staff extends Model
 
     public function appointments()
     {
-        return $this->hasMany(Appointment::class);
+        return $this->hasMany(Appointment::class, 'staff_id');
     }
 
     public function user()
@@ -44,7 +46,16 @@ class Staff extends Model
         return $this->belongsTo(User::class)->withDefault();
     }
 
+    public function payments()
+    {
+        return $this->hasMany(Payment::class, 'staff_id');
+    }
 
+
+    public function expenses()
+    {
+        return $this->hasMany(Expense::class, 'staff_id');
+    }
 
 
 }

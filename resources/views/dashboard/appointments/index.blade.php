@@ -10,6 +10,7 @@
             <a href="{{ route('dashboard.appointments.create') }}" class="btn btn-dark btn-sm">
                 <i class="fas fa-plus fa-sm"></i> Schedule Appointment
             </a>
+
         </div>
 
         <div class="card-body">
@@ -66,12 +67,17 @@
                                     </button>
                                 </td>
                             </tr>
+
                         @empty
+
                             <tr>
                                 <td colspan="10" class="text-center py-4">No data found</td>
                             </tr>
                         @endforelse
                     </tbody>
+                    <a href="{{ route('dashboard.appointments.trash') }}" class="btn btn-dark btn-sm">
+                        <i class="fas fa-plus fa-sm"></i> trash
+                    </a>
                 </table>
             </div>
 
