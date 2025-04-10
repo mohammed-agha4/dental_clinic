@@ -68,6 +68,10 @@
                                         </span>
                                     </td>
                                     <td>
+                                        <a href="{{ route('dashboard.inventory.inventory.show', $inv->id) }}"
+                                            class="btn btn-sm btn-outline-success">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
                                         <a class="btn btn-outline-primary btn-sm"
                                             href="{{ route('dashboard.inventory.inventory.edit', $inv->id) }}">
                                             <i class="fas fa-edit"></i>

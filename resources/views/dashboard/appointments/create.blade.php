@@ -58,11 +58,11 @@
         }
 
         .time-slot-container.active {
-            display: block;
+        display: block !important;
         }
 
         .time-slots {
-            display: grid;
+            display: grid !important;
             grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
             gap: 10px;
             margin-top: 10px;
@@ -550,7 +550,11 @@
                         date: selectedDate, // Ensure this is in YYYY-MM-DD format
                         duration: duration
                     },
+                    beforeSend: function() {
+                        console.log('Sending request with:', {serviceId, selectedDate, duration});
+                    },
                     success: function(response) {
+                        console.log('Response received:', response);
                         if (response.success && response.slots && response.slots.length > 0) {
                             timeSlotContainer.classList.add('active');
                             availabilityMessage.style.display = 'none';

@@ -24,7 +24,7 @@
             @endif
 
             <div class="table-responsive ">
-                <table class="table table-striped table-hover small">
+                <table class="table table-striped table-hover small ">
                     <a href="{{ route('dashboard.patients.trash') }}" class="btn btn-sm btn-dark mb-2">Trash</a>
 
                     <thead class="table-light">
@@ -38,8 +38,8 @@
                             <th>DOB</th>
                             <th>Medical History</th>
                             <th>Allergies</th>
-                            <th>Emergency Contact Name</th>
-                            <th>Emergency Contact Phone</th>
+                            <th class="truncate-header" title="Emergency Contact Name">E. Contact</th>
+                            <th class="truncate-header" title="Emergency Contact phone">E. Contact Phone</th>
                             <th>Last Visit Date</th>
                             <th>Action</th>
                         </tr>
@@ -51,11 +51,11 @@
                                 <td>{{ $patient->fname }}</td>
                                 <td>{{ $patient->lname }}</td>
                                 <td>{{ $patient->gender }}</td>
-                                <td>{{ $patient->email }}</td>
+                                <td title="{{ $patient->email }}"> {{ Str::limit($patient->email, 12) }}</td>
                                 <td>{{ $patient->phone }}</td>
                                 <td>{{ $patient->DOB }}</td>
-                                <td>{{ $patient->medical_history }}</td>
-                                <td>{{ $patient->allergies }}</td>
+                                <td title="{{ $patient->medical_history }}"> {{ Str::limit($patient->medical_history, 12) }}</td>
+                                <td title="{{ $patient->allergies }}"> {{ Str::limit($patient->allergies, 12) }}</td>
                                 <td>{{ $patient->Emergency_contact_name }}</td>
                                 <td>{{ $patient->Emergency_contact_phone }}</td>
                                 <td>{{ $patient->last_visit_date }}</td>
@@ -63,6 +63,7 @@
                                     <a class="btn btn-outline-primary btn-sm" href="{{ route('dashboard.patients.edit', $patient->id) }}">
                                         <i class="fas fa-edit"></i>
                                     </a>
+
                                     <button class="btn btn-outline-danger btn-sm delete-btn" data-id="{{ $patient->id }}" data-name="{{ $patient->fname }} {{ $patient->lname }}">
                                         <i class="fas fa-trash"></i>
                                     </button>

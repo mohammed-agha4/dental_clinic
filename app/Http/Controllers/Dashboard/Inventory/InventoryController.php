@@ -136,9 +136,12 @@ class InventoryController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show($id)
     {
-        //
+        $inventory = Inventory::with(['Supplier', 'Category'])
+            ->findOrFail($id);
+
+        return view('dashboard.inventory.inventory.show', compact('inventory'));
     }
 
     /**

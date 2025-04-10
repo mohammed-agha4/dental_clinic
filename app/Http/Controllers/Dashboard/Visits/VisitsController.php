@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Dashboard\Visits;
 
+use Exception;
 use App\Models\Staff;
 use App\Models\Visit;
 use App\Models\Patient;
@@ -448,20 +449,7 @@ class VisitsController extends Controller
     }
 }
 
-    /**
-     * Send reorder notification to admins
-     */
-    // protected function sendReorderNotification(Inventory $inventory)
-    // {
-    //     $admins = Staff::where('role', 'admin')
-    //     ->with('user')
-    //     ->get()
-    //     ->pluck('user');
 
-    //     foreach ($admins as $admin) {
-    //         $admin->notify(new ReorderNotification($inventory));
-    //     }
-    // }
 
     /**
      * Display the specified resource.
