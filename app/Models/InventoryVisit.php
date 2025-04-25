@@ -20,11 +20,11 @@ class InventoryVisit extends Model
 
     public function visit()
     {
-        return $this->belongsTo(Visit::class);
+        return $this->belongsTo(Visit::class)->withDefault();
     }
 
     public function inventory()
     {
-        return $this->belongsTo(Inventory::class);
+        return $this->belongsTo(Inventory::class)->withDefault();
     }
 }

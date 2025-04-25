@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Dashboard\Inventory;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Gate;
 
 class SuppliersController extends Controller
 {
@@ -13,6 +14,7 @@ class SuppliersController extends Controller
      */
     public function index()
     {
+        Gate::authorize('suppliers.view');
         $suppliers = Supplier::latest('id')->paginate(8);
         return view('dashboard.inventory.suppliers.index', compact('suppliers'));
     }
@@ -22,6 +24,7 @@ class SuppliersController extends Controller
      */
     public function create()
     {
+        Gate::authorize('suppliers.create');
         $supplier = new Supplier;
         return view('dashboard.inventory.suppliers.create', compact('supplier'));
     }
@@ -31,6 +34,7 @@ class SuppliersController extends Controller
      */
     public function store(Request $request)
     {
+        Gate::authorize('suppliers.create');
 
         $request->validate([
             'company_name' => 'required|string',
@@ -50,6 +54,7 @@ class SuppliersController extends Controller
      */
     public function edit(Supplier $supplier)
     {
+        Gate::authorize('suppliers.update');
 
         return view('dashboard.inventory.suppliers.edit', compact('supplier'));
     }
@@ -59,6 +64,7 @@ class SuppliersController extends Controller
      */
     public function update(Request $request, Supplier $supplier)
     {
+        Gate::authorize('suppliers.update');
         $request->validate([
             'company_name' => 'required',
             'contact_name' => 'required',
@@ -76,6 +82,7 @@ class SuppliersController extends Controller
      */
     public function destroy(Supplier $supplier)
     {
+        Gate::authorize('suppliers.delete');
         $supplier->delete();
         return redirect()
         ->route('dashboard.inventory.suppliers.index')

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\HasRoles;
 use App\Models\User;
 use App\Models\Visit;
 use App\Models\Service;
@@ -19,6 +20,9 @@ class Staff extends Model
 
     protected $guarded = [];
 
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
 
 
     public function transactions()

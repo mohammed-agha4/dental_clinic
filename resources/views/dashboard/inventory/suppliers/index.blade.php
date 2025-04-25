@@ -7,9 +7,11 @@
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-light py-3 d-flex justify-content-between align-items-center">
                 <h4 class="mb-0">Suppliers</h4>
-                <a href="{{ route('dashboard.inventory.suppliers.create') }}" class="btn btn-dark btn-sm">
-                    <i class="fas fa-plus fa-sm"></i> New Supplier
-                </a>
+                @can('suppliers.create')
+                    <a href="{{ route('dashboard.inventory.suppliers.create') }}" class="btn btn-dark btn-sm">
+                        <i class="fas fa-plus fa-sm"></i> New Supplier
+                    </a>
+                @endcan
             </div>
 
             <!-- Flash Messages -->
@@ -49,15 +51,18 @@
                                 <td>{{ $supplier->phone }}</td>
                                 <td>{{ $supplier->address }}</td>
                                 <td>
-                                    <a class="btn btn-outline-primary btn-sm"
-                                        href="{{ route('dashboard.inventory.suppliers.edit', $supplier->id) }}">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <button class="btn btn-outline-danger btn-sm delete-btn"
-                                            data-id="{{ $supplier->id }}"
+                                    @can('suppliers.update')
+                                        <a class="btn btn-outline-primary btn-sm"
+                                            href="{{ route('dashboard.inventory.suppliers.edit', $supplier->id) }}">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    @endcan
+                                    @can('suppliers.delete')
+                                        <button class="btn btn-outline-danger btn-sm delete-btn" data-id="{{ $supplier->id }}"
                                             data-name="{{ $supplier->company_name }}">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    @endcan
                                 </td>
                             </tr>
                         @empty
@@ -84,35 +89,37 @@
 @endsection
 
 @push('js')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Handle delete button clicks
-        document.querySelectorAll('.delete-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const supplierId = this.getAttribute('data-id');
-                const supplierName = this.getAttribute('data-name');
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle delete button clicks
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const supplierId = this.getAttribute('data-id');
+                    const supplierName = this.getAttribute('data-name');
 
-                Swal.fire({
-                    title: 'Are you sure?',
-                    html: `You are about to delete the supplier: <strong>${supplierName}</strong>`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#dc3545',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Yes, delete it!',
-                    cancelButtonText: 'Cancel',
-                    reverseButtons: true,
-                    focusCancel: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        const form = document.getElementById('delete-form');
-                        form.action = "{{ route('dashboard.inventory.suppliers.destroy', '') }}/" + supplierId;
-                        form.submit();
-                    }
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        html: `You are about to delete the supplier: <strong>${supplierName}</strong>`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#dc3545',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Yes, delete it!',
+                        cancelButtonText: 'Cancel',
+                        reverseButtons: true,
+                        focusCancel: true
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            const form = document.getElementById('delete-form');
+                            form.action =
+                                "{{ route('dashboard.inventory.suppliers.destroy', '') }}/" +
+                                supplierId;
+                            form.submit();
+                        }
+                    });
                 });
             });
         });
-    });
-</script>
+    </script>
 @endpush

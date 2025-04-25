@@ -21,20 +21,22 @@
 
             @forelse(auth()->user()->unreadNotifications->take($maxNotifications) as $notification)
                 <a class="dropdown-item py-2 border-bottom"
-                    href="{{ route('notifications.markAsRead', $notification->id) }}">
+                    href="{{ route('notifications.index', $notification->id) }}">
                     <div class="d-flex align-items-center">
                         <div class="flex-shrink-0 me-3">
-                            @if(Str::contains($notification->type, 'ReorderNotification'))
+                            @if (Str::contains($notification->type, 'ReorderNotification'))
                                 <i class="fas fa-boxes fa-lg text-warning"></i>
                             @elseif(Str::contains($notification->type, 'NewAppointmentNotification'))
                                 <i class="fas fa-calendar-check fa-lg text-primary"></i>
+                            @elseif(Str::contains($notification->type, 'InventoryExpirationNotification'))
+                                <i class="fas fa-exclamation-triangle fa-lg text-danger"></i>
                             @else
                                 <i class="fas fa-bell fa-lg"></i>
                             @endif
                         </div>
                         <div class="flex-grow-1 overflow-hidden">
                             <p class="mb-0 text-truncate fw-bold">
-                                {{ $notification->data['message'] }}
+                                {{ $notification->data['message'] ?? 'New notification' }}
                             </p>
                             <div class="d-flex justify-content-between align-items-center">
                                 <small class="text-muted">{{ $notification->created_at->diffForHumans() }}</small>
@@ -45,6 +47,11 @@
                                 @elseif (isset($notification->data['status']))
                                     <span class="badge bg-info text-dark">
                                         {{ $notification->data['status'] }}
+                                    </span>
+                                @elseif (Str::contains($notification->type, 'InventoryExpirationNotification') &&
+                                        isset($notification->data['daysRemaining']))
+                                    <span class="badge bg-danger text-white">
+                                        {{ $notification->data['daysRemaining'] }} days
                                     </span>
                                 @endif
                             </div>

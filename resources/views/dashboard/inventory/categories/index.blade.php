@@ -7,9 +7,11 @@
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
                 <h4 class="mb-0">Categories</h4>
-                <a href="{{ route('dashboard.inventory.categories.create') }}" class="btn btn-dark btn-sm">
-                    <i class="fas fa-plus fa-sm"></i> New Category
-                </a>
+                @can('categories.create')
+                    <a href="{{ route('dashboard.inventory.categories.create') }}" class="btn btn-dark btn-sm">
+                        <i class="fas fa-plus fa-sm"></i> New Category
+                    </a>
+                @endcan
             </div>
 
             <!-- Flash Messages -->
@@ -41,15 +43,18 @@
                                 <td>{{ $loop->iteration }}</td>
                                 <td>{{ $category->name }}</td>
                                 <td>
-                                    <a class="btn btn-outline-primary btn-sm"
-                                        href="{{ route('dashboard.inventory.categories.edit', $category->id) }}">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <button class="btn btn-outline-danger btn-sm delete-btn"
-                                            data-id="{{ $category->id }}"
+                                    @can('categories.update')
+                                        <a class="btn btn-outline-primary btn-sm"
+                                            href="{{ route('dashboard.inventory.categories.edit', $category->id) }}">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    @endcan
+                                    @can('categories.delete')
+                                        <button class="btn btn-outline-danger btn-sm delete-btn" data-id="{{ $category->id }}"
                                             data-name="{{ $category->name }}">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    @endcan
                                 </td>
                             </tr>
                         @empty
@@ -76,35 +81,37 @@
 @endsection
 
 @push('js')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Handle delete button clicks
-        document.querySelectorAll('.delete-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const categoryId = this.getAttribute('data-id');
-                const categoryName = this.getAttribute('data-name');
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle delete button clicks
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const categoryId = this.getAttribute('data-id');
+                    const categoryName = this.getAttribute('data-name');
 
-                Swal.fire({
-                    title: 'Are you sure?',
-                    html: `You are about to delete the category: <strong>${categoryName}</strong>`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#dc3545',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Yes, delete it!',
-                    cancelButtonText: 'Cancel',
-                    reverseButtons: true,
-                    focusCancel: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        const form = document.getElementById('delete-form');
-                        form.action = "{{ route('dashboard.inventory.categories.destroy', '') }}/" + categoryId;
-                        form.submit();
-                    }
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        html: `You are about to delete the category: <strong>${categoryName}</strong>`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#dc3545',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Yes, delete it!',
+                        cancelButtonText: 'Cancel',
+                        reverseButtons: true,
+                        focusCancel: true
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            const form = document.getElementById('delete-form');
+                            form.action =
+                                "{{ route('dashboard.inventory.categories.destroy', '') }}/" +
+                                categoryId;
+                            form.submit();
+                        }
+                    });
                 });
             });
         });
-    });
-</script>
+    </script>
 @endpush

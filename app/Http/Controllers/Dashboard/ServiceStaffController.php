@@ -7,17 +7,20 @@ use App\Models\Service;
 use App\Models\ServiceStaff;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Gate;
 
 class ServiceStaffController extends Controller
 {
     public function index()
     {
+        Gate::authorize('service_staff.view');
         $service_staff = ServiceStaff::with(['dentist.user', 'service'])->latest('id')->paginate(8);
         return view('dashboard.service_staff.index', compact('service_staff'));
     }
 
     public function create()
     {
+        Gate::authorize('service_staff.create');
         $staff = Staff::with('user')->get();
         $services = Service::all();
         $service_staff = new ServiceStaff;
@@ -26,6 +29,7 @@ class ServiceStaffController extends Controller
 
     public function store(Request $request)
     {
+        Gate::authorize('service_staff.create');
         $validated = $request->validate([
             'staff_id' => 'required|exists:staff,id',
             'service_id' => 'required|exists:services,id',
@@ -39,6 +43,7 @@ class ServiceStaffController extends Controller
 
     public function edit(ServiceStaff $service_staff)
     {
+        Gate::authorize('service_staff.update');
         $staff = Staff::with('user')->get();
         $services = Service::all();
         // dd('d');
@@ -47,6 +52,7 @@ class ServiceStaffController extends Controller
 
     public function update(Request $request, ServiceStaff $service_staff)
     {
+        Gate::authorize('service_staff.update');
         $validated = $request->validate([
             'staff_id' => 'required|exists:staff,id',
             'service_id' => 'required|exists:services,id',
@@ -59,6 +65,7 @@ class ServiceStaffController extends Controller
 
     public function destroy(ServiceStaff $service_staff)
     {
+        Gate::authorize('service_staff.delete');
         $service_staff->delete();
 
         return redirect()->route('dashboard.service-staff.index')

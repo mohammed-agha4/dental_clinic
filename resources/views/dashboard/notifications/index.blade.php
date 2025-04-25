@@ -1,4 +1,6 @@
 @extends('layouts.master.master')
+@section('title', 'Notifications')
+
 
 @section('css')
 <style>
@@ -36,9 +38,11 @@
                 @if($notifications->where('read_at', null)->count() > 0)
                     <form action="{{ route('notifications.markAllRead') }}" method="POST">
                         @csrf
+                        @can('notifications.mark_all_read')
                         <button type="submit" class="btn btn-sm btn-outline-secondary">
                             Mark All as Read
                         </button>
+                        @endcan
                     </form>
                 @endif
             </div>
@@ -96,14 +100,7 @@
                                     @endif
                                 </div>
 
-                                <div class="mt-2">
-                                    @if(isset($notification->data['url']))
-                                        <a href="{{ route('notifications.markAsRead', $notification->id) }}"
-                                            class="btn btn-sm btn-outline-secondary">
-                                            <i class="fas fa-eye me-1"></i> View Details
-                                        </a>
-                                    @endif
-                                </div>
+
                             </div>
                         </div>
                     </div>

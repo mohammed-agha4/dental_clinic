@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Staff;
 use App\Models\Visit;
+use App\Models\Appointment;
 use Illuminate\Database\Eloquent\Model;
 
 class Service extends Model
@@ -19,6 +20,10 @@ class Service extends Model
     {
         return $this->belongsToMany(Staff::class, 'service_staff', 'service_id', 'staff_id');
 
+    }
+    public function appointments()
+    {
+        return $this->hasMany(Appointment::class);
     }
 
 

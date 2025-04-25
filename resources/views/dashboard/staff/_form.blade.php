@@ -10,22 +10,49 @@
             </div>
         {{-- </div> --}}
         <div class="card-body">
+
+
             <div class="row mb-3">
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label class="form-label">User:</label>
-                        <select name="user_id" class="form-select @error('user_id') is-invalid @enderror">
-                            <option selected disabled>--select--</option>
-                            @foreach ($users as $user)
-                                <option value="{{ $user->id }}" @selected(old('user_id', $staff->user_id) == $user->id)>{{ $user->name }}</option>
-                            @endforeach
-                        </select>
-                        @error('user_id')
+                        <label class="form-label">Staff Member Name:</label>
+                        <input type="text" class="form-control @error('name') is-invalid @enderror" name="name" placeholder="Enter staff name" value="{{ old('name', $staff->user->name) }}">
+                        @error('name')
                             <small class="text-danger">{{ $message }}</small>
                         @enderror
                     </div>
                 </div>
             </div>
+
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">Email:</label>
+                        <input type="text" class="form-control @error('email') is-invalid @enderror" name="email" placeholder="Enter staff email" value="{{ old('email', $staff->user->email) }}" >
+                        @error('email')
+                            <small class="text-danger">{{ $message }}</small>
+                        @enderror
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">Password:</label>
+                        <input type="text" class="form-control @error('password') is-invalid @enderror" name="password" placeholder="Enter staff password" value="{{ old('password') }}" >
+                        @error('password')
+                            <small class="text-danger">{{ $message }}</small>
+                        @enderror
+                    </div>
+                </div>
+            </div>
+
+
+
+
 
             <div class="row mb-3">
                 <div class="col-md-6">

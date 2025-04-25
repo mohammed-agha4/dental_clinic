@@ -1,16 +1,9 @@
 @extends('layouts.master.master')
 
-@section('title', 'Patients')
-
-
+@section('title', 'Patient Information')
 
 @section('content')
-
-    {{-- <h4>Edit Patient</h4> --}}
-
     <form action="{{ route('dashboard.patients.update', $patient->id) }}" method="post">
-
-
         @method('put')
         @csrf
         <div class="container-fluid p-0">
@@ -21,12 +14,18 @@
                 <div class="card-body">
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <x-form.input label='First Name:' type='text' name='fname' :value='$patient->fname'
-                                placeholder='Patient First Name' />
+                            <div class="form-group">
+                                <label for="fname" class="form-label">First Name:</label>
+                                <input type="text" class="form-control" id="fname" name="fname"
+                                    value="{{ old('fname', $patient->fname) }}" placeholder="Patient First Name">
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            <x-form.input label='Last Name:' type='text' name='lname' :value='$patient->lname'
-                                placeholder='Patient Last Name' />
+                            <div class="form-group">
+                                <label for="lname" class="form-label">Last Name:</label>
+                                <input type="text" class="form-control" id="lname" name="lname"
+                                    value="{{ old('lname', $patient->lname) }}" placeholder="Patient Last Name">
+                            </div>
                         </div>
                     </div>
 
@@ -50,30 +49,43 @@
 
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <x-form.input label='Email:' type='email' name='email' :value='$patient->email'
-                                placeholder='Patient Email' />
+                            <div class="form-group">
+                                <label for="email" class="form-label">Email:</label>
+                                <input type="email" class="form-control" id="email" name="email"
+                                    value="{{ old('email', $patient->email) }}" placeholder="Patient Email">
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            <x-form.input label='Phone:' type='tel' name='phone' :value='$patient->phone'
-                                placeholder='Patient Phone' />
+                            <div class="form-group">
+                                <label for="phone" class="form-label">Phone:</label>
+                                <input type="tel" class="form-control" id="phone" name="phone"
+                                    value="{{ old('phone', $patient->phone) }}" placeholder="Patient Phone">
+                            </div>
                         </div>
                     </div>
 
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <x-form.input label='Date Of Birth:' type='date' name='DOB' :value='$patient->DOB'
-                                placeholder='Patient Date Of Birth' />
+                            <div class="form-group">
+                                <label for="DOB" class="form-label">Date Of Birth:</label>
+                                <input type="date" class="form-control" id="DOB" name="DOB"
+                                    value="{{ old('DOB', $patient->DOB ? \Carbon\Carbon::parse($patient->DOB)->format('Y-m-d') : '') }}">
+                            </div>
                         </div>
                     </div>
 
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <x-form.textarea label='Medical History:' name='medical_history' :value='$patient->medical_history'
-                                placeholder="Enter patient medical history" class="form-control" />
+                            <div class="form-group">
+                                <label for="medical_history" class="form-label">Medical History:</label>
+                                <textarea class="form-control" id="medical_history" name="medical_history" placeholder="Enter patient medical history">{{ old('medical_history', $patient->medical_history) }}</textarea>
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            <x-form.textarea label='Allergies:' name='allergies' :value='$patient->allergies'
-                                placeholder="Enter patient Allergies" class="form-control" />
+                            <div class="form-group">
+                                <label for="allergies" class="form-label">Allergies:</label>
+                                <textarea class="form-control" id="allergies" name="allergies" placeholder="Enter patient Allergies">{{ old('allergies', $patient->allergies) }}</textarea>
+                            </div>
                         </div>
                     </div>
 
@@ -83,12 +95,20 @@
                                 <div class="emergency-title h6">Emergency Contact Information</div>
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <x-form.input label='Contact Name:' type='text' name='emergency_contact_name'
-                                            :value='$patient->emergency_contact_name' placeholder='Emergency Contact Name' />
+                                        <div class="form-group">
+                                            <label for="emergency_contact_name" class="form-label">Contact Name:</label>
+                                            <input type="text" class="form-control" id="emergency_contact_name" name="emergency_contact_name"
+                                                   value="{{ old('emergency_contact_name', $patient->Emergency_contact_name) }}"
+                                                   placeholder="Emergency Contact Name">
+                                        </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <x-form.input label='Contact Phone:' type='tel' name='Emergency_contact_phone'
-                                            :value='$patient->Emergency_contact_phone' placeholder='Emergency Contact Phone' />
+                                        <div class="form-group">
+                                            <label for="Emergency_contact_phone" class="form-label">Contact Phone:</label>
+                                            <input type="tel" class="form-control" id="Emergency_contact_phone" name="Emergency_contact_phone"
+                                                   value="{{ old('Emergency_contact_phone', $patient->Emergency_contact_phone) }}"
+                                                   placeholder="Emergency Contact Phone">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -98,9 +118,6 @@
             </div>
         </div>
 
-
         <button type="submit" class="btn btn-primary m-2">Save Changes</button>
     </form>
-
-
 @endsection

@@ -1,6 +1,6 @@
 @extends('layouts.master.master')
 
-@section('title', 'Edit Tool')
+@section('title', 'Tool Information')
 
 @section('content')
     <div class="container-fluid">
@@ -124,6 +124,7 @@
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <div class="form-group">
+                                <label >Expiry Date</label>
                                 <input type="date" class="form-control date @error('expiry_date') is-invalid @enderror"
                                     name='expiry_date' value="{{ old('expiry_date', $inventory->expiry_date) }}"
                                     placeholder='Expiry Date' required>

@@ -1,20 +1,31 @@
 @extends('layouts.master.master')
+@section('title', 'Payment Information')
+
 
 @section('content')
-
-{{-- @dd( $payment->visit->visit_date->format('M d, Y H:i')) --}}
 
     <div class="container-fluid">
         <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h5>Payment Details</h5>
                 <div>
-
-                    <a href="#" class="btn btn-success btn-sm" target="_blank">
-                        <i class="fas fa-file-invoice fa-sm"></i> Receipt
-                    </a>
+                    @can('payments.update')
+                        <a href="{{ route('dashboard.payments.edit', $payment) }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                    @endcan
+                    @can('payments.delete')
+                        <form action="{{ route('dashboard.payments.destroy', $payment) }}" method="POST" class="d-inline">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-outline-danger btn-sm"
+                                onclick="return confirm('Are you sure you want to delete this payment?')">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </form>
+                    @endcan
                     <a href="{{ route('dashboard.payments.index') }}" class="btn btn-secondary btn-sm">
-                        <i class="fas fa-arrow-left fa-sm"></i> Back to Main
+                        <i class="fas fa-arrow-left fa-sm"></i> Back
                     </a>
                 </div>
             </div>
@@ -52,11 +63,11 @@
                                     </tr>
                                     <tr>
                                         <th>Date Created:</th>
-                                        <td>{{ $payment->created_at->format('M d, Y H:i') }}</td>
+                                        <td>{{ $payment->created_at->format('M j, Y g:i A') }}</td>
                                     </tr>
                                     <tr>
                                         <th>Last Updated:</th>
-                                        <td>{{ $payment->updated_at->format('M d, Y H:i') }}</td>
+                                        <td>{{ $payment->updated_at->format('M j, Y g:i A') }}</td>
                                     </tr>
                                 </table>
                             </div>
@@ -73,7 +84,8 @@
                                     <tr>
                                         <th>Patient:</th>
                                         <td>
-                                            <a class=" text-dark-emphasis text-bold " href="{{ route('dashboard.patients.show', $payment->visit->patient) }}">
+                                            <a class=" text-dark-emphasis text-bold text-decoration-none"
+                                                href="{{ route('dashboard.patients.show', $payment->visit->patient) }}">
                                                 {{ $payment->visit->patient->fname }}
                                                 {{ $payment->visit->patient->lname }}
                                             </a>
@@ -81,7 +93,7 @@
                                     </tr>
                                     <tr>
                                         <th>Visit Date:</th>
-                                        <td>{{ $payment->visit->visit_date/*->format('M d, Y') */}}</td>
+                                        <td>{{ $payment->visit->visit_date->format('M j, Y g:i A') }}</td>
                                     </tr>
                                     <tr>
                                         <th>Service:</th>
@@ -120,23 +132,7 @@
                     </div>
                 @endif
 
-                <!-- Buttons for actions -->
-                <div class="mt-4">
-                    <a href="{{ route('dashboard.payments.edit', $payment) }}" class="btn btn-primary">
-                        <i class="fas fa-edit"></i> Edit Payment
-                    </a>
-                    {{-- <a href="{{ route('payments.receipt', $payment) }}" class="btn btn-success" target="_blank">
-                        <i class="fas fa-file-invoice"></i> Generate Receipt
-                    </a> --}}
-                    <form action="{{ route('dashboard.payments.destroy', $payment) }}" method="POST" class="d-inline">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-danger"
-                            onclick="return confirm('Are you sure you want to delete this payment?')">
-                            <i class="fas fa-trash"></i> Delete Payment
-                        </button>
-                    </form>
-                </div>
+
             </div>
         </div>
     </div>

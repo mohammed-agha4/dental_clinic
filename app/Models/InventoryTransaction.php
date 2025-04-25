@@ -26,5 +26,9 @@ class InventoryTransaction extends Model
         return $this->belongsTo(Staff::class)->withDefault();
     }
 
-    
+    protected $casts = [
+        'transaction_date' => 'datetime',  // This ensures it's always a Carbon instance
+
+    ];
+
 }

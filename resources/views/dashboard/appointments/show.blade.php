@@ -1,144 +1,194 @@
 @extends('layouts.master.master')
+@section('title', 'Appointment Information')
 
 @section('content')
-    <div class="container mx-auto px-4 py-8">
-        <div class="flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-gray-800">Appointment Details</h1>
-            <div class="d-flex justify-content-between align-items-center my-2">
+    <div class="container-fluid">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h5>Appointment Details</h5>
                 <div>
-                    <a href="{{ route('dashboard.appointments.edit', $appointment->id) }}" class="btn btn-primary">
-                        Edit
+                    @can('appointments.update')
+                    <a href="{{ route('dashboard.appointments.edit', $appointment->id) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-edit fa-sm"></i> Edit
                     </a>
-
-                    <button type="button" class="btn btn-danger delete-btn" data-id="{{ $appointment->id }}"
-                        data-name="Appointment for {{ $appointment->patient->name }} on {{ $appointment->appointment_date }}">
-                        Delete
+                    @endcan
+                    @can('appointments.delete')
+                    <button type="button" class="btn btn-outline-danger btn-sm delete-btn" data-id="{{ $appointment->id }}"
+                        data-name="Appointment for {{ $appointment->patient->fname }} {{ $appointment->patient->lname }} on {{ $appointment->appointment_date }}">
+                        <i class="fas fa-trash fa-sm"></i> Delete
                     </button>
-                </div>
-
-                <div>
-                    <a href="{{ route('dashboard.appointments.index') }}" class="btn btn-dark">
-                        Back to main
+                    @endcan
+                    <a href="{{ route('dashboard.appointments.index') }}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left fa-sm"></i> Back
                     </a>
                 </div>
             </div>
-        </div>
-
-        <!-- Hidden Delete Form -->
-        <form id="delete-form" method="POST" style="display: none;">
-            @csrf
-            @method('DELETE')
-        </form>
-
-        <div class="bg-white rounded-lg shadow-md overflow-hidden">
-            <div class="p-6">
-                <!-- Patient and Dentist Information in same row -->
-                <div class="d-flex flex-col md:flex-row gap-6 mb-6">
-                    <!-- Patient Information -->
-                    <div class="border rounded-lg p-4 flex-1 w-50">
-                        <h2 class="text-lg font-semibold mb-4 text-gray-700 border-b pb-2">Patient Information</h2>
-                        <div class="space-y-2">
-                            <p><span class="font-medium">Name:</span> {{ $appointment->patient->fname }}
-                                {{ $appointment->patient->lname }}</p>
-                            <p><span class="font-medium">Email:</span> {{ $appointment->patient->email }}</p>
-                            <p><span class="font-medium">Phone:</span> {{ $appointment->patient->phone ?? 'N/A' }}</p>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Patient & Dentist Info -->
+                    <div class="col-md-6">
+                        <div class="card mb-4 h-100">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold text-success">Patient Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td class="p-1 font-weight-bold">Name:</td>
+                                        <td class="p-1">{{ $appointment->patient->fname }} {{ $appointment->patient->lname }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-1 font-weight-bold">Email:</td>
+                                        <td class="p-1">{{ $appointment->patient->email }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-1 font-weight-bold">Phone:</td>
+                                        <td class="p-1">{{ $appointment->patient->phone ?? 'N/A' }}</td>
+                                    </tr>
+                                </table>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Dentist Information -->
-                    <div class="border rounded-lg p-4 flex-1 w-50">
-                        <h2 class="text-lg font-semibold mb-4 text-gray-700 border-b pb-2">Dentist Information</h2>
-                        @if ($appointment->staff_id)
-                            <div class="space-y-2">
-                                <p><span class="font-medium">Name:</span> {{ $appointment->dentist->user->name }}</p>
-                                <p><span class="font-medium">Email:</span> {{ $appointment->dentist->user->email }}</p>
-                                <p><span class="font-medium">Specialization:</span>
-                                    {{ $appointment->dentist->specialization ?? 'General' }}</p>
+                    <div class="col-md-6">
+                        <div class="card mb-4 h-100">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold text-success">Dentist Information</h6>
                             </div>
-                        @else
-                            <p class="text-gray-500">No dentist assigned yet</p>
-                        @endif
+                            <div class="card-body">
+                                @if ($appointment->staff_id)
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td class="p-1 font-weight-bold">Name:</td>
+                                        <td class="p-1">{{ $appointment->dentist->user->name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-1 font-weight-bold">Email:</td>
+                                        <td class="p-1">{{ $appointment->dentist->user->email }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-1 font-weight-bold">Specialization:</td>
+                                        <td class="p-1">{{ $appointment->dentist->specialization ?? 'General' }}</td>
+                                    </tr>
+                                </table>
+                                @else
+                                <p class="small text-muted">No dentist assigned yet</p>
+                                @endif
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Appointment Details -->
-                <div class="border rounded-lg p-4 mb-6">
-                    <h2 class="text-lg font-semibold mb-4 text-gray-700 border-b pb-2">Appointment Details</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <p><span class="font-medium">Service:</span> {{ $appointment->service->name }}</p>
-                            <p><span class="font-medium">Fee:</span> ${{ number_format($appointment->service->price, 2) }}
-                            </p>
-                        </div>
-                        <div>
-                            <p><span class="font-medium">Date & Time:</span> {{ $appointment->appointment_date }}</p>
-                            <p><span class="font-medium">Duration:</span> {{ $appointment->duration }} minutes</p>
-                        </div>
-                        <div>
-                            <p>
-                                <span class="font-medium">Status:</span>
-                                <span
-                                    class="px-2 py-1 rounded-full text-xs
-                                @if ($appointment->status == 'completed') bg-green-100 text-green-800
-                                @elseif($appointment->status == 'canceled') bg-red-100 text-red-800
-                                @elseif($appointment->status == 'scheduled') bg-blue-100 text-blue-800
-                                @elseif($appointment->status == 'rescheduled') bg-yellow-100 text-yellow-800
-                                @else bg-purple-100 text-purple-800 @endif">
-                                    {{ ucfirst($appointment->status) }}
-                                </span>
-                            </p>
-                            @if ($appointment->status == 'canceled' && $appointment->cancellation_reason)
-                                <p><span class="font-medium">Cancellation Reason:</span>
-                                    {{ $appointment->cancellation_reason }}</p>
-                            @endif
-                            <p><span class="font-medium">Reminder Sent:</span>
-                                {{ $appointment->reminder_sent ? 'Yes' : 'No' }}</p>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold text-success">Appointment Details</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <h6 class="font-weight-bold">Service Information</h6>
+                                        <table class="table table-sm table-borderless">
+                                            <tr>
+                                                <td class="p-1">Service:</td>
+                                                <td class="p-1">{{ $appointment->service->service_name }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="p-1">Fee:</td>
+                                                <td class="p-1">${{ number_format($appointment->service->service_price, 2) }}</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <h6 class="font-weight-bold">Timing</h6>
+                                        <table class="table table-sm table-borderless">
+                                            <tr>
+                                                <td class="p-1">Date & Time:</td>
+                                                <td class="p-1">{{ $appointment->appointment_date }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="p-1">Duration:</td>
+                                                <td class="p-1">{{ $appointment->duration }} minutes</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <h6 class="font-weight-bold">Status</h6>
+                                        <table class="table table-sm table-borderless">
+                                            <tr>
+                                                <td class="p-1">Status:</td>
+                                                <td class="p-1"> {{ ucfirst($appointment->status) }} </td>
+                                            </tr>
+                                            @if ($appointment->status == 'canceled' && $appointment->cancellation_reason)
+                                            <tr>
+                                                <td class="p-1">Reason:</td>
+                                                <td class="p-1">{{ $appointment->cancellation_reason }}</td>
+                                            </tr>
+                                            @endif
+                                            <tr>
+                                                <td class="p-1">Reminder:</td>
+                                                <td class="p-1">{{ $appointment->reminder_sent ? 'Sent' : 'Not sent' }}</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Notes -->
                 @if ($appointment->notes)
-                    <div class="border rounded-lg p-4">
-                        <h2 class="text-lg font-semibold mb-2 text-gray-700 border-b pb-2">Notes</h2>
-                        <p class="text-gray-700 whitespace-pre-line">{{ $appointment->notes }}</p>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold text-success">Notes</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="whitespace-pre-line small">{{ $appointment->notes }}</p>
+                            </div>
+                        </div>
                     </div>
+                </div>
                 @endif
             </div>
         </div>
     </div>
+
+    <!-- Hidden Delete Form -->
+    <form id="delete-form" method="POST" style="display: none;">
+        @csrf
+        @method('DELETE')
+    </form>
 @endsection
 
 @push('js')
-    <!-- Include SweetAlert Library -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <script>
-        // Setup delete confirmation with SweetAlert
-        document.querySelectorAll('.delete-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const appointmentId = this.getAttribute('data-id');
-                const appointmentName = this.getAttribute('data-name');
+        document.querySelector('.delete-btn').addEventListener('click', function() {
+            const appointmentId = this.getAttribute('data-id');
+            const appointmentName = this.getAttribute('data-name');
 
-                Swal.fire({
-                    title: 'Are you sure?',
-                    html: `You are about to delete: <strong>${appointmentName}</strong>`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#dc3545',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Yes, delete it!',
-                    cancelButtonText: 'Cancel',
-                    reverseButtons: true,
-                    focusCancel: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        const form = document.getElementById('delete-form');
-                        form.action = "{{ route('dashboard.appointments.destroy', '') }}/" +
-                            appointmentId;
-                        form.submit();
-                    }
-                });
+            Swal.fire({
+                title: 'Are you sure?',
+                html: `You are about to delete: <strong>${appointmentName}</strong>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel',
+                reverseButtons: true,
+                focusCancel: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const form = document.getElementById('delete-form');
+                    form.action = "{{ route('dashboard.appointments.destroy', '') }}/" + appointmentId;
+                    form.submit();
+                }
             });
         });
     </script>

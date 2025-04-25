@@ -1,143 +1,141 @@
 @extends('layouts.master.master')
+@section('title', 'Visit Information')
 
 @section('content')
-    <div class="container mx-auto px-4 py-8">
-        <div class="flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-gray-800">Visit Details</h1>
-            <div class="d-flex justify-content-between align-items-center my-2">
+    <div class="container-fluid">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h5>Visit Details</h5>
                 <div>
-                    <a href="{{ route('dashboard.visits.edit', $visit->id) }}" class="btn btn-primary">
-                        Edit
+                    <a href="{{ route('dashboard.visits.edit', $visit->id) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-edit fa-sm"></i> Edit
                     </a>
-
-                    <button type="button" class="btn btn-danger delete-btn" data-id="{{ $visit->id }}"
+                    <button type="button" class="btn btn-outline-danger btn-sm delete-btn" data-id="{{ $visit->id }}"
                         data-name="{{ $visit->patient->fname }} {{ $visit->patient->lname }}">
-                        Delete
+                        <i class="fas fa-trash fa-sm"></i> Delete
                     </button>
-                </div>
-
-                <div>
-                    <a href="{{ route('dashboard.visits.index') }}" class="btn btn-dark">
-                        Back
+                    <a href="{{ route('dashboard.visits.index') }}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left fa-sm"></i> Back
                     </a>
                 </div>
             </div>
-        </div>
-    
-        <!-- Hidden Delete Form -->
-        <form id="delete-form" method="POST" style="display: none;">
-            @csrf
-            @method('DELETE')
-        </form>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Patient & Visit Info -->
+                    <div class="col-md-4">
+                        <div class="card mb-4 h-100">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold text-success">Patient & Visit Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <h6 class="font-weight-bold">Patient Details</h6>
+                                <table class="table table-sm table-borderless mb-3">
+                                    <tr>
+                                        <td class="p-1">Name:</td>
+                                        <td class="p-1">{{ $visit->patient->fname }} {{ $visit->patient->lname }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-1">Phone:</td>
+                                        <td class="p-1">{{ $visit->patient->phone ?? 'N/A' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-1">Email:</td>
+                                        <td class="p-1">{{ $visit->patient->email }}</td>
+                                    </tr>
+                                </table>
 
-        <div class="flex flex-col lg:flex-row gap-4">
-            <!-- Left Column - Patient & Visit Info -->
-            <div class="flex-1 space-y-4">
-                <!-- Patient Card -->
-                <div class="bg-white rounded-lg shadow p-4">
-                    <h2 class="font-semibold text-gray-700 border-b pb-2 mb-2">Patient Information</h2>
-                    <div class="space-y-1 text-sm">
-                        <p><span class="font-medium">Name:</span> {{ $visit->patient->fname }} {{ $visit->patient->lname }}
-                        </p>
-                        <p><span class="font-medium">Phone:</span> {{ $visit->patient->phone ?? 'N/A' }}</p>
-                        <p><span class="font-medium">Email:</span> {{ $visit->patient->email }}</p>
-                    </div>
-                </div>
+                                <h6 class="font-weight-bold mt-3">Visit Details</h6>
+                                <table class="table table-sm table-borderless mb-3">
+                                    <tr>
+                                        <td class="p-1">Date:</td>
+                                        <td class="p-1">{{ $visit->visit_date->format('M j, Y g:i A') }}</td>
+                                    </tr>
+                                    @if ($visit->appointment)
+                                    <tr>
+                                        <td class="p-1">Appointment:</td>
+                                        <td class="p-1">{{ $visit->appointment->appointment_date->format('M j, Y g:i A')m }}</td>
+                                    </tr>
+                                    @endif
+                                    @if ($visit->service)
+                                    <tr>
+                                        <td class="p-1">Service:</td>
+                                        <td class="p-1">{{ $visit->service->service_name }}</td>
+                                    </tr>
+                                    @endif
+                                </table>
 
-                <!-- Visit Card -->
-                <div class="bg-white rounded-lg shadow p-4">
-                    <h2 class="font-semibold text-gray-700 border-b pb-2 mb-2">Visit Details</h2>
-                    <div class="space-y-1 text-sm">
-                        <p><span class="font-medium">Date:</span> {{ $visit->visit_date }}</p>
-                        @if ($visit->appointment)
-                            <p><span class="font-medium">Appointment:</span> {{ $visit->appointment->appointment_date }}
-                            </p>
-                        @endif
-                        @if ($visit->service)
-                            <p><span class="font-medium">Service:</span> {{ $visit->service->service_name }}</p>
-                        @endif
-                    </div>
-                </div>
-
-                <!-- Dentist Card -->
-                <div class="bg-white rounded-lg shadow p-4">
-                    <h2 class="font-semibold text-gray-700 border-b pb-2 mb-2">Dentist</h2>
-                    <div class="space-y-1 text-sm">
-                        <p><span class="font-medium">Name:</span> {{ $visit->staff->user->name }}</p>
-                        <p><span class="font-medium">Specialization:</span>
-                            {{ $visit->staff->specialization ?? 'General' }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Middle Column - Clinical Notes -->
-            <div class="flex-1 space-y-4">
-                <!-- Chief Complaint -->
-                <div class="bg-white rounded-lg shadow p-4">
-                    <h2 class="font-semibold text-gray-700 border-b pb-2 mb-2">Chief Complaint</h2>
-                    <p class="text-sm whitespace-pre-line text-gray-700">{{ $visit->cheif_complaint ?? 'Not recorded' }}
-                    </p>
-                </div>
-
-                <!-- Diagnosis -->
-                <div class="bg-white rounded-lg shadow p-4">
-                    <h2 class="font-semibold text-gray-700 border-b pb-2 mb-2">Diagnosis</h2>
-                    <p class="text-sm whitespace-pre-line text-gray-700">{{ $visit->diagnosis ?? 'Not recorded' }}</p>
-                </div>
-
-                <!-- Treatment -->
-                <div class="bg-white rounded-lg shadow p-4">
-                    <h2 class="font-semibold text-gray-700 border-b pb-2 mb-2">Treatment Notes</h2>
-                    <p class="text-sm whitespace-pre-line text-gray-700">{{ $visit->treatment_notes ?? 'Not recorded' }}
-                    </p>
-                </div>
-            </div>
-
-            <!-- Right Column - Next Visit & Additional Info -->
-            <div class="flex-1 space-y-4">
-                <!-- Next Visit -->
-                <div class="bg-white rounded-lg shadow p-4">
-                    <h2 class="font-semibold text-gray-700 border-b pb-2 mb-2">Next Visit</h2>
-                    <p class="text-sm whitespace-pre-line text-gray-700">
-                        {{ $visit->next_visit_notes ?? 'No follow-up planned' }}</p>
-                </div>
-
-                <!-- Materials Used -->
-                @if ($visit->inventoryItems && $visit->inventoryItems->count() > 0)
-                    <div class="bg-white rounded-lg shadow p-4">
-                        <h2 class="font-semibold text-gray-700 border-b pb-2 mb-2">Materials Used</h2>
-                        <div class="space-y-2 text-sm">
-                            @foreach ($visit->inventoryItems as $item)
-                                <div class="flex justify-between">
-                                    <span>{{ $item->name }}</span>
-                                    <span class="font-medium">x{{ $item->pivot->quantity_used }}</span>
-                                </div>
-                            @endforeach
+                                <h6 class="font-weight-bold mt-3">Dentist</h6>
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td class="p-1">Name:</td>
+                                        <td class="p-1">{{ $visit->staff->user->name }}</td>
+                                    </tr>
+                                </table>
+                            </div>
                         </div>
                     </div>
-                @endif
 
-                <!-- Payments -->
-                @if ($visit->payments && $visit->payments->count() > 0)
-                    <div class="bg-white rounded-lg shadow p-4">
-                        <h2 class="font-semibold text-gray-700 border-b pb-2 mb-2">Payments</h2>
-                        <div class="space-y-2 text-sm">
-                            @foreach ($visit->payments as $payment)
-                                <div class="flex justify-between items-center">
-                                    <div>
-                                        <span class="font-medium">${{ number_format($payment->amount, 2) }}</span>
-                                        <span
-                                            class="text-xs text-gray-500 ml-2">{{ ucfirst($payment->payment_method) }}</span>
-                                    </div>
-                                    <span
-                                        class="px-2 py-0.5 text-xs rounded-full {{ $payment->status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}">
-                                        {{ ucfirst($payment->status) }}
-                                    </span>
-                                </div>
-                            @endforeach
+                    <!-- Clinical Notes -->
+                    <div class="col-md-4">
+                        <div class="card mb-4 h-100">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold text-success">Clinical Notes</h6>
+                            </div>
+                            <div class="card-body">
+                                <h6 class="font-weight-bold">Chief Complaint</h6>
+                                <p class="whitespace-pre-line small">{{ $visit->cheif_complaint ?? 'Not recorded' }}</p>
+
+                                <h6 class="font-weight-bold mt-3">Diagnosis</h6>
+                                <p class="whitespace-pre-line small">{{ $visit->diagnosis ?? 'Not recorded' }}</p>
+
+                                <h6 class="font-weight-bold mt-3">Treatment Notes</h6>
+                                <p class="whitespace-pre-line small">{{ $visit->treatment_notes ?? 'Not recorded' }}</p>
+
+                                <h6 class="font-weight-bold mt-3">Next Visit</h6>
+                                <p class="whitespace-pre-line small">{{ $visit->next_visit_notes ?? 'No follow-up planned' }}</p>
+                            </div>
                         </div>
                     </div>
-                @endif
+
+                    <!-- Payments & Materials -->
+                    <div class="col-md-4">
+                        <div class="card mb-4 h-100">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold text-success">Payments & Materials</h6>
+                            </div>
+                            <div class="card-body">
+                                @if ($visit->payments && $visit->payments->count() > 0)
+                                <h6 class="font-weight-bold">Payments</h6>
+                                <div class="mb-3">
+                                    @foreach ($visit->payments as $payment)
+                                        <div class="d-flex justify-content-between align-items-center small py-1 border-bottom">
+                                            <div>
+                                                <span class="font-weight-bold">${{ number_format($payment->amount, 2) }}</span>
+                                                <span class="text-muted ml-2">{{ ucfirst($payment->payment_method) }}</span>
+                                            </div>
+                                            <span class="badge {{ $payment->status === 'completed' ? 'badge-success' : 'badge-warning' }}">
+                                                {{ ucfirst($payment->status) }}
+                                            </span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                @endif
+
+                                @if ($visit->inventoryItems && $visit->inventoryItems->count() > 0)
+                                <h6 class="font-weight-bold">Materials Used</h6>
+                                <div class="small">
+                                    @foreach ($visit->inventoryItems as $item)
+                                        <div class="d-flex justify-content-between py-1 border-bottom">
+                                            <span>{{ $item->name }}</span>
+                                            <span class="font-weight-bold">x{{ $item->pivot->quantity_used }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -150,11 +148,8 @@
 @endsection
 
 @push('js')
-    <!-- Include SweetAlert Library -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <script>
-        // Setup delete confirmation with SweetAlert
         document.querySelector('.delete-btn').addEventListener('click', function() {
             const visitId = this.getAttribute('data-id');
             const patientName = this.getAttribute('data-name');

@@ -8,6 +8,7 @@ use App\Models\Appointment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Gate;
 
 class PatientsController extends Controller
 {
@@ -15,20 +16,40 @@ class PatientsController extends Controller
      * Display a listing of the resource.
      */
     public function index()
-    {
+{
+    Gate::authorize('patients.view');
 
-        $patients = Patient::latest('id')->paginate(8);
-        return view('dashboard.patients.index', compact('patients'));
+    $query = Patient::query()->latest('id');
+
+    // If user is dentist but not admin
+    if (auth()->user()->hasAbility('view-own-patients') &&
+        !auth()->user()->hasAbility('view-all-patients')) {
+        $query->whereHas('appointments', function($q) {
+            $q->where('staff_id', auth()->user()->staff->id);
+        });
     }
+
+    $patients = $query->paginate(8);
+    return view('dashboard.patients.index', compact('patients'));
+}
 
     /**
      * Show the form for creating a new resource.
      */
     public function create()
     {
+    Gate::authorize('patients.create');
 
         $patient = Patient::all();
         return view('dashboard.patients.create', compact('patient'));
+    }
+
+    public function show($id)
+    {
+        Gate::authorize('patients.show');
+        $patient = Patient::findOrFail($id);
+
+        return view('dashboard.patients.show', compact('patient'));
     }
 
     /**
@@ -36,6 +57,7 @@ class PatientsController extends Controller
      */
     public function edit(Patient $patient)
     {
+        Gate::authorize('patients.update');
         return view('dashboard.patients.edit',compact('patient'));
     }
 
@@ -44,6 +66,7 @@ class PatientsController extends Controller
      */
     public function update(Request $request, Patient $patient)
     {
+        Gate::authorize('patients.update');
         $rules = [
             'fname' => 'required|string',
             'lname' => 'required|string',
@@ -69,6 +92,7 @@ class PatientsController extends Controller
 
     public function destroy(Patient $patient)
     {
+        Gate::authorize('patients.delete');
             DB::beginTransaction();
 
 
@@ -108,6 +132,7 @@ class PatientsController extends Controller
 
     public function trash()
     {
+        Gate::authorize('patients.trash');
         $patients = Patient::onlyTrashed()
             ->latest('deleted_at')
             ->paginate(10);
@@ -120,6 +145,7 @@ class PatientsController extends Controller
      */
     public function restore($id)
     {
+        Gate::authorize('patients.restore');
         try {
             $patient = Patient::onlyTrashed()->findOrFail($id);
             $patient->restore();
@@ -138,6 +164,7 @@ class PatientsController extends Controller
      */
     public function forceDelete($id)
     {
+        Gate::authorize('patients.force_delete');
         try {
             $patient = Patient::onlyTrashed()->findOrFail($id);
 

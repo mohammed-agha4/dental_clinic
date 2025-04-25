@@ -1,169 +1,214 @@
 @extends('layouts.master.master')
+@section('title', 'Tool Information')
 
 @section('content')
-    <div class="container mx-auto px-4 py-8">
-        <div class="flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-gray-800">Inventory Item Details</h1>
-            <div class="d-flex justify-content-between align-items-center my-2">
+    <div class="container-fluid">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h5>Inventory Item Details</h5>
                 <div>
-                    <a href="{{ route('dashboard.inventory.inventory.edit', $inventory->id) }}" class="btn btn-primary">
-                        Edit
+                    @can('inventory.update')
+                    <a href="{{ route('dashboard.inventory.inventory.edit', $inventory->id) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-edit fa-sm"></i> Edit
                     </a>
-
-                    <button type="button" class="btn btn-danger delete-btn" data-id="{{ $inventory->id }}"
+                    @endcan
+                    @can('inventory.delete')
+                    <button type="button" class="btn btn-outline-danger btn-sm delete-btn" data-id="{{ $inventory->id }}"
                         data-name="{{ $inventory->name }}">
-                        Delete
+                        <i class="fas fa-trash fa-sm"></i> Delete
                     </button>
-                </div>
-
-                <div>
-                    <a href="{{ route('dashboard.inventory.inventory.index') }}" class="btn btn-dark">
-                        Back to Inventory
+                    @endcan
+                    <a href="{{ route('dashboard.inventory.inventory.index') }}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left fa-sm"></i> Back
                     </a>
                 </div>
             </div>
-        </div>
-
-        <!-- Hidden Delete Form -->
-        <form id="delete-form" method="POST" style="display: none;">
-            @csrf
-            @method('DELETE')
-        </form>
-
-
-
-
-        <div class="bg-white rounded-lg shadow-md overflow-hidden">
-            <div class="p-6">
-                <!-- Basic Information -->
-                <div class="d-flex md:grid-cols-2 gap-6 mb-6">
-                    <!-- Item Details -->
-                    <div class="border rounded-lg p-4 w-50">
-                        <h2 class="text-lg font-semibold mb-4 text-gray-700 border-b pb-2">Item Information</h2>
-                        <div class="space-y-3">
-                            <p><span class="font-medium">Name:</span> {{ $inventory->name }}</p>
-                            <p><span class="font-medium">SKU:</span> <span
-                                    class="font-mono bg-gray-100 px-2 py-1 rounded">{{ $inventory->SKU }}</span></p>
-                            <p><span class="font-medium">Description:</span> {{ $inventory->description ?? 'N/A' }}</p>
-                            <p>
-                                <span class="font-medium">Status:</span>
-                                <span
-                                    class="px-2 py-1 rounded-full text-xs {{ $inventory->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                    {{ $inventory->is_active ? 'Active' : 'Inactive' }}
-                                </span>
-                            </p>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Item Information -->
+                    <div class="col-md-6">
+                        <div class="card mb-4 h-100">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold text-success">Item Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td class="p-1 font-weight-bold">Name:</td>
+                                        <td class="p-1">{{ $inventory->name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-1 font-weight-bold">SKU:</td>
+                                        <td class="p-1"> {{ $inventory->SKU }} </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-1 font-weight-bold">Description:</td>
+                                        <td class="p-1">{{ $inventory->description ?? 'No Description' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-1 font-weight-bold">Status:</td>
+                                        <td class="p-1">
+                                            <span class="badge {{ $inventory->is_active ? 'bg-success' : 'bg-danger' }}">
+                                                {{ $inventory->is_active ? 'Active' : 'Inactive' }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Stock Details -->
-                    <div class="border rounded-lg p-4 w-50">
-                        <h2 class="text-lg font-semibold mb-4 text-gray-700 border-b pb-2">Stock Information</h2>
-                        <div class="space-y-3">
-                            <p>
-                                <span class="font-medium">Quantity:</span>
-                                <span
-                                    class="{{ $inventory->quantity <= $inventory->reorder_level ? 'text-red-600 font-bold' : 'text-gray-800' }}">
-                                    {{ $inventory->quantity }}
-                                    @if ($inventory->quantity <= $inventory->reorder_level)
-                                        <span class="text-xs text-red-500 ml-1">(Low stock!)</span>
-                                    @endif
-                                </span>
-                            </p>
-                            <p><span class="font-medium">Reorder Level:</span> {{ $inventory->reorder_level }}</p>
-                            <p><span class="font-medium">Unit Price:</span> ${{ number_format($inventory->unit_price, 2) }}
-                            </p>
-                            <p><span class="font-medium">Expiry Date:</span>
-                                {{ $inventory->expiry_date ? $inventory->expiry_date : 'N/A' }}</p>
+                    <!-- Stock Information -->
+                    <div class="col-md-6">
+                        <div class="card mb-4 h-100">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold text-success">Stock Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td class="p-1 font-weight-bold">Quantity:</td>
+                                        <td class="p-1 {{ $inventory->quantity <= $inventory->reorder_level ? 'text-danger font-weight-bold' : '' }}">
+                                            {{ $inventory->quantity }}
+                                            @if ($inventory->quantity <= $inventory->reorder_level)
+                                            <span class="small">(Low stock!)</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-1 font-weight-bold">Reorder Level:</td>
+                                        <td class="p-1">{{ $inventory->reorder_level }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-1 font-weight-bold">Unit Price:</td>
+                                        <td class="p-1">${{ number_format($inventory->unit_price, 2) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-1 font-weight-bold">Expiry Date:</td>
+                                        <td class="p-1">{{ $inventory->expiry_date->format('M j, Y g:i A') ?: 'N/A' }}</td>
+                                    </tr>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Related Information -->
-                <div class="d-flex md:grid-cols-2 gap-6 mb-6">
+                <div class="row">
                     <!-- Category Information -->
-                    <div class="border rounded-lg p-4 w-50">
-                        <h2 class="text-lg font-semibold mb-4 text-gray-700 border-b pb-2">Category Information</h2>
-                        @if ($inventory->category)
-                            <div class="space-y-2">
-                                <p><span class="font-medium">Name:</span> {{ $inventory->category->name }}</p>
-                                <p><span class="font-medium">Description:</span>
-                                    {{ $inventory->category->description ?? 'N/A' }}</p>
+                    <div class="col-md-6">
+                        <div class="card mb-4 h-100">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold text-success">Category Information</h6>
                             </div>
-                        @else
-                            <p class="text-gray-500">No category assigned</p>
-                        @endif
+                            <div class="card-body">
+                                @if ($inventory->category)
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td class="p-1 font-weight-bold">Name:</td>
+                                        <td class="p-1">{{ $inventory->category->name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-1 font-weight-bold">Description:</td>
+                                        <td class="p-1">{{ $inventory->category->description ?? 'No Description' }}</td>
+                                    </tr>
+                                </table>
+                                @else
+                                <p class="small text-muted">No category assigned</p>
+                                @endif
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Supplier Information -->
-                    <div class="border rounded-lg p-4 w-50">
-                        <h2 class="text-lg font-semibold mb-4 text-gray-700 border-b pb-2">Supplier Information</h2>
-                        @if ($inventory->supplier)
-                            <div class="space-y-2">
-                                <p><span class="font-medium">Name:</span> {{ $inventory->supplier->name }}</p>
-                                <p><span class="font-medium">Contact:</span>
-                                    {{ $inventory->supplier->contact_person ?? 'N/A' }}</p>
-                                <p><span class="font-medium">Phone:</span> {{ $inventory->supplier->phone ?? 'N/A' }}</p>
-                                <p><span class="font-medium">Email:</span> {{ $inventory->supplier->email ?? 'N/A' }}</p>
+                    <div class="col-md-6">
+                        <div class="card mb-4 h-100">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold text-success">Supplier Information</h6>
                             </div>
-                        @else
-                            <p class="text-gray-500">No supplier assigned</p>
-                        @endif
+                            <div class="card-body">
+                                @if ($inventory->supplier)
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td class="p-1 font-weight-bold">Name:</td>
+                                        <td class="p-1">{{ $inventory->supplier->contact_name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-1 font-weight-bold">Company:</td>
+                                        <td class="p-1">{{ $inventory->supplier->company_name ?? 'N/A' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-1 font-weight-bold">Phone:</td>
+                                        <td class="p-1">{{ $inventory->supplier->phone ?? 'N/A' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-1 font-weight-bold">Email:</td>
+                                        <td class="p-1">{{ $inventory->supplier->email ?? 'N/A' }}</td>
+                                    </tr>
+                                </table>
+                                @else
+                                <p class="small text-muted">No supplier assigned</p>
+                                @endif
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Additional Information -->
-                <div class="border rounded-lg p-4">
-                    <h2 class="text-lg font-semibold mb-4 text-gray-700 border-b pb-2">Additional Information</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <p><span class="font-medium">Created At:</span>
-                                {{ $inventory->created_at->format('M d, Y H:i') }}</p>
-                        </div>
-                        <div>
-                            <p><span class="font-medium">Updated At:</span>
-                                {{ $inventory->updated_at->format('M d, Y H:i') }}</p>
-                        </div>
-                        <div>
-                            <p><span class="font-medium">Deleted At:</span>
-                                {{ $inventory->deleted_at ? $inventory->deleted_at->format('M d, Y H:i') : 'N/A' }}</p>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold text-success">Additional Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <p class="small mb-1"><span class="font-weight-bold">Created:</span> {{ $inventory->created_at->format('M d, Y H:i') }}</p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <p class="small mb-1"><span class="font-weight-bold">Updated:</span> {{ $inventory->updated_at->format('M d, Y H:i') }}</p>
+                                    </div>
+
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Hidden Delete Form -->
+    <form id="delete-form" method="POST" style="display: none;">
+        @csrf
+        @method('DELETE')
+    </form>
 @endsection
 
 @push('js')
-    <!-- Include SweetAlert Library -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <script>
-        // Setup delete confirmation with SweetAlert
-        document.querySelectorAll('.delete-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const inventoryId = this.getAttribute('data-id');
-                const inventoryName = this.getAttribute('data-name');
+        document.querySelector('.delete-btn').addEventListener('click', function() {
+            const inventoryId = this.getAttribute('data-id');
+            const inventoryName = this.getAttribute('data-name');
 
-                Swal.fire({
-                    title: 'Are you sure?',
-                    html: `You are about to delete the inventory item: <strong>${inventoryName}</strong>`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#dc3545',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Yes, delete it!',
-                    cancelButtonText: 'Cancel',
-                    reverseButtons: true,
-                    focusCancel: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        const form = document.getElementById('delete-form');
-                        form.action = "{{ route('dashboard.inventory.inventory.destroy', '') }}/" +
-                            inventoryId;
-                        form.submit();
-                    }
-                });
+            Swal.fire({
+                title: 'Are you sure?',
+                html: `You are about to delete: <strong>${inventoryName}</strong>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel',
+                reverseButtons: true,
+                focusCancel: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const form = document.getElementById('delete-form');
+                    form.action = "{{ route('dashboard.inventory.inventory.destroy', '') }}/" + inventoryId;
+                    form.submit();
+                }
             });
         });
     </script>

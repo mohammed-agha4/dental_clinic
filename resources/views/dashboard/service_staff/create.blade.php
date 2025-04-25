@@ -1,6 +1,6 @@
 @extends('layouts.master.master')
 
-@section('title', 'service_staff')
+@section('title', 'Link Staff To Service')
 
 @section('content')
 

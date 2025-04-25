@@ -15,6 +15,12 @@ class Inventory extends Model
     use SoftDeletes;
     protected $guarded = [];
 
+    protected $casts = [
+        'unit_price' => 'decimal:2',
+        'expiry_date' => 'date',
+        'is_active' => 'boolean',
+    ];
+
 
     public function category()
     {

@@ -1,7 +1,7 @@
 {{-- @dd('ff') --}}
 @extends('layouts.master.master')
 
-@section('title', 'service-staff')
+@section('title', 'Staff Service Information')
 
 @section('content')
 

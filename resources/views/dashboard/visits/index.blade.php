@@ -7,7 +7,11 @@
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
                 <h4 class="mb-0">Visits</h4>
-
+                @can('visits.trash')
+                    <a href="{{ route('dashboard.visits.trash') }}" class="btn btn-secondary btn-sm me-2">
+                        <i class="fas fa-trash-alt fa-sm"></i> Trash
+                    </a>
+                @endcan
             </div>
 
             <div class="card-body">
@@ -26,9 +30,7 @@
 
                 <div class="table-responsive mx-3">
                     <table class="table table-striped table-hover small">
-                        <a href="{{ route('dashboard.visits.trash') }}" class="btn btn-sm mb-2 btn-dark">
-                            <i class="fas fa-plus"></i> Trash
-                        </a>
+
                         <thead class="table-light">
                             <tr class="text-center">
                                 <th>ID</th>
@@ -38,28 +40,22 @@
                                 <th>Staff</th>
                                 <th>Service</th>
                                 <th>Visit Date</th>
-                                {{-- <th>Chief Complaint</th>
-                            <th>Diagnosis</th>
-                            <th>Treatment Notes</th>
-                            <th>Next Visit Notes</th> --}}
                                 <th>Tools</th>
-                                <th>Action</th>
+                                @if (auth()->user()->can('visits.show') || auth()->user()->can('visits.update') || auth()->user()->can('visits.delete'))
+                                    <th>Action</th>
+                                @endif
                             </tr>
                         </thead>
                         <tbody>
                             @forelse ($visits as $v)
                                 <tr class="text-center">
                                     <td>{{ $loop->iteration }}</td>
-                                    <td>{{ $v->appointment->appointment_date }}</td>
+                                    <td>{{ $v->appointment->appointment_date->format('M j, Y g:i A') }}</td>
                                     <td>{{ $v->appointment->status }}</td>
-                                    <td>{{ $v->patient->fname }} {{ $v->patient->lname }}</td>
-                                    <td>{{ $v->staff->user->name }}</td>
+                                    <td>{{ $v->patient->FullName }}</td>
+                                    <td>{{ ucfirst($v->staff->user->name) }}</td>
                                     <td>{{ $v->service->service_name }}</td>
-                                    <td>{{ $v->visit_date }}</td>
-                                    {{-- <td>{{ $v->cheif_complaint }}</td>
-                                <td>{{ $v->diagnosis }}</td>
-                                <td>{{ $v->treatment_notes }}</td>
-                                <td>{{ $v->next_visit_notes }}</td> --}}
+                                    <td>{{ $v->visit_date->format('M j, Y g:i A') }}</td>
                                     <td>
                                         @if ($v->inventoryItems->isNotEmpty())
                                             <ol style="margin: 0; padding: 0; list-style: none;">
@@ -74,24 +70,43 @@
                                             No inventory items used.
                                         @endif
                                     </td>
-                                    <td>
-                                        <a href="{{ route('dashboard.visits.show', $v->id) }}"
-                                            class="btn btn-sm btn-outline-success">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a class="btn btn-outline-primary btn-sm"
-                                            href="{{ route('dashboard.visits.edit', $v->id) }}">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <button class="btn btn-outline-danger btn-sm delete-btn"
-                                            data-id="{{ $v->id }}" data-name="{{ $v->patient->fname }}">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
+                                    @if (auth()->user()->can('visits.show') || auth()->user()->can('visits.update') || auth()->user()->can('visits.delete'))
+                                        <td>
+                                            @can('visits.show')
+                                                <a href="{{ route('dashboard.visits.show', $v->id) }}"
+                                                    class="btn btn-sm btn-outline-success">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            @endcan
+                                            @can('visits.update')
+                                                <a class="btn btn-outline-primary btn-sm"
+                                                    href="{{ route('dashboard.visits.edit', $v->id) }}">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            @endcan
+                                            @can('visits.delete')
+                                                <button class="btn btn-outline-danger btn-sm delete-btn"
+                                                    data-id="{{ $v->id }}" data-name="{{ $v->patient->fname }}">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            @endcan
+                                        </td>
+                                    @endif
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="13" class="text-center py-4">No data found</td>
+                                    <td colspan="9" class="text-center py-4">
+                                        @if (auth()->user()->hasAbility('view-own-visits') && !auth()->user()->hasAbility('view-all-visits'))
+                                            <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                                            <h5>No visits scheduled for you</h5>
+                                            <p class="text-muted">When you complete appointments, the visits will appear
+                                                here.</p>
+                                        @else
+                                            <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
+                                            <h5>No visits found</h5>
+                                            <p class="text-muted">When visits are recorded, they'll appear here.</p>
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforelse
                         </tbody>

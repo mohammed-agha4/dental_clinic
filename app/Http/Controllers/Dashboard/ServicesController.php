@@ -6,6 +6,7 @@ use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Gate;
 
 class ServicesController extends Controller
 {
@@ -14,6 +15,7 @@ class ServicesController extends Controller
      */
     public function index()
     {
+        Gate::authorize('services.view');
         $services = Service::latest('id')->paginate(8);
         return view('dashboard.services.index', compact('services'));
     }
@@ -23,6 +25,7 @@ class ServicesController extends Controller
      */
     public function create()
     {
+        Gate::authorize('services.create');
         $service = new Service();
         return view('dashboard.services.create', compact('service'));
     }
@@ -32,6 +35,7 @@ class ServicesController extends Controller
      */
     public function store(Request $request)
     {
+        Gate::authorize('services.create');
         $validated = $request->validate([
             'service_name' => 'required|string',
             'description' => 'nullable|string',
@@ -49,6 +53,7 @@ class ServicesController extends Controller
      */
     public function edit(Service $service)
     {
+        Gate::authorize('services.update');
         return view('dashboard.services.edit',compact('service'));
     }
 
@@ -57,6 +62,7 @@ class ServicesController extends Controller
      */
     public function update(Request $request, Service $service)
     {
+        Gate::authorize('services.update');
         $validated = $request->validate([
             'service_name' => 'required|string',
             'description' => 'nullable|string',
@@ -76,6 +82,7 @@ class ServicesController extends Controller
 
     public function destroy($id)
     {
+        Gate::authorize('services.delete');
 
         $service = Service::findOrFail($id);
         $service->delete();

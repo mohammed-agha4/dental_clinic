@@ -12,7 +12,7 @@ class Payment extends Model
 
     public function visit()
     {
-        return $this->belongsTo(Visit::class);
+        return $this->belongsTo(Visit::class)->withDefault();
     }
 
     /**
@@ -20,6 +20,6 @@ class Payment extends Model
      */
     public function staff()
     {
-        return $this->belongsTo(Staff::class);
+        return $this->belongsTo(Staff::class)->withDefault();
     }
 }

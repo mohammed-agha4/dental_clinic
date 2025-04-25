@@ -150,6 +150,7 @@
 
                             </div>
                         </div>
+
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Active:</label>
@@ -163,6 +164,10 @@
                             </div>
                         </div>
                     </div>
+
+
+
+
 
                     <!-- Initial Purchase Transaction Section -->
                     <div class="card mb-4">
@@ -196,67 +201,6 @@
                         </div>
                     </div>
 
-                    <!-- Additional Transactions Section -->
-                    <div class="card mb-4">
-                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                            <h4 class="mb-0">Additional Inventory Transactions</h4>
-                            <button type="button" class="btn btn-sm btn-primary" id="addTransactionBtn">
-                                <i class="fas fa-plus"></i> Add Transaction
-                            </button>
-                        </div>
-                        <div class="card-body">
-                            <div id="transactionsContainer">
-                                <!-- Dynamic transactions will be added here -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Transaction Template -->
-                    <template id="transactionTemplate">
-                        <div class="transaction-item border p-3 mb-3">
-                            <div class="row">
-                                <div class="col-md-3">
-                                    <div class="form-group">
-                                        <label>Transaction Type</label>
-                                        <select class="form-control" name="transaction_type[]">
-                                            <option value="purchase" selected>Purchase</option>
-                                            <option value="adjustment">Adjustment</option>
-                                            <option value="return">Return</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="form-group">
-                                        <label>Quantity</label>
-                                        <input type="number" class="form-control" name="transaction_quantity[]"
-                                            min="1" value="1" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="form-group">
-                                        <label>Unit Price</label>
-                                        <input type="number" step="0.01" class="form-control"
-                                            name="transaction_price[]" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="form-group">
-                                        <label>Date</label>
-                                        <input type="date" class="form-control date" name="transaction_date"
-                                            value="{{ date('Y-m-d') }}" required>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-group mt-2">
-                                <label>Notes</label>
-                                <textarea class="form-control" name="transaction_notes" rows="1"></textarea>
-                            </div>
-                            <button type="button" class="btn btn-sm btn-danger mt-2" onclick="removeTransaction(this)">
-                                <i class="fas fa-trash"></i> Remove
-                            </button>
-                        </div>
-                    </template>
-
                     <!-- Submit Button -->
                     <div class="text-end">
                         <button type="submit" class="btn btn-primary">
@@ -269,7 +213,7 @@
     </div>
 @endsection
 
-@push('js')
+{{-- @push('js')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Add transaction button handler
@@ -307,4 +251,4 @@
             });
         });
     </script>
-@endpush
+@endpush --}}

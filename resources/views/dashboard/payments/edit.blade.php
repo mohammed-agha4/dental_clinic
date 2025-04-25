@@ -1,6 +1,6 @@
 @extends('layouts.master.master')
 
-@section('title', 'payments')
+@section('title', 'Payment Information')
 
 @section('content')
 
@@ -49,7 +49,7 @@
                         <h5 class="my-3">Payment Information:</h5>
                         <div class="border mx-3 p-3">
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-6 my-2">
                                     <div class="form-group">
                                         <label for="staff_id">Staff Member</label>
                                         <select name="staff_id" id="staff_id"
@@ -68,7 +68,7 @@
                                     </div>
                                 </div>
 
-                                <div class="col-md-6">
+                                <div class="col-md-6 my-2">
                                     <div class="form-group">
                                         <label for="amount">Amount</label>
                                         <div class="input-group">
@@ -87,7 +87,7 @@
                             </div>
 
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-6 my-2">
                                     <div class="form-group">
                                         <label for="method">Payment Method</label>
                                         <select name="method" id="method"
@@ -105,7 +105,7 @@
                                     </div>
                                 </div>
 
-                                <div class="col-md-6" id="transaction_id_group">
+                                <div class="col-md-6 my-2" id="transaction_id_group">
                                     <div class="form-group">
                                         <label for="transaction_id">Transaction ID</label>
                                         <input type="text" name="transaction_id" id="transaction_id"
@@ -118,7 +118,7 @@
                                 </div>
                             </div>
 
-                            <div class="form-group">
+                            <div class="form-group my-2">
                                 <label for="status">Status</label>
                                 <select name="status" id="status"
                                     class="form-control @error('status') is-invalid @enderror" required>
@@ -134,7 +134,7 @@
                                 @enderror
                             </div>
 
-                            <div class="form-group">
+                            <div class="form-group my-2">
                                 <label for="notes">Notes</label>
                                 <textarea name="notes" id="notes" class="form-control @error('notes') is-invalid @enderror" rows="3">{{ old('notes', $payment->notes) }}</textarea>
                                 @error('notes')
@@ -144,8 +144,7 @@
 
                             <div class="form-group mt-4">
                                 <button type="submit" class="btn btn-primary">Update Payment</button>
-                                <a href="{{ route('dashboard.payments.index') }}"
-                                    class="btn btn-secondary">Cancel</a>
+                                <a href="{{ route('dashboard.payments.index') }}" class="btn btn-secondary">Cancel</a>
                             </div>
                         </div>
                     </form>

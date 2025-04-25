@@ -1,11 +1,15 @@
 <?php
 
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PatientVisitController;
+use App\Http\Controllers\Dashboard\RolesController;
 use App\Http\Controllers\Dashboard\StaffController;
+use App\Http\Controllers\Dashboard\ProfileController;
 use App\Http\Controllers\Dashboard\PatientsController;
 use App\Http\Controllers\Dashboard\ServicesController;
+use App\Http\Controllers\Dashboard\UsersRolesController;
 use App\Http\Controllers\Dashboard\AppointmentsController;
 use App\Http\Controllers\Dashboard\ServiceStaffController;
 use App\Http\Controllers\Dashboard\StaffServiceController;
@@ -19,19 +23,18 @@ use App\Http\Controllers\Dashboard\Inventory\SuppliersController;
 use App\Http\Controllers\Dashboard\Inventory\CategoriesController;
 use App\Http\Controllers\Dashboard\Inventory\InventoryTransactionsController;
 
-
-
-Route::prefix('dashboard')->middleware('auth')->name('dashboard')->group(function() {
+Route::prefix('dashboard')->middleware('auth')->name('dashboard')->group(function () {
 
     Route::get('/', [DashboardController::class, 'index']);
-
 });
 
 
 
-Route::prefix('dashboard')->middleware('auth')->name('dashboard.')->group(function() {
+Route::prefix('dashboard')->middleware('auth')->name('dashboard.')->group(function () {
 
 
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
     Route::get('/patients/trash', [PatientsController::class, 'trash'])->name('patients.trash');
     Route::put('/patients/{patient}/restore', [PatientsController::class, 'restore'])->name('patients.restore');
@@ -54,10 +57,10 @@ Route::prefix('dashboard')->middleware('auth')->name('dashboard.')->group(functi
 
 
     Route::get('/appointments/get-available-slots', [AppointmentsController::class, 'getAvailableSlots'])
-    ->name('appointments.getAvailableSlots');
+        ->name('appointments.getAvailableSlots');
 
     Route::get('/appointments/get-available-dentists', [AppointmentsController::class, 'getAvailableDentists'])
-    ->name('appointments.getAvailableDentists');
+        ->name('appointments.getAvailableDentists');
     Route::get('/dashboard/appointments/get-available-staff', [AppointmentsController::class, 'getAvailableStaff']);
 
     Route::get('/appointments/trash', [AppointmentsController::class, 'trash'])->name('appointments.trash');
@@ -73,7 +76,7 @@ Route::prefix('dashboard')->middleware('auth')->name('dashboard.')->group(functi
 
 
 
-Route::prefix('dashboard/inventory')->middleware('auth')->name('dashboard.inventory.')->group(function() {
+Route::prefix('dashboard/inventory')->middleware('auth')->name('dashboard.inventory.')->group(function () {
 
 
 
@@ -85,7 +88,6 @@ Route::prefix('dashboard/inventory')->middleware('auth')->name('dashboard.invent
     Route::delete('/inventory/{inventory}/force-delete', [InventoryController::class, 'forceDelete'])->name('inventory.force-delete');
     Route::resource('/inventory', InventoryController::class);
     Route::resource('/inventory-transactions', InventoryTransactionsController::class);
-
 });
 
 
@@ -95,7 +97,7 @@ Route::prefix('dashboard/inventory')->middleware('auth')->name('dashboard.invent
 //     Route::post('/emergency', [PatientVisitController::class, 'emergencyWalkIn'])->name('emergency');
 // });
 
-Route::prefix('dashboard')->middleware('auth')->name('dashboard.')->group(function() {
+Route::prefix('dashboard')->middleware('auth')->name('dashboard.')->group(function () {
 
     Route::get('/visits/trash', [VisitsController::class, 'trash'])->name('visits.trash');
     Route::put('/visits/{visits}/restore', [VisitsController::class, 'restore'])->name('visits.restore');
@@ -103,10 +105,9 @@ Route::prefix('dashboard')->middleware('auth')->name('dashboard.')->group(functi
 
     Route::resource('/visits', VisitsController::class)->except(['create']);
     Route::get('visits/create/{appointment}', [VisitsController::class, 'create'])->name('visits.create');
-
 });
 
-Route::prefix('dashboard')->middleware('auth')->name('dashboard.')->group(function() {
+Route::prefix('dashboard')->middleware('auth')->name('dashboard.')->group(function () {
     Route::resource('/payments', PaymentsController::class);
 
 
@@ -117,14 +118,44 @@ Route::prefix('dashboard')->middleware('auth')->name('dashboard.')->group(functi
 
     Route::resource('/expenses', ExpensesController::class);
     Route::get('expense-report', [ExpensesController::class, 'report'])->name('expenses.report');
+    Route::resource('/roles', RolesController::class);
+
+
+
+
+
+    // Keep your existing resource route
+    Route::resource('/user-roles', UsersRolesController::class);
+
+    // Add specific routes for edit and destroy that use composite keys
+    Route::get('/user-roles/{user_id}/{role_id}/edit', [UsersRolesController::class, 'editComposite'])
+        ->name('user-roles.edit-composite');
+    Route::delete('/user-roles/{user_id}/{role_id}', [UsersRolesController::class, 'destroyComposite'])
+        ->name('user-roles.destroy-composite');
+    Route::put('/user-roles/{user_id}/{role_id}', [UsersRolesController::class, 'updateComposite'])
+        ->name('user-roles.update-composite');
 });
 
 
 
-Route::prefix('notifications')->middleware('auth')->group(function() {
+Route::prefix('notifications')->middleware('auth')->group(function () {
     Route::get('/', [NotificationsController::class, 'index'])->name('notifications.index');
     Route::post('/mark-all-read', [NotificationsController::class, 'markAllRead'])->name('notifications.markAllRead');
     Route::get('/mark-as-read/{id}', [NotificationsController::class, 'markAsRead'])->name('notifications.markAsRead');
     Route::delete('/delete/{id}', [NotificationsController::class, 'deleteNotification'])->name('notifications.delete');
     Route::delete('/delete-all', [NotificationsController::class, 'deleteAllNotifications'])->name('notifications.deleteAll');
+
 });
+Route::get('/test-smtp', function() {
+    try {
+        Mail::raw('This is a test email from Laravel', function($message) {
+            $message->to('test@example.com')
+                    ->subject('Mailtrap SMTP Test');
+        });
+        return "Email sent successfully! Check your Mailtrap inbox.";
+    } catch (\Exception $e) {
+        return "Error: " . $e->getMessage();
+    }
+});
+
+

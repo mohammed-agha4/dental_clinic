@@ -1,7 +1,7 @@
 
 @extends('layouts.master.master')
 
-@section('title', 'Suppliers')
+@section('title', 'Supplier Information')
 
 @section('content')
 

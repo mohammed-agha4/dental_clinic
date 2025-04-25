@@ -8,6 +8,7 @@ use App\Models\Expense;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Gate;
 
 class ExpensesController extends Controller
 {
@@ -16,6 +17,7 @@ class ExpensesController extends Controller
      */
     public function index(Request $request)
     {
+        Gate::authorize('expenses.view');
         $staffMembers = Staff::with('user')->where('is_active', true)->get();
         $categories = Expense::CATEGORIES;
 
@@ -47,6 +49,7 @@ class ExpensesController extends Controller
      */
     public function create()
     {
+        Gate::authorize('expenses.create');
         $staffMembers = Staff::with('user')->where('is_active', true)->get();
         $categories = Expense::CATEGORIES;
 
@@ -61,6 +64,7 @@ class ExpensesController extends Controller
      */
     public function store(Request $request)
     {
+        Gate::authorize('expenses.create');
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -85,6 +89,7 @@ class ExpensesController extends Controller
      */
     public function show(Expense $expense)
     {
+        Gate::authorize('expenses.show');
         $expense->load('staff.user');
 
         return view('dashboard.expenses.show', compact('expense'));
@@ -98,6 +103,7 @@ class ExpensesController extends Controller
      */
     public function edit(Expense $expense)
     {
+        Gate::authorize('expenses.update');
         $staffMembers = Staff::with('user')->where('is_active', true)->get();
         $categories = Expense::CATEGORIES;
 
@@ -113,6 +119,7 @@ class ExpensesController extends Controller
      */
     public function update(Request $request, Expense $expense)
     {
+        Gate::authorize('expenses.update');
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -138,6 +145,7 @@ class ExpensesController extends Controller
      */
     public function destroy(Expense $expense)
     {
+        Gate::authorize('expenses.delete');
         $expense->delete();
 
         return redirect()->route('dashboard.expenses.index')
@@ -152,11 +160,13 @@ class ExpensesController extends Controller
      */
     public function report(Request $request)
     {
+        Gate::authorize('expenses.report');
+
         // dd('dd');
-        $request->validate([
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-        ]);
+        // $request->validate([
+        //     'start_date' => 'required|date',
+        //     'end_date' => 'required|date|after_or_equal:start_date',
+        // ]);
 
         $expenses = Expense::with('staff.user')
             ->dateRange($request->start_date, $request->end_date)
@@ -173,7 +183,7 @@ class ExpensesController extends Controller
                 ];
             });
 
-        return view('expenses.report', compact(
+        return view('dashboard.expenses.report', compact(
             'expenses',
             'totalAmount',
             'categoryTotals'
@@ -183,6 +193,7 @@ class ExpensesController extends Controller
 
     public function trash()
     {
+        Gate::authorize('expenses.trash');
         $expenses = Expense::onlyTrashed()
             ->with(['staff.user'])
             ->latest('deleted_at')
@@ -196,6 +207,7 @@ class ExpensesController extends Controller
      */
     public function restore($id)
     {
+        Gate::authorize('expenses.restore');
         try {
             DB::beginTransaction();
 
@@ -206,7 +218,6 @@ class ExpensesController extends Controller
 
             return redirect()->route('dashboard.expenses.trash')
                 ->with('success', 'Expense restored successfully');
-
         } catch (Exception $e) {
             DB::rollBack();
             return redirect()->route('dashboard.expenses.trash')
@@ -219,6 +230,7 @@ class ExpensesController extends Controller
      */
     public function forceDelete($id)
     {
+        Gate::authorize('expenses.force_delete');
         try {
             DB::beginTransaction();
 
@@ -229,7 +241,6 @@ class ExpensesController extends Controller
 
             return redirect()->route('dashboard.expenses.trash')
                 ->with('success', 'Expense permanently deleted');
-
         } catch (Exception $e) {
             DB::rollBack();
             return redirect()->route('dashboard.expenses.trash')

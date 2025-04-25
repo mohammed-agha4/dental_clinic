@@ -1,6 +1,6 @@
 @extends('layouts.master.master')
 
-@section('title', 'Visits')
+@section('title', 'Visit Information')
 
 @section('content')
 <div class="container-fluid">

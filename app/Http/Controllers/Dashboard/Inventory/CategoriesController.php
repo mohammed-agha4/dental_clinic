@@ -5,6 +5,10 @@ namespace App\Http\Controllers\Dashboard\Inventory;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rules\Can;
+
+// use Illuminate\Validation\Rules\Can;
 
 class CategoriesController extends Controller
 {
@@ -13,6 +17,7 @@ class CategoriesController extends Controller
      */
     public function index()
     {
+        Gate::authorize('categories.view');
         $categories = Category::latest('id')->paginate(8);
         return view('dashboard.inventory.categories.index', compact('categories'));
     }
@@ -22,6 +27,7 @@ class CategoriesController extends Controller
      */
     public function create()
     {
+        Gate::authorize('categories.create');
         $category = new Category;
         return view('dashboard.inventory.categories.create', compact('category'));
     }
@@ -31,6 +37,7 @@ class CategoriesController extends Controller
      */
     public function store(Request $request)
     {
+        Gate::authorize('categories.create');
 
         $request->validate([
             'name' => 'required|string',
@@ -45,6 +52,7 @@ class CategoriesController extends Controller
      */
     public function edit(Category $category)
     {
+        Gate::authorize('categories.update');
         return view('dashboard.inventory.categories.edit', compact('category'));
     }
 
@@ -53,6 +61,7 @@ class CategoriesController extends Controller
      */
     public function update(Request $request, Category $category)
     {
+        Gate::authorize('categories.update');
         $request->validate([
             'name' => 'required|string',
 
@@ -67,6 +76,7 @@ class CategoriesController extends Controller
      */
     public function destroy(Category $category)
     {
+        Gate::authorize('categories.delete');
         $category->delete();
         return redirect()
         ->route('dashboard.inventory.categories.index')

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('expenses', function (Blueprint $table) {
             $table->id();
             $table->string('title');
-            $table->foreignId('staff_id')->nullable()->constrained()->onDelete('set null');  // Explicitly define restrict
+            $table->foreignId('staff_id')->nullable()->constrained()->onDelete('set null');
             $table->text('description')->nullable();
             $table->decimal('amount', 10, 2);
             $table->enum('category', ['utilities', 'supplies', 'equipment', 'salary', 'maintenance', 'other']);

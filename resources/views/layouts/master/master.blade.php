@@ -7,6 +7,8 @@
     <title>@yield('title')</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.veryicon.com/path-to-icons.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('front/css/style.css') }}">
 
     <style>
@@ -25,6 +27,35 @@
             --border-radius: 0.375rem;
             --box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
         }
+
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        th {
+            color: rgba(0, 0, 0, 0.485) !important
+        }
+
+        h1,
+        h2,
+        h3 {
+            font-weight: 700;
+            /* Bold for headings */
+        }
+
+        p {
+            font-weight: 400;
+            /* Regular for body text */
+        }
+
+        small {
+            font-weight: 300;
+            /* Light for subtle text */
+        }
+
+
+
 
         /* Base form styling */
         .patient-form-wrapper {
@@ -154,11 +185,29 @@
                 <div class="col-md-3 col-lg-2 d-md-block sidebar collapse">
                     <div class="position-sticky pt-3" style="top: 0; height: 100vh; overflow-y: auto">
                         <div class="text-center mb-4">
-                            <h4>OralOasis</h4>
+                            <a class="text-light text-decoration-none" href="{{ route('dashboard') }}"><h4>OralOasis</h4></a>
                             <hr>
-                            <img src="https://placehold.co/30x30" alt=""
-                                style="height: 30px; width: 30px; border-radius: 50%">
-                            <strong class="small">{{ Auth::User()->name }}</strong>
+
+
+                            @auth
+                                <div style="display: inline-block; vertical-align: middle;">
+                                    @if (Auth::user()->profile && Auth::user()->profile->profile_photo)
+                                        <img src="{{ asset('storage/' . Auth::user()->profile->profile_photo) }}"
+                                            style="height: 40px; width: 40px; border-radius: 50%; object-fit: cover;">
+                                    @else
+                                        @php
+                                            $name = urlencode(Auth::user()->name);
+                                            $avatarUrl = "https://ui-avatars.com/api/?name={$name}&background=random&color=fff&size=40";
+                                        @endphp
+                                        <img src="{{ $avatarUrl }}" style="height: 30px; width: 30px; border-radius: 50%;">
+                                    @endif
+                                </div>
+                                <a class="text-decoration-none text-white" href="{{ route('dashboard.profile.edit') }}">
+                                    {{ ucfirst(Auth::User()->name) }}
+                                </a>
+                            @endauth
+
+
                             <hr>
                         </div>
                         @include('layouts.parts.sidebar')
@@ -190,16 +239,14 @@
 
 
 
-
-
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" role="button"
                                     data-bs-toggle="dropdown">
                                     <i class="fas fa-user-circle"></i>
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><a class="dropdown-item" href="#">Profile</a></li>
-                                    <li><a class="dropdown-item" href="#">Settings</a></li>
+                                    <li><a class="dropdown-item"
+                                            href="{{ route('dashboard.profile.edit') }}">Profile</a></li>
                                     <li>
                                         <hr class="dropdown-divider">
                                     </li>
@@ -216,9 +263,12 @@
                 </nav>
 
                 <!-- Main Content Area -->
+
                 <div class="content">
                     @yield('content')
-                    <div id="displayed-content" class="mt-3"></div>
+                    <div id="displayed-content" class="mt-3">
+                        {{-- code here --}}
+                    </div>
                 </div>
             </div>
         </div>
@@ -229,12 +279,12 @@
     <script src="{{ asset('front/js/script.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @stack('js')
-    {{-- <script>
+    <script>
         let flash_msg = document.querySelector('#flash-msg');
         window.setTimeout(() => {
             flash_msg.remove();
         }, 3000);
-    </script> --}}
+    </script>
 
 
     <script>

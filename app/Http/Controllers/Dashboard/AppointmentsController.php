@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers\Dashboard;
 
-use App\Http\Controllers\Controller;
-use App\Models\Appointment;
+use Carbon\Carbon;
+use App\Models\Staff;
 use App\Models\Patient;
 use App\Models\Service;
-use App\Models\Staff;
-use Carbon\Carbon;
+use App\Models\Appointment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class AppointmentsController extends Controller
@@ -19,10 +21,19 @@ class AppointmentsController extends Controller
      */
     public function index()
     {
-        $appointments = Appointment::with(['patient', 'dentist.user', 'service'])
-            ->orderBy('appointment_date', 'desc')
-            ->paginate(10);
+        Gate::authorize('appointments.view');
 
+        $query = Appointment::with(['patient', 'dentist.user', 'service'])
+            ->orderBy('appointment_date', 'desc');
+
+        if (
+            auth()->user()->hasAbility('view-own-appointments') &&
+            !auth()->user()->hasAbility('view-all-appointments')
+        ) {
+            $query->where('staff_id', auth()->user()->staff->id);
+        }
+
+        $appointments = $query->paginate(10);
         return view('dashboard.appointments.index', compact('appointments'));
     }
 
@@ -31,6 +42,7 @@ class AppointmentsController extends Controller
      */
     public function create()
     {
+        Gate::authorize('appointments.create');
         $services = Service::where('is_active', true)->orderBy('service_name')->get();
         $patients = new Patient();
 
@@ -42,27 +54,10 @@ class AppointmentsController extends Controller
      */
     public function store(Request $request)
     {
+        Gate::authorize('appointments.create');
         $isWalkIn = $request->has('appointment_type') && $request->appointment_type === 'walk_in';
 
-        $rules = [
-            'fname' => 'required|string|max:255',
-            'lname' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
-            'service_id' => 'required|exists:services,id',
-            'staff_id' => 'required|exists:staff,id',
-        ];
-
-        if (!$isWalkIn) {
-            $rules['email'] = 'required|email|max:255';
-            $rules['DOB'] = 'required|date';
-            $rules['gender'] = 'required|in:male,female';
-            $rules['appointment_date_time'] = 'required|date';
-        } else {
-            $rules['email'] = 'nullable|email|max:255';
-            $rules['cheif_complaint'] = 'required|string';
-        }
-
-        $validator = Validator::make($request->all(), $rules);
+        $validator = $this->validateAppointmentRequest($request, $isWalkIn);
 
         if ($validator->fails()) {
             return redirect()->back()
@@ -74,65 +69,16 @@ class AppointmentsController extends Controller
         try {
             DB::beginTransaction();
 
-            $patient = Patient::where('phone', $request->phone)->first();
+            $patient = Patient::findOrCreateFromRequest($request, $isWalkIn);
 
-            if (!$patient) {
-                $patient = new Patient();
-                $patient->fname = $request->fname;
-                $patient->lname = $request->lname;
-                $patient->phone = $request->phone;
-                $patient->email = $request->email ?? null;
-
-                if (!$isWalkIn) {
-                    $patient->DOB = $request->DOB;
-                    $patient->gender = $request->gender;
-                    $patient->medical_history = $request->medical_history ?? '';
-                    $patient->allergies = $request->allergies ?? '';
-                    $patient->Emergency_contact_name = $request->Emergency_contact_name;
-                    $patient->Emergency_contact_phone = $request->Emergency_contact_phone;
-                } else {
-                    $patient->DOB = $request->DOB ?? now()->subYears(30)->format('Y-m-d');
-                    $patient->gender = $request->gender ?? 'male';
-                    $patient->medical_history = '';
-                    $patient->allergies = '';
-                }
-
-                $patient->save();
-            } else {
-                if (!$isWalkIn) {
-                    $patient->fname = $request->fname;
-                    $patient->lname = $request->lname;
-                    $patient->DOB = $request->DOB;
-                    $patient->gender = $request->gender;
-                    $patient->email = $request->email;
-                    $patient->medical_history = $request->medical_history ?? $patient->medical_history;
-                    $patient->allergies = $request->allergies ?? $patient->allergies;
-                    $patient->Emergency_contact_name = $request->Emergency_contact_name ?? $patient->Emergency_contact_name;
-                    $patient->Emergency_contact_phone = $request->Emergency_contact_phone ?? $patient->Emergency_contact_phone;
-                    $patient->save();
-                }
-            }
-
-            $appointment = new Appointment();
-            $appointment->patient_id = $patient->id;
-            $appointment->staff_id = $request->staff_id;
-            $appointment->service_id = $request->service_id;
-
-            $service = Service::findOrFail($request->service_id);
-            $appointment->duration = $service->duration;
-
-            if ($isWalkIn) {
-                $appointment->appointment_date = now();
-                $appointment->status = 'walk_in';
-            } else {
-                $appointment->appointment_date = $request->appointment_date_time;
-                $appointment->status = 'scheduled';
-            }
-
-            $appointment->notes = $request->notes;
-            $appointment->cancellation_reason = $request->cancellation_reason;
-            $appointment->reminder_sent = false;
-            $appointment->save();
+            $appointment = Appointment::createAppointment([
+                'patient_id' => $patient->id,
+                'staff_id' => $request->staff_id,
+                'service_id' => $request->service_id,
+                'appointment_date' => $isWalkIn ? now() : $request->appointment_date_time,
+                'notes' => $request->notes,
+                'cancellation_reason' => $request->cancellation_reason,
+            ], $isWalkIn);
 
             if ($isWalkIn) {
                 \App\Models\Visit::create([
@@ -162,90 +108,17 @@ class AppointmentsController extends Controller
      */
     public function getAvailableSlots(Request $request)
     {
-        $serviceId = $request->service_id;
-        $date = $request->date;
-        $duration = $request->duration;
-        $currentAppointmentId = $request->current_appointment_id ?? null;
-
-        if (!$serviceId || !$date || !$duration) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Missing required parameters'
-            ]);
-        }
-
         try {
-            $dateObj = Carbon::parse($date);
-            $openingTime = Carbon::parse($date . ' 09:00:00');
-            $closingTime = Carbon::parse($date . ' 17:00:00');
+            $slots = Appointment::getAvailableSlots(
+                $request->service_id,
+                $request->date,
+                $request->duration,
+                $request->current_appointment_id ?? null
+            );
 
-            $now = Carbon::now();
-            if ($dateObj->isToday() && $now->greaterThan($openingTime)) {
-                $openingTime = $now->copy()->addHours(1)->startOfHour();
-            }
-
-            $staffIds = Staff::where('is_active', true)
-                ->whereHas('services', function ($query) use ($serviceId) {
-                    $query->where('service_id', $serviceId);
-                })
-                ->pluck('id');
-
-            if ($staffIds->isEmpty()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No staff available for this service'
-                ]);
-            }
-
-            $appointmentsQuery = Appointment::whereDate('appointment_date', $dateObj)
-                ->whereIn('staff_id', $staffIds)
-                ->where('status', '!=', 'canceled');
-
-            if ($currentAppointmentId) {
-                $appointmentsQuery->where('id', '!=', $currentAppointmentId);
-            }
-
-            $existingAppointments = $appointmentsQuery->with('service')->get();
-
-            $slots = [];
-            $currentTime = $openingTime->copy();
-            $durationInMinutes = (int)$duration;
-
-            while ($currentTime->lessThan($closingTime)) {
-                $slotEndTime = $currentTime->copy()->addMinutes($durationInMinutes);
-
-                if ($slotEndTime->greaterThan($closingTime)) {
-                    break;
-                }
-
-                $timeString = $currentTime->format('H:i');
-                $available = true;
-
-                foreach ($existingAppointments as $appointment) {
-                    $appointmentStart = Carbon::parse($appointment->appointment_date);
-                    $appointmentDuration = $appointment->service ? $appointment->service->duration : $durationInMinutes;
-                    $appointmentEnd = Carbon::parse($appointment->appointment_date)->addMinutes($appointmentDuration);
-
-                    if ($appointmentStart->lt($slotEndTime) && $appointmentEnd->gt($currentTime)) {
-                        $available = false;
-                        break;
-                    }
-                }
-
-                $slots[] = [
-                    'time' => $timeString,
-                    'available' => $available
-                ];
-
-                $currentTime->addMinutes($durationInMinutes);
-            }
-
-            return response()->json([
-                'success' => true,
-                'slots' => $slots
-            ]);
+            return response()->json(['success' => true, 'slots' => $slots]);
         } catch (\Exception $e) {
-            \Log::error('Error in getAvailableSlots: ' . $e->getMessage());
+            Log::error('Error in getAvailableSlots: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error generating time slots: ' . $e->getMessage()
@@ -258,56 +131,15 @@ class AppointmentsController extends Controller
      */
     public function getAvailableDentists(Request $request)
     {
-        $serviceId = $request->input('service_id');
-        $appointmentDate = $request->input('appointment_date');
-        $currentAppointmentId = $request->input('current_appointment_id');
-        $isWalkIn = $request->input('is_walk_in', false);
-
-        if (!$serviceId) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Service ID is required'
-            ]);
-        }
-
         try {
-            $dentists = Staff::with(['user'])
-                ->where('role', 'dentist')
-                ->where('is_active', true)
-                ->whereHas('services', function ($query) use ($serviceId) {
-                    $query->where('service_id', $serviceId);
-                })
-                ->get();
+            $dentists = Appointment::getAvailableDentists(
+                $request->input('service_id'),
+                $request->input('appointment_date'),
+                $request->input('current_appointment_id'),
+                $request->input('is_walk_in', false)
+            );
 
-            if (!$isWalkIn && $appointmentDate) {
-                $appointmentStart = Carbon::parse($appointmentDate);
-                $service = Service::findOrFail($serviceId);
-                $appointmentEnd = (clone $appointmentStart)->addMinutes($service->duration);
-
-                $availableDentists = $dentists->filter(function ($dentist) use ($appointmentStart, $appointmentEnd, $currentAppointmentId) {
-                    $conflicts = Appointment::where('staff_id', $dentist->id)
-                        ->where('status', '!=', 'canceled')
-                        ->where('id', '!=', $currentAppointmentId)
-                        ->where(function ($query) use ($appointmentStart, $appointmentEnd) {
-                            $query->where(function ($q) use ($appointmentStart, $appointmentEnd) {
-                                $q->where('appointment_date', '>=', $appointmentStart)
-                                    ->where('appointment_date', '<', $appointmentEnd);
-                            })->orWhere(function ($q) use ($appointmentStart, $appointmentEnd) {
-                                $q->whereRaw("DATE_ADD(appointment_date, INTERVAL duration MINUTE) > ?", [$appointmentStart])
-                                    ->whereRaw("appointment_date < ?", [$appointmentEnd]);
-                            });
-                        })
-                        ->count();
-                    return $conflicts === 0;
-                });
-
-                $dentists = $availableDentists->values();
-            }
-
-            return response()->json([
-                'success' => true,
-                'dentists' => $dentists
-            ]);
+            return response()->json(['success' => true, 'dentists' => $dentists]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -321,6 +153,7 @@ class AppointmentsController extends Controller
      */
     public function show($id)
     {
+        Gate::authorize('appointments.show');
         $appointment = Appointment::with(['patient', 'dentist.user', 'service'])
             ->findOrFail($id);
 
@@ -332,6 +165,7 @@ class AppointmentsController extends Controller
      */
     public function edit($id)
     {
+        Gate::authorize('appointments.update');
         $appointment = Appointment::findOrFail($id);
         $patient = Patient::findOrFail($appointment->patient_id);
         $services = Service::where('is_active', true)->get();
@@ -348,6 +182,7 @@ class AppointmentsController extends Controller
      */
     public function update(Request $request, Appointment $appointment)
     {
+        Gate::authorize('appointments.update');
         $validator = Validator::make($request->all(), [
             'appointment_id' => 'required|exists:appointments,id',
             'service_id' => 'required|exists:services,id',
@@ -374,74 +209,17 @@ class AppointmentsController extends Controller
             DB::beginTransaction();
 
             $patient = Patient::findOrFail($appointment->patient_id);
+            $this->validatePatientUpdate($request, $patient);
+            $patient->updateFromRequest($request);
 
-            if ($patient->email != $request->email) {
-                $emailExists = Patient::where('email', $request->email)
-                    ->where('id', '!=', $patient->id)
-                    ->exists();
-
-                if ($emailExists) {
-                    return redirect()->back()
-                        ->withInput()
-                        ->with('error', 'Email already exists for another patient.');
-                }
-            }
-
-            if ($patient->phone != $request->phone) {
-                $phoneExists = Patient::where('phone', $request->phone)
-                    ->where('id', '!=', $patient->id)
-                    ->exists();
-
-                if ($phoneExists) {
-                    return redirect()->back()
-                        ->withInput()
-                        ->with('error', 'Phone number already exists for another patient.');
-                }
-            }
-
-            $patient->fname = $request->fname;
-            $patient->lname = $request->lname;
-            $patient->DOB = $request->DOB;
-            $patient->gender = $request->gender;
-            $patient->phone = $request->phone;
-            $patient->email = $request->email;
-            $patient->medical_history = $request->medical_history;
-            $patient->allergies = $request->allergies;
-            $patient->Emergency_contact_name = $request->Emergency_contact_name;
-            $patient->Emergency_contact_phone = $request->Emergency_contact_phone;
-            $patient->save();
-
-            $appointment->staff_id = $request->staff_id;
-            $appointment->service_id = $request->service_id;
-
-            $service = Service::findOrFail($request->service_id);
-            $appointment->duration = $service->duration;
-
-            if (in_array($request->status, ['scheduled', 'rescheduled'])) {
-                $appointment->appointment_date = $request->appointment_date_time;
-
-                if ($appointment->getOriginal('status') !== 'rescheduled' && $request->status === 'rescheduled') {
-                    $appointment->status = 'rescheduled';
-                } else {
-                    $appointment->status = $request->status;
-                }
-            } else {
-                if ($request->status !== $appointment->getOriginal('status')) {
-                    $appointment->status = $request->status;
-                }
-            }
-
-            if ($request->status === 'canceled') {
-                if (empty($request->cancellation_reason)) {
-                    return redirect()->back()
-                        ->withInput()
-                        ->with('error', 'Cancellation reason is required when canceling an appointment.');
-                }
-                $appointment->cancellation_reason = $request->cancellation_reason;
-            }
-
-            $appointment->notes = $request->notes;
-            $appointment->save();
+            $appointment->updateAppointment([
+                'staff_id' => $request->staff_id,
+                'service_id' => $request->service_id,
+                'appointment_date' => $request->appointment_date_time,
+                'status' => $request->status,
+                'notes' => $request->notes,
+                'cancellation_reason' => $request->cancellation_reason,
+            ]);
 
             DB::commit();
             return redirect()->route('dashboard.appointments.index')
@@ -459,10 +237,11 @@ class AppointmentsController extends Controller
      */
     public function destroy($id)
     {
+        Gate::authorize('appointments.delete');
         try {
             $appointment = Appointment::with('patient')->findOrFail($id);
 
-            if ($appointment->visits()->count() > 0) {
+            if (!$appointment->canBeDeleted()) {
                 return redirect()->back()
                     ->with('error', 'Cannot delete this appointment because it has associated visits.');
             }
@@ -486,6 +265,7 @@ class AppointmentsController extends Controller
      */
     public function trash()
     {
+        Gate::authorize('appointments.trash');
         $appointments = Appointment::onlyTrashed()
             ->with([
                 'patient' => function ($query) {
@@ -505,6 +285,7 @@ class AppointmentsController extends Controller
      */
     public function restore(Request $request, $id)
     {
+        Gate::authorize('appointments.restore');
         $appointment = Appointment::onlyTrashed()->findOrFail($id);
         $appointment->restore();
         return redirect()->route('dashboard.appointments.trash')->with('success', 'Appointment Restored.');
@@ -515,6 +296,7 @@ class AppointmentsController extends Controller
      */
     public function forceDelete($id)
     {
+        Gate::authorize('appointments.force_delete');
         try {
             $appointment = Appointment::withTrashed()->with('patient')->findOrFail($id);
             $patient = $appointment->patient()->withTrashed()->first();
@@ -528,6 +310,58 @@ class AppointmentsController extends Controller
         } catch (\Exception $e) {
             return redirect()->route('dashboard.appointments.trash')
                 ->with('error', 'Error permanently deleting: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Validate appointment request data
+     */
+    protected function validateAppointmentRequest(Request $request, bool $isWalkIn): \Illuminate\Validation\Validator
+    {
+        $rules = [
+            'fname' => 'required|string|max:255',
+            'lname' => 'required|string|max:255',
+            'phone' => 'required|string|max:20',
+            'service_id' => 'required|exists:services,id',
+            'staff_id' => 'required|exists:staff,id',
+        ];
+
+        if (!$isWalkIn) {
+            $rules['email'] = 'required|email|max:255';
+            $rules['DOB'] = 'required|date';
+            $rules['gender'] = 'required|in:male,female';
+            $rules['appointment_date_time'] = 'required|date';
+        } else {
+            $rules['email'] = 'nullable|email|max:255';
+            $rules['cheif_complaint'] = 'required|string';
+        }
+
+        return Validator::make($request->all(), $rules);
+    }
+
+    /**
+     * Validate patient update data
+     */
+    protected function validatePatientUpdate(Request $request, Patient $patient): void
+    {
+        if ($patient->email != $request->email) {
+            $emailExists = Patient::where('email', $request->email)
+                ->where('id', '!=', $patient->id)
+                ->exists();
+
+            if ($emailExists) {
+                throw new \Exception('Email already exists for another patient.');
+            }
+        }
+
+        if ($patient->phone != $request->phone) {
+            $phoneExists = Patient::where('phone', $request->phone)
+                ->where('id', '!=', $patient->id)
+                ->exists();
+
+            if ($phoneExists) {
+                throw new \Exception('Phone number already exists for another patient.');
+            }
         }
     }
 }

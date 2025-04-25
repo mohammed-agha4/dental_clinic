@@ -7,9 +7,11 @@
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
                 <h4 class="mb-0">Services</h4>
-                <a href="{{ route('dashboard.services.create') }}" class="btn btn-dark btn-sm">
-                    <i class="fas fa-plus fa-sm"></i> New Service
-                </a>
+                @can('services.create')
+                    <a href="{{ route('dashboard.services.create') }}" class="btn btn-dark btn-sm">
+                        <i class="fas fa-plus fa-sm"></i> New Service
+                    </a>
+                @endcan
             </div>
 
             <div class="card-body">
@@ -36,7 +38,9 @@
                                 <th>Service Price</th>
                                 <th>Duration</th>
                                 <th>Activity</th>
-                                <th>Action</th>
+                                @if (auth()->user()->can('services.update') || auth()->user()->can('services.delete'))
+                                    <th>Action</th>
+                                @endif
                             </tr>
                         </thead>
                         <tbody>
@@ -48,24 +52,32 @@
                                     <td>{{ $service->service_price }} $</td>
                                     <td>{{ $service->duration }} minute</td>
                                     <td class="text-center">
-                                        <span class="badge {{ $service->is_active ? 'bg-success' : 'bg-danger' }} text-white">
+                                        <span
+                                            class="badge {{ $service->is_active ? 'bg-success' : 'bg-danger' }} text-white">
                                             {{ $service->is_active ? 'Active' : 'Inactive' }}
                                         </span>
                                     </td>
-                                    <td>
-                                        <a class="btn btn-sm btn-outline-primary" href="{{ route('dashboard.services.edit', $service->id) }}">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <button class="btn btn-sm btn-outline-danger delete-btn"
-                                                data-id="{{ $service->id }}"
-                                                data-name="{{ $service->service_name }}">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
+                                    @if (auth()->user()->can('services.update') || auth()->user()->can('services.delete'))
+                                        <td>
+                                            @can('services.update')
+                                                <a class="btn btn-sm btn-outline-primary"
+                                                    href="{{ route('dashboard.services.edit', $service->id) }}">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            @endcan
+                                            @can('services.delete')
+                                                <button class="btn btn-sm btn-outline-danger delete-btn"
+                                                    data-id="{{ $service->id }}" data-name="{{ $service->service_name }}">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            @endcan
+                                        </td>
+                                    @endif
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center py-4">No services found</td>
+                                    <td colspan="{{ auth()->user()->can('services.update') || auth()->user()->can('services.delete') ? 7 : 6 }}"
+                                        class="text-center py-4">No services found</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -88,9 +100,8 @@
 @endsection
 
 @push('js')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-
         document.querySelectorAll('.delete-btn').forEach(button => {
             button.addEventListener('click', function() {
                 const serviceId = this.getAttribute('data-id');

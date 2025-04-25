@@ -8,6 +8,7 @@ use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Gate;
 
 class PaymentsController extends Controller
 {
@@ -15,41 +16,52 @@ class PaymentsController extends Controller
      * Display a listing of the resource.
      */
     public function index(Request $request)
-    {
-        $query = Payment::with(['visit.patient', 'staff']);
+{
+    Gate::authorize('payments.view');
 
-        // Filter by status if provided
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
-        }
+    $query = Payment::with(['visit.patient', 'staff']);
 
-        // Filter by payment method if provided
-        if ($request->has('method')) {
-            $query->where('method', $request->method);
-        }
-
-        // Filter by date range if provided
-        if ($request->has('from_date') && $request->has('to_date')) {
-            $query->whereBetween('created_at', [$request->from_date, $request->to_date]);
-        }
-
-        $payments = $query->latest()->paginate(10);
-
-        return view('dashboard.Payments.index', compact('payments'));
+    // If user is dentist but not admin
+    if (auth()->user()->hasAbility('view-own-payments') &&
+        !auth()->user()->hasAbility('view-all-payments')) {
+        $query->whereHas('visit', function($q) {
+            $q->where('staff_id', auth()->user()->staff->id);
+        });
     }
+
+    // Filter by status if provided
+    if ($request->has('status')) {
+        $query->where('status', $request->status);
+    }
+
+    // Filter by payment method if provided
+    if ($request->has('method')) {
+        $query->where('method', $request->method);
+    }
+
+    // Filter by date range if provided
+    if ($request->has('from_date') && $request->has('to_date')) {
+        $query->whereBetween('created_at', [$request->from_date, $request->to_date]);
+    }
+
+    $payments = $query->latest()->paginate(10);
+
+    return view('dashboard.Payments.index', compact('payments'));
+}
 
     /**
      * Show the form for creating a new resource.
      */
     public function create()
     {
+        Gate::authorize('payments.create');
 
         $visits = Visit::with(['patient', 'service'])
-        // ->whereDoesntHave('payments', function($query) {
-        //     $query->where('status', 'completed');
-        // })
-        ->latest()
-        ->get();
+            // ->whereDoesntHave('payments', function($query) {
+            //     $query->where('status', 'completed');
+            // })
+            ->latest()
+            ->get();
 
         // dd('d');
         $staff = Staff::where('is_active', true)->with('user')->get();
@@ -63,6 +75,7 @@ class PaymentsController extends Controller
      */
     public function store(Request $request)
     {
+        Gate::authorize('payments.create');
         // dd($request->all());
         $validated = $request->validate([
             'visit_id' => 'required|exists:visits,id',
@@ -88,7 +101,7 @@ class PaymentsController extends Controller
 
             DB::commit();
 
-            return redirect()->route('dashboard.payments.show', $payment)
+            return redirect()->route('dashboard.payments.index', $payment)
                 ->with('success', 'Payment recorded successfully');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -101,6 +114,7 @@ class PaymentsController extends Controller
      */
     public function show(Payment $payment)
     {
+        Gate::authorize('payments.show');
         $payment->load(['visit.patient', 'visit.service', 'staff']);
         return view('dashboard.payments.show', compact('payment'));
     }
@@ -110,6 +124,7 @@ class PaymentsController extends Controller
      */
     public function edit(Payment $payment)
     {
+        Gate::authorize('payments.update');
         $payment->load('visit.patient', 'staff');
         $staff = Staff::where('is_active', true)->with('user')->get();
         $paymentMethods = ['cash', 'credit_card', 'bank_transfer'];
@@ -123,6 +138,7 @@ class PaymentsController extends Controller
      */
     public function update(Request $request, Payment $payment)
     {
+        Gate::authorize('payments.update');
         $validated = $request->validate([
             'staff_id' => 'required|exists:staff,id',
             'amount' => 'required|numeric|min:0',
@@ -162,6 +178,7 @@ class PaymentsController extends Controller
      */
     public function destroy(Payment $payment)
     {
+        Gate::authorize('payments.delete');
         try {
             DB::beginTransaction();
 
