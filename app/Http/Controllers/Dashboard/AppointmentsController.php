@@ -60,6 +60,12 @@ class AppointmentsController extends Controller
         $validator = $this->validateAppointmentRequest($request, $isWalkIn);
 
         if ($validator->fails()) {
+            // Log validation errors for debugging
+            Log::error('Appointment validation failed', [
+                'errors' => $validator->errors()->all(),
+                'input' => $request->all()
+            ]);
+
             return redirect()->back()
                 ->withErrors($validator)
                 ->withInput()
@@ -69,8 +75,18 @@ class AppointmentsController extends Controller
         try {
             DB::beginTransaction();
 
-            $patient = Patient::findOrCreateFromRequest($request, $isWalkIn);
+            // Handle existing patient
+            if ($request->filled('existing_patient_id')) {
+                $patient = Patient::findOrFail($request->existing_patient_id);
 
+                if (!$patient) {
+                    throw new \Exception('Patient not found');
+                }
+            } else {
+                $patient = Patient::findOrCreateFromRequest($request, $isWalkIn);
+            }
+
+            // Create appointment
             $appointment = Appointment::createAppointment([
                 'patient_id' => $patient->id,
                 'staff_id' => $request->staff_id,
@@ -80,23 +96,13 @@ class AppointmentsController extends Controller
                 'cancellation_reason' => $request->cancellation_reason,
             ], $isWalkIn);
 
-            if ($isWalkIn) {
-                \App\Models\Visit::create([
-                    'appointment_id' => $appointment->id,
-                    'patient_id' => $patient->id,
-                    'staff_id' => $request->staff_id,
-                    'service_id' => $request->service_id,
-                    'visit_date' => now(),
-                    'cheif_complaint' => $request->cheif_complaint,
-                ]);
-            }
-
             DB::commit();
 
             return redirect()->route('dashboard.appointments.index')
                 ->with('success', $isWalkIn ? 'Walk-in appointment created successfully.' : 'Appointment scheduled successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Appointment creation failed: ' . $e->getMessage());
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Error creating appointment: ' . $e->getMessage());
@@ -317,27 +323,42 @@ class AppointmentsController extends Controller
      * Validate appointment request data
      */
     protected function validateAppointmentRequest(Request $request, bool $isWalkIn): \Illuminate\Validation\Validator
-    {
-        $rules = [
-            'fname' => 'required|string|max:255',
-            'lname' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
-            'service_id' => 'required|exists:services,id',
-            'staff_id' => 'required|exists:staff,id',
-        ];
+{
+    $rules = [
+        'service_id' => 'required|exists:services,id',
+        'staff_id' => 'required|exists:staff,id',
+        'notes' => 'nullable|string',
+        'cancellation_reason' => 'nullable|string',
+    ];
 
-        if (!$isWalkIn) {
-            $rules['email'] = 'required|email|max:255';
+    if ($isWalkIn) {
+        // Walk-in specific validation
+        $rules['fname'] = 'required|string|max:255';
+        $rules['lname'] = 'required|string|max:255';
+        $rules['phone'] = 'required|string|max:20';
+        $rules['email'] = 'nullable|email|max:255';
+        $rules['gender'] = 'required|in:male,female';
+        $rules['cheif_complaint'] = 'required|string';
+    } else {
+        // Regular appointment validation
+        if ($request->filled('existing_patient_id')) {
+            $rules['existing_patient_id'] = 'required|exists:patients,id';
+        } else {
+            $rules['fname'] = 'required|string|max:255';
+            $rules['lname'] = 'required|string|max:255';
             $rules['DOB'] = 'required|date';
             $rules['gender'] = 'required|in:male,female';
-            $rules['appointment_date_time'] = 'required|date';
-        } else {
+            $rules['phone'] = 'required|string|max:20';
             $rules['email'] = 'nullable|email|max:255';
-            $rules['cheif_complaint'] = 'required|string';
+            $rules['medical_history'] = 'nullable|string';
+            $rules['allergies'] = 'nullable|string';
         }
 
-        return Validator::make($request->all(), $rules);
+        $rules['appointment_date_time'] = 'required|date|after:now';
     }
+
+    return Validator::make($request->all(), $rules);
+}
 
     /**
      * Validate patient update data

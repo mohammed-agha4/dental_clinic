@@ -146,10 +146,12 @@
                                     <tbody>
                                         @foreach ($doctorAppointments as $appointment)
                                             <tr>
-                                                <td>{{ $appointment->patient->fname }} {{ $appointment->patient->lname }}</td>
+                                                <td>{{ $appointment->patient->fname }} {{ $appointment->patient->lname }}
+                                                </td>
                                                 <td>{{ $appointment->service->service_name ?? 'N/A' }}</td>
-                                                <td>{{ \Carbon\Carbon::parse($appointment->appointment_date)->format('M d, Y h:i A') }}</td>
-                                                <td>{{$appointment->status}}</td>
+                                                <td>{{ \Carbon\Carbon::parse($appointment->appointment_date)->format('M d, Y h:i A') }}
+                                                </td>
+                                                <td>{{ $appointment->status }}</td>
                                             </tr>
                                         @endforeach
                                     </tbody>
@@ -170,7 +172,8 @@
 
                 <div class="col-lg-4">
                     <a href="{{ route('dashboard.appointments.create') }}" class="btn text-light mb-4 "
-                        style="background-color: rgb(11, 74, 51);"><i class="fa-solid fa-clock-rotate-left"></i> Schedule Appointment</a>
+                        style="background-color: rgb(11, 74, 51);"><i class="fa-solid fa-clock-rotate-left"></i> Schedule
+                        Appointment</a>
 
                     <!-- Today's Appointments -->
                     <div class="card mb-4">
@@ -184,7 +187,8 @@
                                         @foreach ($todayAppointments as $appointment)
                                             <tr>
                                                 <td>
-                                                    <strong>{{ $appointment->patient->fname }} {{ $appointment->patient->lname }}</strong><br>
+                                                    <strong>{{ $appointment->patient->fname }}
+                                                        {{ $appointment->patient->lname }}</strong><br>
                                                     <small>{{ $appointment->service->service_name ?? 'N/A' }}</small><br>
                                                     <small>{{ \Carbon\Carbon::parse($appointment->appointment_date)->format('h:i A') }}</small>
                                                 </td>
@@ -205,7 +209,8 @@
                     <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">Recent Patient Visits</h5>
-                            <a href="{{ route('dashboard.visits.index') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                            <a href="{{ route('dashboard.visits.index') }}" class="btn btn-sm btn-outline-primary">View
+                                All</a>
                         </div>
                         <div class="card-body p-0 scrollable-card-body">
                             @if (isset($recentVisits) && count($recentVisits) > 0)
@@ -214,7 +219,8 @@
                                         @foreach ($recentVisits as $visit)
                                             <tr>
                                                 <td>
-                                                    <strong>{{ $visit->patient->fname }} {{ $visit->patient->lname }}</strong><br>
+                                                    <strong>{{ $visit->patient->fname }}
+                                                        {{ $visit->patient->lname }}</strong><br>
                                                     <small>{{ $visit->service->service_name ?? 'N/A' }}</small><br>
                                                     <small>{{ \Carbon\Carbon::parse($visit->visit_date)->format('M d, Y') }}</small>
                                                 </td>
@@ -272,6 +278,189 @@
                         </div>
                     </div>
 
+
+
+
+
+
+
+                    <!-- Profit Analysis Section -->
+                    <div class="card mb-4 shadow-sm">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                            <h5 class="mb-0 fw-bold">Profit Analysis - {{ $profitData['period']['label'] }}</h5>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                                    id="profitPeriodDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-calendar-alt me-1"></i> Select Period
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="profitPeriodDropdown">
+                                    <li><a class="dropdown-item" href="?period=day">Today</a></li>
+                                    <li><a class="dropdown-item" href="?period=week">This Week</a></li>
+                                    <li><a class="dropdown-item" href="?period=month">This Month</a></li>
+                                    <li><a class="dropdown-item" href="?period=quarter">This Quarter</a></li>
+                                    <li><a class="dropdown-item" href="?period=year">This Year</a></li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal"
+                                            data-bs-target="#customPeriodModal">Custom Range</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="p-4 bg-light rounded">
+                                        <div class="d-flex flex-column">
+                                            <div class="mb-4">
+                                                <p class="text-muted small mb-1">Total Revenue</p>
+                                                <h3 class="text-success mb-0">
+                                                    ${{ number_format($profitData['revenue'], 2) }}</h3>
+                                            </div>
+                                            <div class="mb-4">
+                                                <p class="text-muted small mb-1">Total Expenses</p>
+                                                <h4 class="text-danger mb-0">
+                                                    ${{ number_format($profitData['totalExpenses'], 2) }}</h4>
+                                            </div>
+                                            <div class="pt-2 border-top">
+                                                <p class="text-muted small mb-1">Net Profit</p>
+                                                <h4
+                                                    class="{{ $profitData['profit'] >= 0 ? 'text-success' : 'text-danger' }} mb-0">
+                                                    ${{ number_format($profitData['profit'], 2) }}</h4>
+                                                <p class="small text-muted mt-1">
+                                                    {{ $profitData['profit'] >= 0 ? 'Profit Margin' : 'Loss Margin' }}:
+                                                    {{ $profitData['revenue'] > 0 ? number_format(($profitData['profit'] / $profitData['revenue']) * 100, 1) : 0 }}%
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card h-100 border-0 shadow-sm">
+                                        <div class="card-header bg-white border-bottom">
+                                            <h6 class="mb-0">Expense Breakdown</h6>
+                                        </div>
+                                        <div class="card-body p-0">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover mb-0">
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>Direct Expenses</td>
+                                                            <td class="text-end fw-bold">
+                                                                ${{ number_format($profitData['expenses'], 2) }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Supplies Used (COGS)</td>
+                                                            <td class="text-end fw-bold">
+                                                                ${{ number_format($profitData['cogs'], 2) }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Inventory Purchases</td>
+                                                            <td class="text-end fw-bold">
+                                                                ${{ number_format($profitData['purchases'], 2) }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Adjustments (Losses)</td>
+                                                            <td class="text-end fw-bold text-danger">
+                                                                ${{ number_format($profitData['negativeAdjustments'], 2) }}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Returns (Credits)</td>
+                                                            <td class="text-end fw-bold text-success">
+                                                                ${{ number_format($profitData['returns'], 2) }}</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {{-- <div class="card-footer bg-white text-end">
+                            <button class="btn btn-sm btn-outline-secondary me-2" id="printReport">
+                                <i class="fas fa-print me-1"></i> Print
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" id="exportReport">
+                                <i class="fas fa-download me-1"></i> Export
+                            </button>
+                        </div> --}}
+                    </div>
+
+                   <!-- Custom Period Modal -->
+<div class="modal fade" id="customPeriodModal" tabindex="-1" aria-labelledby="customPeriodModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title" id="customPeriodModalLabel">Custom Date Range</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="GET" class="m-0">
+                <div class="modal-body p-2">
+                    <div class="mb-2">
+                        <label for="startDate" class="form-label small mb-1">Start</label>
+                        <input type="date" class="form-control form-control-sm" id="startDate" name="start_date" required>
+                    </div>
+                    <div class="mb-1">
+                        <label for="endDate" class="form-label small mb-1">End</label>
+                        <input type="date" class="form-control form-control-sm" id="endDate" name="end_date" required>
+                    </div>
+                    <input type="hidden" name="period" value="custom">
+                </div>
+                <div class="modal-footer py-1 px-2">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-primary">Apply</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+                    <!-- Custom Period Modal -->
+                    <div class="modal fade" id="customPeriodModal" tabindex="-1"
+                        aria-labelledby="customPeriodModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="customPeriodModalLabel">Select Custom Period</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <form method="GET">
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label for="startDate" class="form-label">Start Date</label>
+                                            <input type="date" class="form-control" id="startDate" name="start_date"
+                                                required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="endDate" class="form-label">End Date</label>
+                                            <input type="date" class="form-control" id="endDate" name="end_date"
+                                                required>
+                                        </div>
+                                        <input type="hidden" name="period" value="custom">
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-bs-dismiss="modal">Close</button>
+                                        <button type="submit" class="btn btn-primary">Apply</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+
+
+
+
+
+
+
+
                     <!-- Upcoming Appointments -->
                     <div class="card mb-4">
                         <div class="card-header">
@@ -291,9 +480,11 @@
                                     <tbody>
                                         @foreach ($tomorrowAppointments as $appointment)
                                             <tr>
-                                                <td>{{ $appointment->patient->fname }} {{ $appointment->patient->lname }}</td>
+                                                <td>{{ $appointment->patient->fname }} {{ $appointment->patient->lname }}
+                                                </td>
                                                 <td>{{ $appointment->service->service_name ?? 'N/A' }}</td>
-                                                <td>{{ \Carbon\Carbon::parse($appointment->appointment_date)->format('h:i A') }}</td>
+                                                <td>{{ \Carbon\Carbon::parse($appointment->appointment_date)->format('h:i A') }}
+                                                </td>
                                                 <td>{{ $appointment->dentist->user->name ?? 'N/A' }}</td>
                                             </tr>
                                         @endforeach
@@ -318,8 +509,8 @@
                     <div class="card mb-4">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">Recent Patients</h5>
-                            <a href="{{ route('dashboard.patients.index') }}"
-                                class="btn btn-sm btn-outline-primary">View All</a>
+                            <a href="{{ route('dashboard.patients.index') }}" class="btn btn-sm btn-outline-primary">View
+                                All</a>
                         </div>
                         <div class="card-body p-0 scrollable-card-body">
                             @if (isset($recentPatients) && count($recentPatients) > 0)

@@ -50,7 +50,7 @@
                             @forelse ($visits as $v)
                                 <tr class="text-center">
                                     <td>{{ $loop->iteration }}</td>
-                                    <td>{{ $v->appointment->appointment_date->format('M j, Y g:i A') }}</td>
+                                    <td>{{ $v->appointment->appointment_date->format('M j, Y g:i A') ?? 'm' }}</td>
                                     <td>{{ $v->appointment->status }}</td>
                                     <td>{{ $v->patient->FullName }}</td>
                                     <td>{{ ucfirst($v->staff->user->name) }}</td>

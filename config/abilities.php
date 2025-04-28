@@ -104,7 +104,7 @@ return [
 
     'dashboard.overview' => 'overview',
 
-    
+
 
     // Patients abilities
     'view-all-patients' => 'View all patients (Admin)',
@@ -121,6 +121,8 @@ return [
     // Payments abilities
     'view-all-payments' => 'View all payments (Admin)',
     'view-own-payments' => 'View own payments (Dentist)',
+
+
 
 
 

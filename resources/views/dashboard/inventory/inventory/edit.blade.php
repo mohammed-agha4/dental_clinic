@@ -126,7 +126,7 @@
                             <div class="form-group">
                                 <label >Expiry Date</label>
                                 <input type="date" class="form-control date @error('expiry_date') is-invalid @enderror"
-                                    name='expiry_date' value="{{ old('expiry_date', $inventory->expiry_date) }}"
+                                    name='expiry_date' value="{{ old('expiry_date', $inventory->expiry_date->format('Y-m-d')) }}"
                                     placeholder='Expiry Date' required>
                                 @error('expiry_date')
                                     <small class="text-danger">{{ $message }}</small>

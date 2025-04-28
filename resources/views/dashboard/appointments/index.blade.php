@@ -59,9 +59,9 @@
                                 <tr class="text-center">
                                     <td>{{ $loop->iteration }}</td>
                                     <td>{{ $appointment->patient->FullName }}</td>
-                                    <td>{{ Str::ucfirst($appointment->dentist->user->name) ?? 'N/A' }}</td>
+                                    <td>{{ Str::ucfirst($appointment->dentist->user->name) ?? '' }}</td>
                                     <td>{{ $appointment->service->service_name }}</td>
-                                    <td>{{ $appointment->appointment_date->format('M j, Y g:i A') }}</td>
+                                    <td>{{ $appointment->appointment_date->format('M j, Y g:i A') ?? '' }}</td>
                                     <td>{{ $appointment->duration }} min</td>
                                     <td>{{ $appointment->status }}</td>
                                     <td>{{ $appointment->reminder_sent == 1 ? 'Yes' : 'No' }}</td>

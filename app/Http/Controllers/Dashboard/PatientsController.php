@@ -110,7 +110,7 @@ class PatientsController extends Controller
                 // dd($activeVisits);
 
                 if ($activeAppointments || $activeVisits) {
-                    dd('d');
+                    // dd('d');
                     DB::rollBack();
                     return redirect()->route('dashboard.patients.index')
                         ->with('error', 'Cannot delete patient. They have active appointments or a visitation.');
@@ -185,4 +185,23 @@ class PatientsController extends Controller
                 ->with('error', 'Error deleting patient: ' . $e->getMessage());
         }
     }
+    public function search(Request $request)
+{
+    $query = Patient::query();
+
+    if ($request->phone) {
+        $query->where('phone', $request->phone);
+    }
+
+    if ($request->email && !$request->phone) {
+        $query->where('email', $request->email);
+    }
+
+    $patient = $query->first();
+
+    return response()->json([
+        'patient' => $patient,
+        'success' => $patient !== null
+    ]);
+}
 }

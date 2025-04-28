@@ -58,7 +58,7 @@
         }
 
         .time-slot-container.active {
-        display: block !important;
+            display: block !important;
         }
 
         .time-slots {
@@ -96,11 +96,21 @@
         .date-picker-container {
             margin-bottom: 15px;
         }
+
+        #patientSearchResults {
+            display: none;
+            margin-top: 15px;
+        }
+
+        .patient-info {
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
     </style>
 @endsection
 
 @section('content')
-
     @if (session()->has('success'))
         <div id="flash-msg" class="alert alert-success alert-dismissible fade show">
             {{ session('success') }}
@@ -134,76 +144,129 @@
 
         <div id="regularBookingForm" class="booking-form bg-white p-4">
             <div class="progress mb-4">
-                <div class="progress-bar" role="progressbar" style="width: 33%"></div>
+                <div class="progress-bar" role="progressbar" style="width: 25%"></div>
             </div>
 
             <div class="d-flex justify-content-between mb-4">
                 <div class="text-center">
                     <div class="step-indicator active mx-auto mb-2">1</div>
-                    <span class="d-none d-md-block">Personal Info</span>
+                    <span class="d-none d-md-block">Find Patient</span>
                 </div>
                 <div class="text-center">
                     <div class="step-indicator mx-auto mb-2">2</div>
-                    <span class="d-none d-md-block">Medical History</span>
+                    <span class="d-none d-md-block">Personal Info</span>
                 </div>
                 <div class="text-center">
                     <div class="step-indicator mx-auto mb-2">3</div>
+                    <span class="d-none d-md-block">Medical History</span>
+                </div>
+                <div class="text-center">
+                    <div class="step-indicator mx-auto mb-2">4</div>
                     <span class="d-none d-md-block">Appointment</span>
                 </div>
             </div>
 
             <form method="POST" action="{{ route('dashboard.appointments.store') }}" id="appointmentForm">
                 @csrf
+                <input type="hidden" name="existing_patient_id" id="existingPatientId"
+                    value="{{ old('existing_patient_id') }}">
 
-
-
-
+                <!-- Step 0: Patient Search -->
+                <div class="form-step active" id="step0">
+                    <h4 class="mb-4">Find Patient</h4>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label>Search by Phone:</label>
+                            <input type="tel" id="patientSearchPhone" class="form-control"
+                                placeholder="Enter patient phone number" value="{{ old('phone') }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label>Search by Email:</label>
+                            <input type="email" id="patientSearchEmail" class="form-control"
+                                placeholder="Enter patient email" value="{{ old('email') }}">
+                        </div>
+                        <div class="col-12">
+                            <button type="button" class="btn btn-primary" id="searchPatientBtn">
+                                <i class="fas fa-search me-2"></i>Search Patient
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary ms-2" id="newPatientBtn">
+                                <i class="fas fa-user-plus me-2"></i>New Patient
+                            </button>
+                        </div>
+                        <div class="col-12" id="patientSearchResults">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Found Patient</h5>
+                                    <div id="patientDetails"></div>
+                                    <button type="button" class="btn btn-success mt-3" id="useExistingPatient">
+                                        <i class="fas fa-check me-2"></i>Use This Patient
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-end">
+                        <button type="button" class="btn btn-primary px-4" id="nextFromSearch" style="display: none;">
+                            Next <i class="fas fa-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+                </div>
 
                 <!-- Step 1: Personal Information -->
-                <div class="form-step active" id="step1">
+                <div class="form-step" id="step1" @if (old('existing_patient_id')) style="display: none;" @endif>
                     <h4 class="mb-4">Personal Information</h4>
                     <div class="row g-3">
                         <div class="col-md-6">
-
                             <label>First Name:</label>
-                            <input type="text" name="fname" class="form-control" value="{{ old('fname', $patients->fname) }}" required >
-
+                            <input type="text" name="fname" class="form-control"
+                                value="{{ old('fname', $patients->fname) }}"
+                                @if (old('existing_patient_id')) disabled @endif required>
                         </div>
                         <div class="col-md-6">
-
                             <label>Last Name:</label>
-                            <input type="text" name="lname" class="form-control" value="{{ old('lname', $patients->lname) }}" required >
-
+                            <input type="text" name="lname" class="form-control"
+                                value="{{ old('lname', $patients->lname) }}"
+                                @if (old('existing_patient_id')) disabled @endif required>
                         </div>
                         <div class="col-md-6">
-
                             <label>Date Of Birth:</label>
-                            <input type="date" name="DOB" class="form-control" value="{{ old('DOB', $patients->DOB) }}" required >
-
+                            <input type="date" name="DOB" class="form-control"
+                                value="{{ old('DOB', $patients->DOB) }}" @if (old('existing_patient_id')) disabled @endif
+                                required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Gender</label>
-                            <select class="form-select" name="gender" required>
+                            <select class="form-select" name="gender" @if (old('existing_patient_id')) disabled @endif
+                                required>
                                 <option value="">Select Gender</option>
-                                <option value="male">Male</option>
-                                <option value="female">Female</option>
+                                <option value="male" @selected(old('gender', $patients->gender) == 'male')>Male</option>
+                                <option value="female" @selected(old('gender', $patients->gender) == 'female')>Female</option>
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label>Phone:</label>
-                            <input type="tel" name="phone" class="form-control" value="{{ old('phone', $patients->phone) }}" required >
+                            <input type="tel" name="phone"
+                                class="form-control @error('phone') is-invalid @enderror"
+                                value="{{ old('phone', $patients->phone) }}"
+                                @if (old('existing_patient_id')) disabled @endif required>
+                            @error('phone')
+                                <small class="text-danger">{{ $message }}</small>
+                            @enderror
                         </div>
                         <div class="col-md-6">
                             <label>Email:</label>
-                            <input type="email" name="email" class="form-control" value="{{ old('email', $patients->email) }}" required >
+                            <input type="email" name="email" class="form-control"
+                                value="{{ old('email', $patients->email) }}"
+                                @if (old('existing_patient_id')) disabled @endif required>
                         </div>
                     </div>
-                    <div class="mt-4 text-end">
+                    <div class="mt-4 d-flex justify-content-between">
+                        <button type="button" class="btn btn-outline-secondary px-4" onclick="prevStep(1)"><i
+                                class="fas fa-arrow-left me-2"></i> Previous</button>
                         <button type="button" class="btn btn-primary px-4" onclick="nextStep(1)">Next <i
                                 class="fas fa-arrow-right ms-2"></i></button>
                     </div>
                 </div>
-
 
                 <!-- Step 2: Medical History -->
                 <div class="form-step" id="step2">
@@ -217,12 +280,13 @@
                         </div>
                         <div class="col-md-6">
                             <label>Emergency Contact Name:</label>
-                            <input type="text" name="Emergency_contact_name" class="form-control" value="{{ old('Emergency_contact_name', $patients->Emergency_contact_name) }}" >
-
+                            <input type="text" name="Emergency_contact_name" class="form-control"
+                                value="{{ old('Emergency_contact_name', $patients->Emergency_contact_name) }}">
                         </div>
                         <div class="col-md-6">
                             <label>Emergency Contact Phone:</label>
-                            <input type="tel" name="Emergency_contact_phone" class="form-control" value="{{ old('Emergency_contact_phone', $patients->Emergency_contact_phone) }}" >
+                            <input type="tel" name="Emergency_contact_phone" class="form-control"
+                                value="{{ old('Emergency_contact_phone', $patients->Emergency_contact_phone) }}">
                         </div>
                     </div>
                     <div class="mt-4 d-flex justify-content-between">
@@ -232,8 +296,6 @@
                                 class="fas fa-arrow-right ms-2"></i></button>
                     </div>
                 </div>
-
-
 
                 <!-- Step 3: Appointment Details -->
                 <div class="form-step" id="step3">
@@ -257,10 +319,10 @@
                             <input type="text" class="form-control" id="duration_input" name="duration" readonly>
                         </div>
 
-                        <!-- New Date/Time Selection -->
+                        <!-- Date/Time Selection -->
                         <div class="col-12 date-picker-container">
                             <label class="form-label">Appointment Date </label>
-                            <input type="date" class="form-control " id="appointment_date" name="appointment_date"
+                            <input type="date" class="form-control" id="appointment_date" name="appointment_date"
                                 required>
                         </div>
 
@@ -359,12 +421,10 @@
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         <label class="form-label">Service </label>
-
                                         <select class="form-select" name="service_id" id="walkInServiceSelect" required>
                                             <option value="">Select Service</option>
                                             @foreach ($services as $service)
                                                 @if ($service->is_active)
-                                                    <!-- Only show active services -->
                                                     <option value="{{ $service->id }}"
                                                         data-duration="{{ $service->duration }}"
                                                         data-price="{{ $service->service_price }}">
@@ -373,7 +433,6 @@
                                                 @endif
                                             @endforeach
                                         </select>
-
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Dentist </label>
@@ -428,22 +487,53 @@
 @push('js')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Multi step form navigation
-            // next and previous buttons
-            // progress bar, form validation
+
+
+            document.querySelectorAll('#step1 input[required], #step1 select[required]').forEach(field => {
+                field.setAttribute('data-was-required', 'true');
+            });
+
+
+            // Multi-step form navigation
             let form = document.getElementById('appointmentForm');
             let steps = document.querySelectorAll('.form-step');
             let progressBar = document.querySelector('.progress-bar');
             let indicators = document.querySelectorAll('.step-indicator');
+            let currentStep = 0;
 
-            // next step with validation
-            window.nextStep = function(currentStep) {
-                let currentStepElement = document.getElementById(`step${currentStep}`);
+            // Initialize form steps
+            function initSteps() {
+                steps.forEach((step, index) => {
+                    if (index === 0) {
+                        step.classList.add('active');
+                    } else {
+                        step.classList.remove('active');
+                    }
+                });
+                updateProgress(0);
+            }
+
+            // Go to specific step
+            window.goToStep = function(stepNumber) {
+                steps.forEach((step, index) => {
+                    if (index === stepNumber) {
+                        step.classList.add('active');
+                    } else {
+                        step.classList.remove('active');
+                    }
+                });
+                currentStep = stepNumber;
+                updateProgress(stepNumber);
+            };
+
+            // Next step with validation
+            window.nextStep = function(currentStepNumber) {
+                let currentStepElement = document.getElementById(`step${currentStepNumber}`);
                 let inputs = currentStepElement.querySelectorAll(
-                    'input[required], select[required], textarea[required]');
+                    'input[required]:not(:disabled), select[required]:not(:disabled), textarea[required]:not(:disabled)'
+                );
 
-
-                // validation
+                // Validate required fields
                 let isValid = true;
                 inputs.forEach(input => {
                     if (!input.value.trim()) {
@@ -459,27 +549,24 @@
                     return;
                 }
 
+                goToStep(currentStepNumber + 1);
+            };
 
-                currentStepElement.classList.remove('active');
-                document.getElementById(`step${currentStep + 1}`).classList.add('active');
-                updateProgress(currentStep + 1);
+            // Previous step
+            window.prevStep = function(currentStepNumber) {
+                goToStep(currentStepNumber - 1);
             };
-            // previous button
-            window.prevStep = function(currentStep) {
-                document.getElementById(`step${currentStep}`).classList.remove('active');
-                document.getElementById(`step${currentStep - 1}`).classList.add('active');
-                updateProgress(currentStep - 1);
-            };
-            // progress bar
+
+            // Update progress bar and indicators
             function updateProgress(stepNumber) {
-                let progress = ((stepNumber - 1) / (steps.length - 1)) * 100;
+                let progress = ((stepNumber) / (steps.length - 1)) * 100;
                 progressBar.style.width = `${progress}%`;
 
                 indicators.forEach((indicator, index) => {
-                    if (index + 1 < stepNumber) {
+                    if (index < stepNumber) {
                         indicator.classList.add('completed');
                         indicator.classList.remove('active');
-                    } else if (index + 1 === stepNumber) {
+                    } else if (index === stepNumber) {
                         indicator.classList.add('active');
                         indicator.classList.remove('completed');
                     } else {
@@ -488,14 +575,184 @@
                 });
             }
 
+            // Patient Search Functionality
+            document.getElementById('searchPatientBtn').addEventListener('click', function() {
+                const phone = document.getElementById('patientSearchPhone').value;
+                const email = document.getElementById('patientSearchEmail').value;
 
+                if (!phone && !email) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Missing Information',
+                        text: 'Please enter a phone number or email to search',
+                        confirmButtonText: 'OK'
+                    });
+                    return;
+                }
 
+                $.ajax({
+                    url: '/dashboard/patients/search',
+                    method: 'GET',
+                    data: {
+                        phone,
+                        email
+                    },
+                    beforeSend: function() {
+                        // Show loading state
+                        $('#searchPatientBtn').html(
+                                '<i class="fas fa-spinner fa-spin me-2"></i>Searching...')
+                            .prop(
+                                'disabled', true);
+                        $('#patientSearchResults').hide();
+                    },
+                    success: function(response) {
+                        if (response.success && response.patient) {
+                            // Set the existing patient ID
+                            document.getElementById('existingPatientId').value = response
+                                .patient.id;
 
+                            // Show patient details
+                            document.getElementById('patientDetails').innerHTML = `
+                                    <div class="patient-info">
+                                        <p><strong>Name:</strong> ${response.patient.fname} ${response.patient.lname}</p>
+                                        <p><strong>Phone:</strong> ${response.patient.phone}</p>
+                                        <p><strong>Email:</strong> ${response.patient.email || 'N/A'}</p>
+                                        <p><strong>DOB:</strong> ${response.patient.DOB ? new Date(response.patient.DOB).toLocaleDateString() : 'N/A'}</p>
+                                        <p><strong>Last Visit:</strong> ${response.last_visit ? new Date(response.last_visit).toLocaleDateString() : 'Never'}</p>
+                                    </div>
+                                `;
 
+                            // Show the results and next button
+                            document.getElementById('patientSearchResults').style.display =
+                                'block';
+                            document.getElementById('nextFromSearch').style.display =
+                                'inline-block';
+                        } else {
+                            Swal.fire({
+                                icon: 'info',
+                                title: 'Patient Not Found',
+                                text: 'No patient found with those details. Please check the information or create a new patient.',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error('Search error:', xhr);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Search Failed',
+                            text: xhr.responseJSON?.message ||
+                                'An error occurred while searching for the patient',
+                            confirmButtonText: 'OK'
+                        });
+                    },
+                    complete: function() {
+                        // Reset button state
+                        $('#searchPatientBtn').html(
+                            '<i class="fas fa-search me-2"></i>Search Patient').prop(
+                            'disabled', false);
+                    }
+                });
+            });
 
+            // Use existing patient button
+            document.getElementById('useExistingPatient').addEventListener('click', function() {
+                const patientId = document.getElementById('existingPatientId').value;
+                if (patientId) {
+                    document.querySelectorAll('#step1 input[required], #step1 select[required]').forEach(
+                        field => {
+                            field.removeAttribute('required');
+                            field.removeAttribute('aria-required');
+                        });
 
+                    // Skip to appointment details for existing patients
+                    goToStep(3);
+                }
+            });
 
-            // Time slot selection
+            // New patient button
+            document.getElementById('newPatientBtn').addEventListener('click', function() {
+                // Clear existing patient ID
+                document.getElementById('existingPatientId').value = '';
+
+                // Re-add required attributes to step 1 fields
+                document.querySelectorAll('#step1 input, #step1 select').forEach(field => {
+                    if (field.hasAttribute('data-was-required')) {
+                        field.setAttribute('required', '');
+                        field.removeAttribute('data-was-required');
+                    }
+                    field.disabled = false;
+                });
+
+                // Hide search results
+                document.getElementById('patientSearchResults').style.display = 'none';
+                document.getElementById('nextFromSearch').style.display = 'none';
+
+                // Go to personal info step
+                goToStep(1);
+            });
+
+            // Next button from search
+            document.getElementById('nextFromSearch').addEventListener('click', function() {
+                if (document.getElementById('existingPatientId').value) {
+                    goToStep(3); // Skip to appointment details for existing patients
+                } else {
+                    goToStep(1); // Otherwise go to personal info
+                }
+            });
+
+            // Form switching between regular and walk-in
+            function switchForm(isWalkIn) {
+                const regularBookingBtn = document.getElementById('regularBookingBtn');
+                const walkInBtn = document.getElementById('walkInBtn');
+                const regularBookingForm = document.getElementById('regularBookingForm');
+                const walkInForm = document.getElementById('walkInForm');
+                const bookingDescription = document.getElementById('bookingDescription');
+
+                if (regularBookingBtn) regularBookingBtn.classList.toggle('active', !isWalkIn);
+                if (walkInBtn) walkInBtn.classList.toggle('active', isWalkIn);
+
+                if (regularBookingForm) regularBookingForm.style.display = isWalkIn ? 'none' : 'block';
+                if (walkInForm) walkInForm.style.display = isWalkIn ? 'block' : 'none';
+
+                if (bookingDescription) {
+                    bookingDescription.textContent = isWalkIn ?
+                        'Create an immediate appointment for a walk-in patient' :
+                        'Schedule a new appointment with complete patient information';
+                }
+
+                // Reset forms when switching
+                if (isWalkIn) {
+                    // Reset regular booking form
+                    if (document.getElementById('appointmentForm')) {
+                        document.getElementById('appointmentForm').reset();
+                        initSteps();
+                    }
+                } else {
+                    // Reset walk-in form
+                    if (document.getElementById('walkInAppointmentForm')) {
+                        document.getElementById('walkInAppointmentForm').reset();
+                    }
+                }
+            }
+
+            // Add event listeners for form switching
+            const regularBookingBtn = document.getElementById('regularBookingBtn');
+            const walkInBtn = document.getElementById('walkInBtn');
+
+            if (regularBookingBtn) {
+                regularBookingBtn.addEventListener('click', function() {
+                    switchForm(false);
+                });
+            }
+
+            if (walkInBtn) {
+                walkInBtn.addEventListener('click', function() {
+                    switchForm(true);
+                });
+            }
+
+            // Time slot selection functionality
             let serviceSelect = document.getElementById('service_select');
             let durationInput = document.getElementById('duration_input');
             let appointmentDateInput = document.getElementById('appointment_date');
@@ -505,23 +762,22 @@
             let appointmentDateTimeInput = document.getElementById('appointment_date_time');
             let staffSelect = document.getElementById('staff_select');
             let availabilityMessage = document.getElementById('availabilityMessage');
-            let bookAppointmentBtn = document.getElementById('bookAppointmentBtn');
 
             // Set minimum date to today
-            let today = new Date();
-            let yyyy = today.getFullYear();
-            let mm = String(today.getMonth() + 1).padStart(2, '0');
-            let dd = String(today.getDate()).padStart(2, '0');
-            let formattedToday = `${yyyy}-${mm}-${dd}`;
-            appointmentDateInput.min = formattedToday;
-
+            if (appointmentDateInput) {
+                let today = new Date();
+                let yyyy = today.getFullYear();
+                let mm = String(today.getMonth() + 1).padStart(2, '0');
+                let dd = String(today.getDate()).padStart(2, '0');
+                let formattedToday = `${yyyy}-${mm}-${dd}`;
+                appointmentDateInput.min = formattedToday;
+            }
 
             // Generate time slots based on service duration
             function generateTimeSlots() {
                 let serviceId = serviceSelect.value;
                 let selectedDate = appointmentDateInput.value;
-                let duration = parseInt(serviceSelect.options[serviceSelect.selectedIndex].dataset.duration ||
-                    30);
+                let duration = parseInt(serviceSelect.options[serviceSelect.selectedIndex].dataset.duration || 30);
 
                 if (!serviceId || !selectedDate) {
                     timeSlotContainer.classList.remove('active');
@@ -538,23 +794,16 @@
                 availabilityMessage.textContent = 'Loading available time slots...';
                 timeSlots.innerHTML = '';
 
-
-
-
                 // AJAX call to get available time slots
                 $.ajax({
-                    url: `/dashboard/appointments/get-available-slots`, // Ensure this matches the route
+                    url: `/dashboard/appointments/get-available-slots`,
                     method: 'GET',
                     data: {
                         service_id: serviceId,
-                        date: selectedDate, // Ensure this is in YYYY-MM-DD format
+                        date: selectedDate,
                         duration: duration
                     },
-                    beforeSend: function() {
-                        console.log('Sending request with:', {serviceId, selectedDate, duration});
-                    },
                     success: function(response) {
-                        console.log('Response received:', response);
                         if (response.success && response.slots && response.slots.length > 0) {
                             timeSlotContainer.classList.add('active');
                             availabilityMessage.style.display = 'none';
@@ -610,14 +859,7 @@
                 });
             }
 
-
-
-
-
-
-
-
-            // show the available dentists according to the service
+            // Update available dentists
             function updateAvailableDentists(serviceId, dateTime) {
                 staffSelect.disabled = true;
                 staffSelect.innerHTML = '<option value="">Loading...</option>';
@@ -630,104 +872,104 @@
                         appointment_date: dateTime
                     },
                     success: function(data) {
-                        console.log('API Response:', data);
-                        console.log('All dentists returned:', data.dentists);
-
                         if (data.success && data.dentists) {
-                            // Filter to ensure only active dentists are shown
                             let activeDentists = data.dentists.filter(dentist => dentist.is_active);
-                            console.log('Filtered active dentists:', activeDentists);
 
                             if (activeDentists.length > 0) {
                                 staffSelect.innerHTML = '<option value="">Select Dentist</option>';
                                 activeDentists.forEach(dentist => {
-                                    console.log(
-                                        `Adding dentist: ${dentist.id}, Name: ${dentist.user ? dentist.user.name : 'Unknown'}, Active: ${dentist.is_active}`
-                                    );
                                     staffSelect.innerHTML +=
                                         `<option value="${dentist.id}">${dentist.user ? dentist.user.name : 'Unknown'}</option>`;
                                 });
                                 staffSelect.disabled = false;
                             } else {
-                                console.log('No active dentists available after filtering');
                                 staffSelect.innerHTML =
                                     '<option value="">No dentists available</option>';
                                 staffSelect.disabled = true;
                             }
                         } else {
-                            console.log('No dentists data in the response or response not successful');
                             staffSelect.innerHTML = '<option value="">No dentists available</option>';
                             staffSelect.disabled = true;
                         }
                     },
                     error: function(error) {
-                        console.error('AJAX Error:', error);
                         staffSelect.innerHTML = '<option value="">Error loading dentists</option>';
                         staffSelect.disabled = true;
                     }
                 });
             }
 
-
-
             // Event listeners for the appointment booking form
-            serviceSelect.addEventListener('change', function() {
-                let selectedOption = this.options[this.selectedIndex];
-                durationInput.value = selectedOption.dataset.duration || '';
-                appointmentTimeInput.value = '';
-                appointmentDateTimeInput.value = '';
+            if (serviceSelect) {
+                serviceSelect.addEventListener('change', function() {
+                    let selectedOption = this.options[this.selectedIndex];
+                    if (durationInput) {
+                        durationInput.value = selectedOption.dataset.duration || '';
+                    }
+                    if (appointmentTimeInput) {
+                        appointmentTimeInput.value = '';
+                    }
+                    if (appointmentDateTimeInput) {
+                        appointmentDateTimeInput.value = '';
+                    }
 
-                if (appointmentDateInput.value) {
-                    generateTimeSlots();
-                } else {
-                    timeSlotContainer.classList.remove('active');
-                    availabilityMessage.style.display = 'block';
-                    availabilityMessage.textContent = 'Please select a date to see available time slots.';
-                }
-            });
-
-            appointmentDateInput.addEventListener('change', function() {
-                appointmentTimeInput.value = '';
-                appointmentDateTimeInput.value = '';
-                if (serviceSelect.value) {
-                    generateTimeSlots();
-                } else {
-                    timeSlotContainer.classList.remove('active');
-                    availabilityMessage.style.display = 'block';
-                    availabilityMessage.textContent =
-                        'Please select a service to see available time slots.';
-                }
-            });
-
-
-
-
-            // Form submission validation
-            form.addEventListener('submit', function(e) {
-                if (!appointmentDateTimeInput.value) {
-                    e.preventDefault();
-                    alert('Please select an appointment time slot.');
-                    return false;
-                }
-            });
-
-            // Form switching
-            let regularBookingBtn = document.getElementById('regularBookingBtn');
-            let walkInBtn = document.getElementById('walkInBtn');
-            let regularBookingForm = document.getElementById('regularBookingForm');
-            let walkInForm = document.getElementById('walkInForm');
-            let bookingDescription = document.getElementById('bookingDescription');
-
-            function switchForm(isWalkIn) {
-                regularBookingBtn.classList.toggle('active', !isWalkIn);
-                walkInBtn.classList.toggle('active', isWalkIn);
-                regularBookingForm.style.display = isWalkIn ? 'none' : 'block';
-                walkInForm.style.display = isWalkIn ? 'block' : 'none';
-                bookingDescription.textContent = isWalkIn ? 'Create an immediate appointment for a walk-in patient' : 'Schedule a new appointment with complete patient information';
+                    if (appointmentDateInput && appointmentDateInput.value) {
+                        generateTimeSlots();
+                    } else if (timeSlotContainer) {
+                        timeSlotContainer.classList.remove('active');
+                        if (availabilityMessage) {
+                            availabilityMessage.style.display = 'block';
+                            availabilityMessage.textContent =
+                                'Please select a date to see available time slots.';
+                        }
+                    }
+                });
             }
 
-            regularBookingBtn.addEventListener('click', () => switchForm(false));
-            walkInBtn.addEventListener('click', () => switchForm(true));
+            if (appointmentDateInput) {
+                appointmentDateInput.addEventListener('change', function() {
+                    if (appointmentTimeInput) {
+                        appointmentTimeInput.value = '';
+                    }
+                    if (appointmentDateTimeInput) {
+                        appointmentDateTimeInput.value = '';
+                    }
+
+                    if (serviceSelect && serviceSelect.value) {
+                        generateTimeSlots();
+                    } else if (timeSlotContainer) {
+                        timeSlotContainer.classList.remove('active');
+                        if (availabilityMessage) {
+                            availabilityMessage.style.display = 'block';
+                            availabilityMessage.textContent =
+                                'Please select a service to see available time slots.';
+                        }
+                    }
+                });
+            }
+
+            // Form submission validation
+            if (form) {
+                // In your form submission event listener
+                form.addEventListener('submit', function(e) {
+                    // If using existing patient, remove required attributes from step 1 fields
+                    if (document.getElementById('existingPatientId').value) {
+                        document.querySelectorAll('#step1 input[required], #step1 select[required]')
+                            .forEach(field => {
+                                field.removeAttribute('required');
+                                field.removeAttribute('aria-required');
+                            });
+                    }
+
+                    // Show loading state
+                    let submitBtn = document.getElementById('bookAppointmentBtn');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML =
+                            '<span class="spinner-border spinner-border-sm me-2"></span>Booking...';
+                    }
+                });
+            }
 
             // Walk-in form handling
             let walkInServiceSelect = document.getElementById('walkInServiceSelect');

@@ -223,14 +223,7 @@
                         <button class="navbar-toggler border-0" type="button" onclick="toggleSidebar()">
                             <span class="navbar-toggler-icon"></span>
                         </button>
-                        <div class="d-flex align-items-center">
-                            <div class="input-group">
-                                <input type="text" class="form-control" placeholder="Search...">
-                                <button class="btn btn-outline-secondary" type="button">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                            </div>
-                        </div>
+                        
                         <ul class="navbar-nav ms-auto">
 
 
@@ -279,12 +272,12 @@
     <script src="{{ asset('front/js/script.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @stack('js')
-    <script>
+    {{-- <script>
         let flash_msg = document.querySelector('#flash-msg');
         window.setTimeout(() => {
             flash_msg.remove();
         }, 3000);
-    </script>
+    </script> --}}
 
 
     <script>

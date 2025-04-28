@@ -314,29 +314,7 @@
                     }
                 });
 
-                // // Event listener for transaction type changes
-                // typeSelect.addEventListener('change', function() {
-                //     const transactionItem = this.closest('.inventory-item');
-                //     const indicator = transactionItem.querySelector('.transaction-indicator');
 
-                //     // Clear previous indicator
-                //     indicator.innerHTML = '';
-
-                //     // Add appropriate indicator based on type
-                //     if (this.value === 'use') {
-                //         indicator.innerHTML =
-                //         '<span class="badge bg-danger">Will decrease inventory</span>';
-                //     } else if (this.value === 'purchase') {
-                //         indicator.innerHTML =
-                //             '<span class="badge bg-success">Will increase inventory</span>';
-                //     } else if (this.value === 'adjustment') {
-                //         indicator.innerHTML =
-                //             '<span class="badge bg-warning text-dark">Inventory adjustment</span>';
-                //     } else if (this.value === 'return') {
-                //         indicator.innerHTML =
-                //             '<span class="badge bg-secondary">Will decrease inventory</span>';
-                //     }
-                // });
 
                 // Trigger change events to initialize the fields
                 typeSelect.dispatchEvent(new Event('change'));

@@ -31,7 +31,7 @@ Route::prefix('dashboard')->middleware('auth')->name('dashboard')->group(functio
 
 
 Route::prefix('dashboard')->middleware('auth')->name('dashboard.')->group(function () {
-
+    Route::get('/patients/search', [PatientsController::class, 'search'])->name('patients.search');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -66,9 +66,9 @@ Route::prefix('dashboard')->middleware('auth')->name('dashboard.')->group(functi
     Route::get('/appointments/trash', [AppointmentsController::class, 'trash'])->name('appointments.trash');
     Route::put('/appointments/{appointment}/restore', [AppointmentsController::class, 'restore'])->name('appointments.restore');
     Route::delete('/appointments/{appointment}/force-delete', [AppointmentsController::class, 'forceDelete'])->name('appointments.force-delete');
-    Route::resource('/appointments', AppointmentsController::class);
 
     Route::resource('/service-staff', ServiceStaffController::class);
+    Route::resource('/appointments', AppointmentsController::class);
 });
 
 
@@ -146,16 +146,6 @@ Route::prefix('notifications')->middleware('auth')->group(function () {
     Route::delete('/delete-all', [NotificationsController::class, 'deleteAllNotifications'])->name('notifications.deleteAll');
 
 });
-Route::get('/test-smtp', function() {
-    try {
-        Mail::raw('This is a test email from Laravel', function($message) {
-            $message->to('test@example.com')
-                    ->subject('Mailtrap SMTP Test');
-        });
-        return "Email sent successfully! Check your Mailtrap inbox.";
-    } catch (\Exception $e) {
-        return "Error: " . $e->getMessage();
-    }
-});
 
 
+Route::get('/dashboard/patients/search', [PatientsController::class, 'search'])->name('dashboard.patients.search')->middleware('auth');
