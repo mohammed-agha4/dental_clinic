@@ -40,7 +40,7 @@
 
         <div class="form-group m-2">
             <label for="name">Phone Number:</label>
-            <input type="tel" class="form-control @error('phone') is-invalid @enderror" name="phone"
+            <input type="tel" name="phone" class="form-control @error('phone') is-invalid @enderror"
                 placeholder="Enter supplier phone" value="{{ old('phone', $supplier->phone) }}">
             @error('phone')
                 <small class="text-danger alert-danger">{{ $message }}</small>

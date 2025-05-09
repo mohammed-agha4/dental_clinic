@@ -43,7 +43,7 @@
                                     </tr>
                                     <tr>
                                         <td class="p-1 font-weight-bold">Phone:</td>
-                                        <td class="p-1">{{ $appointment->patient->phone ?? 'N/A' }}</td>
+                                        <td class="p-1">{{ $appointment->patient->phone ?? 'Not Recorded' }}</td>
                                     </tr>
                                 </table>
                             </div>
@@ -158,7 +158,7 @@
         </div>
     </div>
 
-    <!-- Hidden Delete Form -->
+
     <form id="delete-form" method="POST" style="display: none;">
         @csrf
         @method('DELETE')

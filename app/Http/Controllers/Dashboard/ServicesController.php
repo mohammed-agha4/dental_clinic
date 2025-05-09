@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Models\Service;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Gate;
@@ -36,15 +37,16 @@ class ServicesController extends Controller
     public function store(Request $request)
     {
         Gate::authorize('services.create');
+
         $validated = $request->validate([
-            'service_name' => 'required|string',
+            'service_name' => 'required|string|unique:services,service_name|max:255',
             'description' => 'nullable|string',
             'service_price' => 'required|numeric|min:0',
-            'duration' => 'required|integer',
+            'duration' => 'required|integer|gt:0',
             'is_active' => 'required|boolean',
         ]);
 
-        $service = Service::create($validated);
+        Service::create($validated);
         return redirect()->route('dashboard.services.index')->with('success', 'Service Added Successfuly');
     }
 
@@ -54,7 +56,7 @@ class ServicesController extends Controller
     public function edit(Service $service)
     {
         Gate::authorize('services.update');
-        return view('dashboard.services.edit',compact('service'));
+        return view('dashboard.services.edit', compact('service'));
     }
 
     /**
@@ -63,11 +65,18 @@ class ServicesController extends Controller
     public function update(Request $request, Service $service)
     {
         Gate::authorize('services.update');
+
         $validated = $request->validate([
-            'service_name' => 'required|string',
+            'service_name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('services')->ignore($service->id)
+
+            ],
             'description' => 'nullable|string',
             'service_price' => 'required|numeric|min:0',
-            'duration' => 'required|integer',
+            'duration' => 'required|integer|gt:0',
             'is_active' => 'required|boolean',
         ]);
 
@@ -84,10 +93,23 @@ class ServicesController extends Controller
     {
         Gate::authorize('services.delete');
 
-        $service = Service::findOrFail($id);
-        $service->delete();
-        return redirect()
+        $service = Service::withCount('appointments')->findOrFail($id); // withCount(): eager load the count of related records for model relationship without loading the related data
+
+        if ($service->appointments_count > 0) {
+            return redirect()
+                ->route('dashboard.services.index')
+                ->with('error', 'Cannot delete service because it has related appointments.');
+        }
+
+        try {
+            $service->delete();
+            return redirect()
                 ->route('dashboard.services.index')
                 ->with('success', 'Service deleted successfully.');
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('dashboard.services.index')
+                ->with('error', 'Failed to delete service: ' . $e->getMessage());
+        }
     }
 }

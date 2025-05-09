@@ -9,6 +9,13 @@
                 <h4 class="mb-0">Insert Patient Visit</h4>
             </div>
 
+            @if (session()->has('error'))
+                <div id="flash-msg" class="alert alert-danger alert-dismissible fade show ">
+                    {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
             <div class="card-body">
                 <form action="{{ route('dashboard.visits.store') }}" method="post">
                     @csrf
@@ -91,7 +98,7 @@
                     <!-- Visit Information Card -->
                     <div class="card mb-4 border-primary">
                         <div class="card-header bg-light text-white">
-                            <h5 class="mb-0 text-dark" >Visit Information</h5>
+                            <h5 class="mb-0 text-dark">Visit Information</h5>
                         </div>
                         <div class="card-body">
                             <div class="row">
@@ -122,8 +129,9 @@
 
                     <!-- Inventory Transactions Card -->
                     <div class="card mb-4 border-info">
-                        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Inventory Transactions</h5>
+                        <div
+                            class="card-header bg-secondary-subtle text-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 text-dark">Inventory Transactions</h5>
                             <div>
                                 <button type="button" class="btn btn-sm btn-light me-2" id="addInventoryItemBtn">
                                     <i class="fas fa-plus-circle"></i> Add Item
@@ -140,7 +148,7 @@
                             <div
                                 class="transaction-summary mb-3 d-flex justify-content-between align-items-center bg-light p-2 rounded">
                                 <div>
-                                    <span class="badge bg-primary me-2 total-items">0</span> items
+                                    <span class="badge bg-dark me-2 total-items">0</span> items
                                 </div>
                             </div>
 
@@ -177,8 +185,17 @@
                             <option value="">Select Item</option>
                             @foreach ($inventory as $item)
                                 <option value="{{ $item->id }}" data-price="{{ $item->unit_price }}"
-                                    data-available="{{ $item->quantity }}" data-sku="{{ $item->SKU }}">
+                                    data-available="{{ $item->quantity }}" data-sku="{{ $item->SKU }}"
+                                    data-expiry="{{ $item->expiry_date ? $item->expiry_date->format('Y-m-d') : '' }}"
+                                    @if ($item->expiry_date && $item->expiry_date->isPast()) class="text-danger" @endif>
                                     {{ $item->name }} ({{ $item->quantity }} available) - {{ $item->SKU }}
+                                    @if ($item->expiry_date)
+                                        @if ($item->expiry_date->isPast())
+                                            [EXPIRED]
+                                        @else
+                                            [Exp: {{ $item->expiry_date->format('m/d/Y') }}]
+                                        @endif
+                                    @endif
                                 </option>
                             @endforeach
                         </select>
@@ -278,6 +295,7 @@
                 const skuSpan = itemElement.querySelector('.item-sku');
                 const availableQtySpan = itemElement.querySelector('.available-qty');
                 const quantityWarning = itemElement.querySelector('.quantity-warning');
+                const transactionIndicator = itemElement.querySelector('.transaction-indicator');
 
                 // Event listener for inventory selection
                 inventorySelect.addEventListener('change', function() {
@@ -287,11 +305,27 @@
                         const price = selectedOption.getAttribute('data-price');
                         const available = selectedOption.getAttribute('data-available');
                         const sku = selectedOption.getAttribute('data-sku');
+                        const expiryDate = selectedOption.getAttribute('data-expiry');
+                        const today = new Date().toISOString().split('T')[0];
 
                         // Update fields
                         priceInput.value = price;
                         skuSpan.textContent = sku;
                         availableQtySpan.textContent = `Available: ${available}`;
+
+                        // Check for expired item
+                        if (expiryDate && expiryDate < today) {
+                            transactionIndicator.innerHTML = `
+                        <div class="alert alert-danger p-2 mb-0">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            This item expired on ${new Date(expiryDate).toLocaleDateString()}
+                        </div>
+                    `;
+                            this.classList.add('is-invalid');
+                        } else {
+                            transactionIndicator.innerHTML = '';
+                            this.classList.remove('is-invalid');
+                        }
 
                         // Check quantity against available
                         validateQuantity(quantityInput, available, quantityWarning);
@@ -301,6 +335,8 @@
                         skuSpan.textContent = '-';
                         availableQtySpan.textContent = 'Available: -';
                         quantityWarning.style.display = 'none';
+                        transactionIndicator.innerHTML = '';
+                        this.classList.remove('is-invalid');
                     }
                 });
 
@@ -317,7 +353,32 @@
 
 
                 // Trigger change events to initialize the fields
+
                 typeSelect.dispatchEvent(new Event('change'));
+            }
+            // Add form submission validation
+            const form = document.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    const expiredItems = [];
+
+                    document.querySelectorAll('.inventory-select').forEach(select => {
+                        const selectedOption = select.options[select.selectedIndex];
+                        if (selectedOption.value) {
+                            const expiryDate = selectedOption.getAttribute('data-expiry');
+                            const today = new Date().toISOString().split('T')[0];
+
+                            if (expiryDate && expiryDate < today) {
+                                expiredItems.push(selectedOption.text.trim());
+                            }
+                        }
+                    });
+
+                    if (expiredItems.length > 0) {
+                        e.preventDefault();
+                        alert(`Cannot submit visit with expired items:\n\n${expiredItems.join('\n')}`);
+                    }
+                });
             }
 
             // Function to validate quantity against available stock

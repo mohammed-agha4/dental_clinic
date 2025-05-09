@@ -7,9 +7,8 @@
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
                 <h4 class="mb-0">Staff</h4>
-
                 <div>
-                    @can('appointments.trash')
+                    @can('staff.trash')
                         <a href="{{ route('dashboard.staff.trash') }}" class="btn btn-secondary btn-sm me-2">
                             <i class="fas fa-trash-alt fa-sm"></i> Trash
                         </a>
@@ -20,9 +19,6 @@
                         </a>
                     @endcan
                 </div>
-
-
-
             </div>
 
             @if (session()->has('success'))
@@ -32,23 +28,17 @@
                 </div>
             @endif
             @if (session()->has('error'))
-                <div id="flash-msg" class="alert alert-danger alert-dismissible fade show ">
+                <div id="flash-msg" class="alert alert-danger alert-dismissible fade show">
                     {{ session('error') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
 
-
-            <div class="table-responsive mx-3">
-                <table class="table table-striped table-hover">
-                    @can('staff.trash')
-                        <a href="{{ route('dashboard.staff.trash') }}" class="btn btn-dark btn-sm my-2">
-                            <i class="fas fa-plus fa-sm"></i> Trash
-                        </a>
-                    @endcan
-                    <thead class="table-light">
+            <div class="table-responsive" style="overflow-x: auto;">
+                <table class="table small" style="min-width: 800px;">
+                    <thead>
                         <tr class="text-center">
-                            <th>ID</th>
+                            <th>#</th>
                             <th>User Name</th>
                             <th>Phone</th>
                             <th>License Number</th>
@@ -68,11 +58,7 @@
                                 <td>{{ $st->phone }}</td>
                                 <td>{{ $st->license_number }}</td>
                                 <td>{{ $st->working_hours }} Hour</td>
-                                <td>
-                                    <span class="text-dark">
-                                        {{ ucfirst($st->role) }}
-                                    </span>
-                                </td>
+                                <td>{{ ucfirst($st->role) }}</td>
                                 <td>
                                     <span class="badge {{ $st->is_active ? 'bg-success' : 'bg-danger' }} text-white">
                                         {{ $st->is_active ? 'Active' : 'Inactive' }}
@@ -80,6 +66,12 @@
                                 </td>
                                 @if (auth()->user()->can('staff.update') || auth()->user()->can('staff.delete'))
                                     <td>
+                                        @can('staff.show')
+                                            <a class="btn btn-outline-success btn-sm"
+                                                href="{{ route('dashboard.staff.show', $st->id) }}">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        @endcan
                                         @can('staff.update')
                                             <a class="btn btn-outline-primary btn-sm"
                                                 href="{{ route('dashboard.staff.edit', $st->id) }}">
@@ -103,49 +95,19 @@
                     </tbody>
                 </table>
             </div>
-
             <div class="mt-3">
                 {{ $staff->links() }}
             </div>
         </div>
     </div>
-    </div>
-    @can('staff.delete')
-        <!-- Hidden Delete Form -->
-        <form id="delete-form" method="POST" style="display: none;">
-            @csrf
-            @method('DELETE')
-        </form>
-    @endcan
+
+    <form id="delete-form" method="POST" style="display: none;">
+        @csrf
+        @method('DELETE')
+    </form>
+    
 @endsection
 
 @push('js')
-    <script>
-        // Setup delete confirmation
-        document.querySelectorAll('.delete-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const staffId = this.getAttribute('data-id');
-                const staffName = this.getAttribute('data-name');
-
-                Swal.fire({
-                    title: 'Are you sure?',
-                    html: `You are about to delete staff member: <strong>${staffName}</strong>`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#dc3545',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Yes, delete it!',
-                    cancelButtonText: 'Cancel',
-                    reverseButtons: true,
-                    focusCancel: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        const form = document.getElementById('delete-form');
-                        form.action = "{{ route('dashboard.staff.destroy', '') }}/" + staffId;
-                        form.submit();
-                    }
-                });
-            });
-        });
-    </script>
+    <x-delete-alert route="dashboard.staff.destroy" itemName="staff" deleteBtnClass="delete-btn" />
 @endpush

@@ -60,11 +60,11 @@ class Appointment extends Model
 
 
     public function scopeForDentist($query, $userId)
-{
-    return $query->whereHas('dentist', function($q) use ($userId) {
-        $q->where('user_id', $userId);
-    });
-}
+    {
+        return $query->whereHas('dentist', function ($q) use ($userId) {
+            $q->where('user_id', $userId);
+        });
+    }
 
 
 
@@ -87,7 +87,7 @@ class Appointment extends Model
         $appointment->service_id = $data['service_id'];
         $appointment->duration = Service::findOrFail($data['service_id'])->duration;
         $appointment->notes = $data['notes'] ?? null;
-        $appointment->cancellation_reason = $data['cancellation_reason'] ?? null;
+        // $appointment->cancellation_reason = $data['cancellation_reason'] ?? null;
         $appointment->reminder_sent = false;
 
         if ($isWalkIn) {
@@ -112,7 +112,7 @@ class Appointment extends Model
         $this->service_id = $data['service_id'];
         $this->duration = Service::findOrFail($data['service_id'])->duration;
         $this->notes = $data['notes'] ?? $this->notes;
-        $this->cancellation_reason = $data['cancellation_reason'] ?? $this->cancellation_reason;
+        // $this->cancellation_reason = $data['cancellation_reason'] ?? $this->cancellation_reason;
 
         if (in_array($data['status'], [self::STATUS_SCHEDULED, self::STATUS_RESCHEDULED])) {
             $this->appointment_date = $data['appointment_date'];
@@ -150,19 +150,28 @@ class Appointment extends Model
             $closingTime = Carbon::parse($date . ' 17:00:00');
 
             $now = Carbon::now();
-            if ($dateObj->isToday() && $now->greaterThan($openingTime)) {
+
+
+
+            if ($dateObj->isToday() && $now->greaterThan($openingTime)) { // This checks if the given $date is today & current time has already passed 09:00 AM
+
+                // - Since the original opening time (09:00 AM) is already in the past, the function adjusts it. The new opening time becomes one hour ahead from now, rounded to the next full hour.
                 $openingTime = $now->copy()->addHours(1)->startOfHour();
             }
 
+
+
+
             $staffIds = Staff::where('is_active', true)
-                ->whereHas('services', fn($query) => $query->where('service_id', $serviceId))
-                ->pluck('id');
+                ->whereHas('services', fn($query) => $query->where('service_id', $serviceId)) //- Filters the staff further, ensuring they are linked to the requested service ($serviceId)
+
+                ->pluck('id'); // to retieve only the id (not the full staff record)
 
             if ($staffIds->isEmpty()) {
                 throw new \Exception('No staff available for this service');
             }
 
-            $appointmentsQuery = self::onDate($dateObj)
+            $appointmentsQuery = self::onDate($dateObj) //self: php way to call another function in the same class ,so its calling scopeOnDate()
                 ->active()
                 ->whereIn('staff_id', $staffIds);
 
@@ -173,7 +182,8 @@ class Appointment extends Model
             $existingAppointments = $appointmentsQuery->with('service')->get();
 
             $slots = [];
-            $currentTime = $openingTime->copy();
+            $currentTime = $openingTime->copy(); //- copy() creates a separate instance of openingTime, storing it in $currentTime.This prevents accidental changes to openingTime when $currentTime is modified later in the loop.
+
 
             while ($currentTime->lessThan($closingTime)) {
                 $slotEndTime = $currentTime->copy()->addMinutes($duration);
@@ -227,21 +237,31 @@ class Appointment extends Model
             $appointmentEnd = $appointmentStart->copy()->addMinutes($service->duration);
 
             $dentists = $dentists->filter(function ($dentist) use ($appointmentStart, $appointmentEnd, $currentAppointmentId) {
-                $conflicts = self::where('staff_id', $dentist->id)
-                    ->active()
-                    ->where('id', '!=', $currentAppointmentId)
+                $conflicts = self::where('staff_id', $dentist->id) //Searches the Appointment model for existing appointments assigned to this dentist.
+
+                    ->active()  //scope
+                    ->where('id', '!=', $currentAppointmentId) //- Ensures that the current appointment (if being edited) is not counted as a conflict
+
                     ->where(function ($query) use ($appointmentStart, $appointmentEnd) {
                         $query->where(function ($q) use ($appointmentStart, $appointmentEnd) {
                             $q->where('appointment_date', '>=', $appointmentStart)
                                 ->where('appointment_date', '<', $appointmentEnd);
                         })->orWhere(function ($q) use ($appointmentStart, $appointmentEnd) {
                             $q->whereRaw("DATE_ADD(appointment_date, INTERVAL duration MINUTE) > ?", [$appointmentStart])
+                            /* Start Time: 10:00 AM,  Duration: 30 minutes,  End Time (calculated by DATE_ADD): 10:30 AM
+                            Now, assume we're checking availability for: Requested Start Time: 10:15 AM
+                            The condition: DATE_ADD('10:00 AM', INTERVAL 30 MINUTE) > '10:15 AM'
+                            becomes: '10:30 AM' > '10:15 AM' (Overlap detected)
+                            Since 10:30 AM is greater than 10:15 AM, it means this appointment overlaps, and the dentist is not available.*/
+
+
+
                                 ->whereRaw("appointment_date < ?", [$appointmentEnd]);
                         });
-                    })
-                    ->count();
+                    })->count();
+
                 return $conflicts === 0;
-            })->values();
+            })->values(); // holding the filter values
         }
 
         return $dentists;

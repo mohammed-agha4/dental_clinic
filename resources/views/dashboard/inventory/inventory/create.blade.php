@@ -12,14 +12,24 @@
                     <i class="fas fa-arrow-left fa-sm"></i> Back to Main
                 </a>
             </div>
+            <div class="card-body">
+                @if (session()->has('success'))
+                    <div id="flash-msg" class="alert alert-success alert-dismissible fade show">
+                        {{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+                @if (session()->has('error'))
+                    <div id="flash-msg" class="alert alert-danger alert-dismissible fade show">
+                        {{ session('error') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
 
 
             <div class="card-body">
                 <form action="{{ route('dashboard.inventory.inventory.store') }}" method="post">
-
-
                     @csrf
-
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <div class="form-group">
@@ -31,7 +41,6 @@
                                 @error('name')
                                     <small class="text-danger alert-danger">{{ $message }}</small>
                                 @enderror
-
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -51,7 +60,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <div class="form-group">
@@ -71,18 +79,15 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-
                                 <label>SKU:</label>
                                 <input type="text" name="SKU" class="form-control @error('SKU') is-invalid @enderror"
                                     value="{{ old('SKU') }}" required>
                                 @error('SKU')
                                     <small class="text-danger alert-danger">{{ $message }}</small>
                                 @enderror
-
                             </div>
                         </div>
                     </div>
-
                     <div class="row mb-4">
                         <div class="col-md-12">
                             <div class="form-group">
@@ -93,11 +98,9 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="row mb-4">
                         <div class="col-md-4">
                             <div class="form-group">
-
                                 <label>Quantity:</label>
                                 <input type="number" name="quantity"
                                     class="form-control @error('quantity') is-invalid @enderror"
@@ -105,12 +108,10 @@
                                 @error('quantity')
                                     <small class="text-danger alert-danger">{{ $message }}</small>
                                 @enderror
-
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-
                                 <label>Reorder Level:</label>
                                 <input type="number" name="reorder_level"
                                     class="form-control @error('reorder_level') is-invalid @enderror"
@@ -118,12 +119,10 @@
                                 @error('reorder_level')
                                     <small class="text-danger alert-danger">{{ $message }}</small>
                                 @enderror
-
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-
                                 <label>Unit Price:</label>
                                 <input type="number" name="unit_price"
                                     class="form-control @error('unit_price') is-invalid @enderror"
@@ -131,26 +130,20 @@
                                 @error('unit_price')
                                     <small class="text-danger alert-danger">{{ $message }}</small>
                                 @enderror
-
                             </div>
                         </div>
                     </div>
-
                     <div class="row mb-4">
                         <div class="col-md-6">
-
                             <div class="form-group">
-
                                 <label>Expiry Date</label>
                                 <input type="date" class="form-control date @error('expiry_date') is-invalid @enderror"
                                     name='expiry_date' value="{{ old('expiry_date') }}" placeholder='Expiry Date' required>
                                 @error('expiry_date')
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror
-
                             </div>
                         </div>
-
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Active:</label>
@@ -166,10 +159,7 @@
                     </div>
 
 
-
-
-
-                    <!-- Initial Purchase Transaction Section -->
+{{-- transaction --}}
                     <div class="card mb-4">
                         <div class="card-header bg-light">
                             <h4 class="mb-0">Initial Purchase Transaction</h4>
@@ -200,8 +190,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Submit Button -->
                     <div class="text-end">
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save"></i> Insert Tool
@@ -212,43 +200,3 @@
         </div>
     </div>
 @endsection
-
-{{-- @push('js')
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add transaction button handler
-            document.getElementById('addTransactionBtn')?.addEventListener('click', addTransaction);
-
-            // Add a new transaction row
-            function addTransaction() {
-                const template = document.getElementById('transactionTemplate').innerHTML;
-                const container = document.getElementById('transactionsContainer');
-                const div = document.createElement('div');
-                div.innerHTML = template;
-                container.appendChild(div.firstElementChild);
-
-                // Copy the unit price from the main form to this transaction's price field
-                const mainUnitPrice = document.querySelector('input[name="unit_price"]').value;
-                const newTransactionPrice = div.querySelector('input[name="transaction_price[]"]');
-                if (mainUnitPrice && newTransactionPrice) {
-                    newTransactionPrice.value = mainUnitPrice;
-                }
-            }
-
-            // Remove a transaction row
-            window.removeTransaction = function(button) {
-                button.closest('.transaction-item').remove();
-            };
-
-            // Listen for changes to the main unit price and update empty transaction prices
-            document.querySelector('input[name="unit_price"]').addEventListener('change', function() {
-                const prices = document.querySelectorAll('input[name="transaction_price[]"]');
-                prices.forEach(price => {
-                    if (!price.value) {
-                        price.value = this.value;
-                    }
-                });
-            });
-        });
-    </script>
-@endpush --}}

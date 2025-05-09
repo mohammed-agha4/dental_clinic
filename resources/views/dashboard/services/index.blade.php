@@ -28,11 +28,11 @@
                     </div>
                 @endif
 
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover">
+                <div class="table-responsive" style="overflow-x: auto;">
+                    <table class="table table-striped table-hover small" style="min-width: 800px;">
                         <thead class="table-light">
                             <tr class="text-center">
-                                <th>ID</th>
+                                <th>#</th>
                                 <th>Service Name</th>
                                 <th>Description</th>
                                 <th>Service Price</th>
@@ -76,15 +76,15 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="{{ auth()->user()->can('services.update') || auth()->user()->can('services.delete') ? 7 : 6 }}"
-                                        class="text-center py-4">No services found</td>
+                                    <td colspan="7" class="text-center py-4">
+                                        <h5>No services found</h5>
+                                    </td>
                                 </tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
 
-                <!-- Pagination Links -->
                 <div class="mt-3">
                     {{ $services->links() }}
                 </div>
@@ -92,7 +92,6 @@
         </div>
     </div>
 
-    <!-- Hidden Delete Form -->
     <form id="delete-form" method="POST" style="display: none;">
         @csrf
         @method('DELETE')
@@ -100,32 +99,5 @@
 @endsection
 
 @push('js')
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        document.querySelectorAll('.delete-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const serviceId = this.getAttribute('data-id');
-                const serviceName = this.getAttribute('data-name');
-
-                Swal.fire({
-                    title: 'Are you sure?',
-                    html: `You are about to delete the service: <strong>${serviceName}</strong>`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#dc3545',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Yes, delete it!',
-                    cancelButtonText: 'Cancel',
-                    reverseButtons: true,
-                    focusCancel: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        const form = document.getElementById('delete-form');
-                        form.action = "{{ route('dashboard.services.destroy', '') }}/" + serviceId;
-                        form.submit();
-                    }
-                });
-            });
-        });
-    </script>
+    <x-delete-alert route="dashboard.services.destroy" itemName="service" deleteBtnClass="delete-btn" />
 @endpush

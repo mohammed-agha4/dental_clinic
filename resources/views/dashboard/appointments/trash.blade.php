@@ -30,7 +30,7 @@
                     <table class="table table-striped table-hover small">
                         <thead class="table-light">
                             <tr class="text-center">
-                                <th>ID</th>
+                                <th>#</th>
                                 <th>Patient</th>
                                 <th>Staff</th>
                                 <th>Service</th>
@@ -45,7 +45,7 @@
                                 <tr class="text-center">
                                     <td>{{ $loop->iteration }}</td>
                                     <td>{{ $appointment->patient->fname }} {{ $appointment->patient->lname }}</td>
-                                    <td>{{ $appointment->dentist->user->name ?? 'N/A' }}</td>
+                                    <td>{{ $appointment->dentist->user->name ?? 'Not Recorded' }}</td>
                                     <td>{{ $appointment->service->service_name }}</td>
                                     <td>{{ $appointment->appointment_date }}</td>
                                     <td>{{ $appointment->duration }} minutes</td>

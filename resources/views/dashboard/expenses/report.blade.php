@@ -177,7 +177,7 @@
                                         <table class="table table-bordered table-striped">
                                             <thead>
                                                 <tr>
-                                                    <th>ID</th>
+                                                    <th>#</th>
                                                     <th>Date</th>
                                                     <th>Title</th>
                                                     <th>Category</th>

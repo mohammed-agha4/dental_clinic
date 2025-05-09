@@ -29,7 +29,7 @@
                     <table class="table table-striped table-hover small">
                         <thead class="table-light">
                             <tr class="text-center">
-                                <th>ID</th>
+                                <th>#</th>
                                 <th>Name</th>
                                 <th>SKU</th>
                                 <th>Action</th>

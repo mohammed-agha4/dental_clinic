@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Staff;
 use App\Models\Appointment;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Gate;
@@ -20,7 +21,14 @@ class StaffController extends Controller
     public function index()
     {
         Gate::authorize('staff.view');
-        $staff = Staff::latest('id')->with('user')->paginate(8);
+
+        $staff = Staff::whereDoesntHave('user', function ($query) { // to retrieve the staff without the admins
+            $query->where('role', 'admin');
+        })
+            ->latest('id')
+            ->with('user')
+            ->paginate(8);
+
         return view('dashboard.staff.index', compact('staff'));
     }
 
@@ -39,47 +47,67 @@ class StaffController extends Controller
      */
     public function store(Request $request)
     {
+
         Gate::authorize('staff.create');
-        // dd($request->all());
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:8',
+            'password' => 'required|min:8|confirmed',
             'role' => 'required|in:admin,dentist,assistant,receptionist',
-            'phone' => 'nullable|string|max:20',
-            'department' => 'nullable|string',
-            'license_number' => 'nullable|string',
-            'working_hours' => 'nullable|string',
+            'phone' => [
+                'required',
+                'string',
+                'max:20',
+                'unique:staff,phone',
+                'regex:/^\+?[0-9\s\-\(\)]{7,20}$/'
+            ],
+            'department' => 'nullable|string|max:255',
+            'license_number' => 'nullable|string|max:255',
+            'working_hours' => 'nullable|string|max:255',
             'is_active' => 'required|boolean',
         ]);
 
         try {
-            DB::beginTransaction();
-
-            // Create user first
+            DB::transaction();
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
-                'password' => Hash::make($validated['password']), // Don't forget to hash the password!
+                'password' => Hash::make($validated['password']),
             ]);
 
-            // Then create staff with user_id reference
-            $staff = Staff::create([
+            Staff::create([
                 'user_id' => $user->id,
                 'role' => $validated['role'],
-                'phone' => $validated['phone'] ?? null,
+                'phone' => $validated['phone'],
                 'department' => $validated['department'] ?? null,
                 'license_number' => $validated['license_number'] ?? null,
                 'working_hours' => $validated['working_hours'] ?? null,
                 'is_active' => $validated['is_active'],
             ]);
-
             DB::commit();
-            return redirect()->route('dashboard.staff.index')->with('success', 'Staff Added Successfully');
+
+            return redirect()
+                ->route('dashboard.staff.index')
+                ->with('success', 'Staff added successfully');
         } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()->with('error', 'Error creating staff: ' . $e->getMessage())->withInput();
+            return redirect()
+                ->back()
+                ->with('error', 'Error creating staff: ' . $e->getMessage())
+                ->withInput();
         }
+    }
+
+
+    public function show($id)
+    {
+        Gate::authorize('staff.view');
+
+        $staff = Staff::where('role', '!=', 'admin')
+            ->with(['user', 'services'])
+            ->findOrFail($id);
+
+        return view('dashboard.staff.show', compact('staff'));
     }
 
     /**
@@ -99,117 +127,100 @@ class StaffController extends Controller
     public function update(Request $request, Staff $staff)
     {
         Gate::authorize('staff.update');
-        $validatedStaff = $request->validate([
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $staff->user_id,
+            'password' => 'nullable|min:8|confirmed',
             'role' => 'required|in:admin,dentist,assistant,receptionist',
-            'phone' => 'nullable|string|max:20',
-            'department' => 'nullable|string',
-            'license_number' => 'nullable|string',
-            'working_hours' => 'nullable|string',
+            'phone' => [
+                'nullable',
+                'string',
+                'max:20',
+                'unique:staff,phone,' . $staff->id,
+                'regex:/^\+?[0-9\s\-\(\)]{7,20}$/'
+            ],
+            'department' => 'nullable|string|max:255',
+            'license_number' => 'nullable|string|max:255',
+            'working_hours' => 'nullable|string|max:255',
             'is_active' => 'required|boolean',
         ]);
 
-        $validatedUser = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $staff->user_id,
-        ]);
-
-        // Only validate password if it's provided
-        if ($request->filled('password')) {
-            $request->validate([
-                'password' => 'min:8',
-            ]);
-        }
-
         try {
-            DB::beginTransaction();
+            DB::transaction(function () use ($validated, $staff) {
+                $user = $staff->user;
+                $user->name = $validated['name'];
+                $user->email = $validated['email'];
 
-            // Update user information
-            $user = User::findOrFail($staff->user_id);
-            $user->name = $validatedUser['name'];
-            $user->email = $validatedUser['email'];
+                if (!empty($validated['password'])) {
+                    $user->password = Hash::make($validated['password']);
+                }
 
-            if ($request->filled('password')) {
-                $user->password = Hash::make($request->password);
-            }
+                $user->save();
 
-            $user->save();
+                $staff->update([
+                    'role' => $validated['role'],
+                    'phone' => $validated['phone'] ?? null,
+                    'department' => $validated['department'] ?? null,
+                    'license_number' => $validated['license_number'] ?? null,
+                    'working_hours' => $validated['working_hours'] ?? null,
+                    'is_active' => $validated['is_active'],
+                ]);
+            });
 
-            // Update staff information
-            $staff->update($validatedStaff);
-
-            DB::commit();
-            return redirect()->route('dashboard.staff.index')->with('success', 'Staff Updated Successfully.');
+            return redirect()
+                ->route('dashboard.staff.index')
+                ->with('success', 'Staff updated successfully');
         } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()->with('error', 'Error updating staff: ' . $e->getMessage())->withInput();
+            return redirect()
+                ->back()
+                ->with('error', 'Error updating staff: ' . $e->getMessage())
+                ->withInput();
         }
     }
-
     /**
      * Remove the specified resource from storage.
      */
     public function destroy($id)
     {
         Gate::authorize('staff.delete');
+
         try {
             DB::beginTransaction();
 
-            $staff = Staff::with(['user', 'appointments', 'expenses', 'visits', 'inventoryTransactions', 'payments'])
+            $staff = Staff::with(['user', 'appointments', 'expenses', 'visits', 'transactions', 'payments'])
                 ->findOrFail($id);
             $staffName = $staff->user->name ?? 'Staff Member';
 
-            // Check for active dentist appointments
+
             if ($staff->role === 'dentist') {
                 $hasActiveAppointments = $staff->appointments()
                     ->whereIn('status', ['scheduled', 'rescheduled', 'walk_in'])
                     ->exists();
 
                 if ($hasActiveAppointments) {
-                    throw new Exception('Cannot delete dentist with active appointments (scheduled/rescheduled/walk-in)');
+
+                    DB::rollBack();
+                    return redirect()->back()->with('error', 'Cannot delete dentist with active appointments');
                 }
             }
 
-            // Check all foreign key constraints
-            $errorMessages = [];
-
-            // 1. Check appointments (any status)
-            if ($staff->appointments()->exists()) {
-                $errorMessages[] = 'has historical appointment records';
-            }
-
-            // 2. Check visits (restrict)
             if ($staff->visits()->exists()) {
-                $errorMessages[] = 'has patient visit records';
+                DB::rollBack();
+                return redirect()->back()->with('error', 'Cannot delete dentist with patient visit records');
             }
 
-            // 3. Check expenses (restrict)
             if ($staff->expenses()->exists()) {
-                $errorMessages[] = 'has expense records';
+                DB::rollBack();
+                return redirect()->back()->with('error', 'Cannot delete dentist with expense records');
             }
 
-            // 4. Check payments (set null, but we might want to track)
             if ($staff->payments()->exists()) {
-                $errorMessages[] = 'has payment processing records';
+                DB::rollBack();
+                return redirect()->back()->with('error', 'Cannot delete dentist with assoceated payments');
             }
 
-            // 5. Check inventory transactions
-            if ($staff->inventoryTransactions()->exists()) {
-                $errorMessages[] = 'has inventory transaction records';
-            }
-
-            // 6. Check service_staff pivot table (cascade)
-            // No check needed as it cascades
-
-            if (!empty($errorMessages)) {
-                throw new Exception(
-                    'Cannot delete staff member who ' . implode(', ', $errorMessages) .
-                        '. Please reassign these records first.'
-                );
-            }
-
-            // Soft delete the staff member if no constraints violated
             $staff->delete();
-
             DB::commit();
 
             return redirect()
@@ -247,7 +258,6 @@ class StaffController extends Controller
 
             $staff = Staff::onlyTrashed()->findOrFail($id);
 
-            // Check if the associated user exists
             if (!$staff->user) {
                 throw new Exception('Associated user account not found');
             }
@@ -271,69 +281,20 @@ class StaffController extends Controller
     public function forceDelete($id)
     {
         Gate::authorize('staff.force_delete');
+
         try {
             DB::beginTransaction();
 
             $staff = Staff::onlyTrashed()
-                ->with(['user', 'appointments', 'visits', 'expenses', 'payments', 'inventoryTransactions'])
+                ->with(['user', 'appointments', 'visits', 'expenses', 'payments', 'transactions'])
                 ->findOrFail($id);
 
             $staffName = $staff->user->name ?? 'Deleted Staff';
-            $errorMessages = [];
 
-            // Check for active dentist appointments (scheduled/rescheduled/walk-in)
-            if ($staff->role === 'dentist') {
-                $hasActiveAppointments = $staff->appointments()
-                    ->whereIn('status', ['scheduled', 'rescheduled', 'walk_in'])
-                    ->exists();
-
-                if ($hasActiveAppointments) {
-                    $errorMessages[] = 'has active appointments (scheduled/rescheduled/walk-in)';
-                }
-            }
-
-            // Check all restricted foreign key relationships
-            if ($staff->visits()->exists()) {
-                $errorMessages[] = 'has associated patient visits';
-            }
-
-            if ($staff->expenses()->exists()) {
-                $errorMessages[] = 'has expense records';
-            }
-
-            if ($staff->payments()->exists()) {
-                // Payments has set null, but we should still warn
-                $errorMessages[] = 'has payment records (these will be unassigned)';
-            }
-
-            // Check inventory transactions
-            if ($staff->inventoryTransactions()->exists()) {
-                $errorMessages[] = 'has inventory transaction records';
-            }
-
-            if (!empty($errorMessages)) {
-                $message = 'Cannot permanently delete staff member who ' . implode(', ', $errorMessages);
-
-                // Add specific instructions for each case
-                if (in_array('has associated patient visits', $errorMessages)) {
-                    $message .= '. Please reassign visits first.';
-                } elseif (in_array('has expense records', $errorMessages)) {
-                    $message .= '. Please reassign expenses first.';
-                } else {
-                    $message .= '. Please resolve these dependencies first.';
-                }
-
-                throw new Exception($message);
-            }
-
-            // If we get here, safe to force delete
-            // First get the user_id to delete the user after
             $userId = $staff->user_id;
 
-            // Force delete staff
             $staff->forceDelete();
 
-            // Also delete the associated user
             if ($userId) {
                 User::destroy($userId);
             }
@@ -345,11 +306,8 @@ class StaffController extends Controller
                 ->with('success', "{$staffName} has been permanently deleted");
         } catch (\Exception $e) {
             DB::rollBack();
-            logger()->error("Staff forceDelete failed: " . $e->getMessage());
-
             return redirect()
-                ->route('dashboard.staff.trash')
-                ->with('error', $e->getMessage());
+                ->route('dashboard.staff.trash')->with('error', "Staff forceDelete failed: " . $e->getMessage());
         }
     }
 }

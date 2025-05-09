@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('services', function (Blueprint $table) {
             $table->id();
-            $table->string('service_name');
+            $table->string('service_name')->unique();
             $table->text('description')->nullable();
             $table->decimal('service_price', 10, 2);
-            $table->integer('duration')->default(30); // in minutes
+            $table->integer('duration')->default(30);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

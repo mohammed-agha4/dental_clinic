@@ -25,7 +25,7 @@ class RolesController extends Controller
      */
     public function create()
     {
-    Gate::authorize('roles.create');
+        Gate::authorize('roles.create');
         $role = new Role();
         return view('dashboard.roles.create', compact('role'));
     }
@@ -37,7 +37,7 @@ class RolesController extends Controller
     {
         Gate::authorize('roles.create');
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|unique:roles,name|string|max:255',
             'abilities' => 'required|array',
         ]);
 
@@ -78,7 +78,6 @@ class RolesController extends Controller
         $role->updateWithAbilities($request);
 
         return redirect()->route('dashboard.roles.index')->with('success', 'Role Updated Successfully');
-
     }
 
     /**
@@ -87,7 +86,19 @@ class RolesController extends Controller
     public function destroy(string $id)
     {
         Gate::authorize('roles.delete');
-        Role::destroy($id);
-        return redirect()->route('dashboard.roles.index')->with('success', 'Role Deleted Successfully');
+
+        $role = Role::withCount('users')->findOrFail($id);
+
+        if ($role->users_count > 0) {
+            return redirect()
+                ->route('dashboard.roles.index')
+                ->with('error', 'Cannot delete role: There are users assigned to this role.');
+        }
+
+        $role->delete();
+
+        return redirect()
+            ->route('dashboard.roles.index')
+            ->with('success', 'Role deleted successfully');
     }
 }

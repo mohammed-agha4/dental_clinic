@@ -8,25 +8,34 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.veryicon.com/path-to-icons.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css"
+        rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('front/css/style.css') }}">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400&family=Montserrat:wght@400&display=swap"
+        rel="stylesheet">
 
     <style>
         /* Variables for consistent theming */
         :root {
-            /* --primary-color: #0d6efd; */
-            --primary-hover: #0b5ed7;
-            --text-dark: #212529;
-            --text-muted: #6c757d;
-            --border-color: #dee2e6;
-            --light-bg: #f8f9fa;
-            --input-focus: rgba(13, 110, 253, 0.25);
-            --spacing-sm: 0.75rem;
-            --spacing-md: 1.5rem;
-            --spacing-lg: 2.5rem;
-            --border-radius: 0.375rem;
-            --box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-        }
+    /* New color scheme */
+    --primary-color: #122e44;  /* Professional teal */
+    --primary-hover: #238F89;  /* Slightly darker teal */
+    --secondary-color: #E0F2F1;  /* Very light teal */
+    --accent-color: #567da8;  /* Warm orange for actions */
+    --text-dark: #2D3748;  /* Dark gray-blue */
+    --text-muted: #718096;  /* Medium gray */
+    --border-color: #E2E8F0;  /* Light gray */
+    --light-bg: #F8FAFC;  /* Very light gray */
+    --input-focus: rgba(42, 167, 160, 0.25);  /* Teal with transparency */
+
+    /* Spacing and other variables remain the same */
+    --spacing-sm: 0.75rem;
+    --spacing-md: 1.5rem;
+    --spacing-lg: 2.5rem;
+    --border-radius: 0.375rem;
+    --box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
 
 
         body {
@@ -184,8 +193,15 @@
 
                 <div class="col-md-3 col-lg-2 d-md-block sidebar collapse">
                     <div class="position-sticky pt-3" style="top: 0; height: 100vh; overflow-y: auto">
-                        <div class="text-center mb-4">
-                            <a class="text-light text-decoration-none" href="{{ route('dashboard') }}"><h4>OralOasis</h4></a>
+                        <div class="text-center mb-4 ">
+                            <div class="d-flex align-items-center ">
+                                <img src="{{ asset('front/assets/icons/final_logo.png') }}" class="m-0 p-0"
+                                    style="filter: brightness(0) invert(1);" height="40" alt="">
+                                <a class="text-light text-decoration-none" href="{{ route('dashboard') }}"
+                                    style="font-family: 'Playfair Display', serif; font-weight: 600;">
+                                    <h2>OralOasis</h2>
+                                </a>
+                            </div>
                             <hr>
 
 
@@ -215,6 +231,7 @@
                 </div>
             @endauth
 
+            
             <!-- Main Content Area with Navbar -->
             <div class="col-md-9 col-lg-10">
                 <!-- Navbar -->
@@ -223,7 +240,7 @@
                         <button class="navbar-toggler border-0" type="button" onclick="toggleSidebar()">
                             <span class="navbar-toggler-icon"></span>
                         </button>
-                        
+
                         <ul class="navbar-nav ms-auto">
 
 
@@ -242,6 +259,12 @@
                                             href="{{ route('dashboard.profile.edit') }}">Profile</a></li>
                                     <li>
                                         <hr class="dropdown-divider">
+                                    </li>
+                                    <li>
+                                        <a class="nav-link {{ request()->routeIs('password.change') ? 'active' : '' }}"
+                                            href="{{ route('password.change') }}">
+                                            </i>change password
+                                        </a>
                                     </li>
                                     <li>
                                         <form action="{{ route('logout') }}" method="post">
@@ -272,15 +295,16 @@
     <script src="{{ asset('front/js/script.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @stack('js')
-    {{-- <script>
+    <script>
         let flash_msg = document.querySelector('#flash-msg');
         window.setTimeout(() => {
             flash_msg.remove();
         }, 3000);
-    </script> --}}
+    </script>
 
 
-    <script>
+
+    {{-- <script>
         let appointmentDateInput = document.querySelectorAll('.date');
         let today = new Date();
         let yyyy = today.getFullYear();
@@ -291,7 +315,18 @@
         appointmentDateInput.forEach(element => {
             element.min = formattedToday;
         });
-    </script>
+
+
+
+        if (appointmentDateInput) {
+            let today = new Date();
+            let yyyy = today.getFullYear();
+            let mm = String(today.getMonth() + 1).padStart(2, '0');
+            let dd = String(today.getDate()).padStart(2, '0');
+            let formattedToday = `${yyyy}-${mm}-${dd}`;
+            appointmentDateInput.min = formattedToday;
+        }
+    </script> --}}
 </body>
 
 </html>

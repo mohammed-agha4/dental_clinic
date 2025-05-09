@@ -15,26 +15,20 @@ class InventoryObserver
     public function updated(Inventory $inventory): void
     {
         try {
-            // Only trigger if quantity was decreased below reorder level
-            if ($inventory->isDirty('quantity') && 
-                $inventory->quantity <= $inventory->reorder_level) {
-
-                // Get all admin users
+                // isDerty() returns true if the quantity was modified but not yet saved (as here in the)
+            if ($inventory->isDirty('quantity') && $inventory->quantity <= $inventory->reorder_level) {
+                //whereHas/has ensures the User model has at least one associated staff record that meets the condition
                 $admins = User::whereHas('staff', function($query) {
                     $query->where('role', 'admin');
                 })->get();
-                
-                Log::info('Reorder notification triggered for ' . $inventory->name . '. Found ' . $admins->count() . ' admins.');
 
-                // Send notification to each admin
                 foreach ($admins as $admin) {
                     $admin->notify(new ReorderNotification($inventory));
-                    Log::info('Notification sent to admin ID: ' . $admin->id);
+                    Log::info('Notification sent');
                 }
             }
         } catch (\Exception $e) {
-            // Log any errors in sending notifications
-            Log::error('Failed to send reorder notification: ' . $e->getMessage());
+            Log::error('failed to send notification: ' . $e->getMessage());
         }
     }
 

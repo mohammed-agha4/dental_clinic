@@ -74,6 +74,7 @@ return [
     'staff.create' => 'create staff',
     'staff.update' => 'update staff',
     'staff.delete' => 'delete staff',
+    'staff.show' => 'show staff',
     'staff.restore' => 'restore staff',
     'staff.trash' => 'trash staff',
     'staff.force_delete' => 'force delete staff',

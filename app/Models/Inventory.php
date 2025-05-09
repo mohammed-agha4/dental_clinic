@@ -27,9 +27,6 @@ class Inventory extends Model
         return $this->belongsTo(Category::class)->withDefault();
     }
 
-    /**
-     * Get the supplier associated with the inventory.
-     */
     public function supplier()
     {
         return $this->belongsTo(Supplier::class)->withDefault();
@@ -43,10 +40,12 @@ class Inventory extends Model
     public function visits()
     {
         return $this->belongsToMany(Visit::class, 'inventory_visits')
-                    ->withPivot('quantity_used', 'notes')
-                    ->withTimestamps();
+            ->withPivot('quantity_used', 'notes')
+            ->withTimestamps();
     }
 
-
-
+    public function getIsExpiredAttribute()
+    {
+        return $this->expiry_date && $this->expiry_date->isPast();
+    }
 }

@@ -81,8 +81,8 @@
                                             </p>
                                         @elseif(isset($notification->data['appointment_date']))
                                             <p class="mb-1 text-muted small">
-                                                <strong>Patient:</strong> {{ $notification->data['patient_name'] ?? 'N/A' }} |
-                                                <strong>Service:</strong> {{ $notification->data['service_name'] ?? 'N/A' }} |
+                                                <strong>Patient:</strong> {{ $notification->data['patient_name'] ?? 'Not Recorded' }} |
+                                                <strong>Service:</strong> {{ $notification->data['service_name'] ?? 'Not Recorded' }} |
                                                 <span class="badge bg-info text-dark">{{ $notification->data['status'] }}</span>
                                             </p>
                                         @endif

@@ -148,7 +148,7 @@
                                             <tr>
                                                 <td>{{ $appointment->patient->fname }} {{ $appointment->patient->lname }}
                                                 </td>
-                                                <td>{{ $appointment->service->service_name ?? 'N/A' }}</td>
+                                                <td>{{ $appointment->service->service_name ?? 'Not Recorded' }}</td>
                                                 <td>{{ \Carbon\Carbon::parse($appointment->appointment_date)->format('M d, Y h:i A') }}
                                                 </td>
                                                 <td>{{ $appointment->status }}</td>
@@ -189,7 +189,7 @@
                                                 <td>
                                                     <strong>{{ $appointment->patient->fname }}
                                                         {{ $appointment->patient->lname }}</strong><br>
-                                                    <small>{{ $appointment->service->service_name ?? 'N/A' }}</small><br>
+                                                    <small>{{ $appointment->service->service_name ?? 'Not Recorded' }}</small><br>
                                                     <small>{{ \Carbon\Carbon::parse($appointment->appointment_date)->format('h:i A') }}</small>
                                                 </td>
                                             </tr>
@@ -221,7 +221,7 @@
                                                 <td>
                                                     <strong>{{ $visit->patient->fname }}
                                                         {{ $visit->patient->lname }}</strong><br>
-                                                    <small>{{ $visit->service->service_name ?? 'N/A' }}</small><br>
+                                                    <small>{{ $visit->service->service_name ?? 'Not Recorded' }}</small><br>
                                                     <small>{{ \Carbon\Carbon::parse($visit->visit_date)->format('M d, Y') }}</small>
                                                 </td>
                                             </tr>
@@ -482,10 +482,10 @@
                                             <tr>
                                                 <td>{{ $appointment->patient->fname }} {{ $appointment->patient->lname }}
                                                 </td>
-                                                <td>{{ $appointment->service->service_name ?? 'N/A' }}</td>
+                                                <td>{{ $appointment->service->service_name ?? 'Not Recorded' }}</td>
                                                 <td>{{ \Carbon\Carbon::parse($appointment->appointment_date)->format('h:i A') }}
                                                 </td>
-                                                <td>{{ $appointment->dentist->user->name ?? 'N/A' }}</td>
+                                                <td>{{ $appointment->dentist->user->name ?? 'Not Recorded' }}</td>
                                             </tr>
                                         @endforeach
                                     </tbody>

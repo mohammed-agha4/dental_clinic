@@ -23,17 +23,46 @@ class AppointmentsController extends Controller
     {
         Gate::authorize('appointments.view');
 
-        $query = Appointment::with(['patient', 'dentist.user', 'service'])
-            ->orderBy('appointment_date', 'desc');
+        $query = Appointment::with(['patient', 'dentist.user', 'service']);
 
-        if (
-            auth()->user()->hasAbility('view-own-appointments') &&
-            !auth()->user()->hasAbility('view-all-appointments')
-        ) {
+        if (auth()->user()->hasAbility('view-own-appointments') && !auth()->user()->hasAbility('view-all-appointments')) {
             $query->where('staff_id', auth()->user()->staff->id);
         }
 
-        $appointments = $query->paginate(10);
+        if ($search = request('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('patient', function ($q) use ($search) {
+                    $q->where('fname', 'like', "%{$search}%")
+                        ->orWhere('lname', 'like', "%{$search}%");
+                })
+                    ->orWhereHas('dentist.user', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('service', function ($q) use ($search) {
+                        $q->where('service_name', 'like', "%{$search}%");
+                    })
+                    ->orWhere('status', 'like', "%{$search}%");
+            });
+        }
+
+        if ($dateFrom = request('date_from')) {
+            $query->whereDate('appointment_date', '>=', $dateFrom);
+        }
+        if ($dateTo = request('date_to')) {
+            $query->whereDate('appointment_date', '<=', $dateTo);
+        }
+
+        if ($status = request('status')) {
+            $query->where('status', $status);
+        }
+
+        $sortField = request('sort', 'appointment_date');
+        $sortDirection = request('direction', 'desc');
+
+        $query->orderBy($sortField, $sortDirection);
+
+        $appointments = $query->paginate(8);
+
         return view('dashboard.appointments.index', compact('appointments'));
     }
 
@@ -57,10 +86,43 @@ class AppointmentsController extends Controller
         Gate::authorize('appointments.create');
         $isWalkIn = $request->has('appointment_type') && $request->appointment_type === 'walk_in';
 
-        $validator = $this->validateAppointmentRequest($request, $isWalkIn);
+        // Define base validation rules that apply to all appointment types
+        $rules = [
+            'service_id' => 'required|exists:services,id',
+            'staff_id' => 'required|exists:staff,id',
+            'notes' => 'nullable|string',
+        ];
+
+        if ($isWalkIn) {
+            // Walk-in specific validation
+            $rules['fname'] = 'required|string|max:255';
+            $rules['lname'] = 'required|string|max:255';
+            $rules['phone'] = 'required|string|max:20';
+            $rules['email'] = 'nullable|email|max:255';
+            $rules['gender'] = 'required|in:male,female';
+            $rules['cheif_complaint'] = 'required|string';
+        } else {
+            // Regular appointment validation
+            if ($request->filled('existing_patient_id')) {
+                $rules['existing_patient_id'] = 'required|exists:patients,id';
+            } else {
+                $rules['fname'] = 'required|string|max:255';
+                $rules['lname'] = 'required|string|max:255';
+                $rules['DOB'] = 'required|date';
+                $rules['gender'] = 'required|in:male,female';
+                $rules['phone'] = 'required|string|max:20';
+                $rules['email'] = 'nullable|email|max:255';
+                $rules['medical_history'] = 'nullable|string';
+                $rules['allergies'] = 'nullable|string';
+            }
+
+            $rules['appointment_date_time'] = 'required|date|after:now';
+        }
+
+        // Perform the validation with the defined rules
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
-            // Log validation errors for debugging
             Log::error('Appointment validation failed', [
                 'errors' => $validator->errors()->all(),
                 'input' => $request->all()
@@ -79,22 +141,32 @@ class AppointmentsController extends Controller
             if ($request->filled('existing_patient_id')) {
                 $patient = Patient::findOrFail($request->existing_patient_id);
 
+                // Verify patient exists
                 if (!$patient) {
                     throw new \Exception('Patient not found');
                 }
-            } else {
-                $patient = Patient::findOrCreateFromRequest($request, $isWalkIn);
-            }
 
-            // Create appointment
-            $appointment = Appointment::createAppointment([
-                'patient_id' => $patient->id,
-                'staff_id' => $request->staff_id,
-                'service_id' => $request->service_id,
-                'appointment_date' => $isWalkIn ? now() : $request->appointment_date_time,
-                'notes' => $request->notes,
-                'cancellation_reason' => $request->cancellation_reason,
-            ], $isWalkIn);
+                // Create appointment using existing patient
+                $appointment = Appointment::create([
+                    'patient_id' => $patient->id,
+                    'staff_id' => $request->staff_id,
+                    'service_id' => $request->service_id,
+                    'appointment_date' => $isWalkIn ? now() : $request->appointment_date_time,
+                    'notes' => $request->notes,
+                    'status' => $isWalkIn ? 'completed' : 'scheduled',
+                ]);
+            } else {
+                // Handle new patient
+                $patient = Patient::findOrCreateFromRequest($request, $isWalkIn);
+
+                $appointment = Appointment::createAppointment([
+                    'patient_id' => $patient->id,
+                    'staff_id' => $request->staff_id,
+                    'service_id' => $request->service_id,
+                    'appointment_date' => $isWalkIn ? now() : $request->appointment_date_time,
+                    'notes' => $request->notes,
+                ], $isWalkIn);
+            }
 
             DB::commit();
 
@@ -189,6 +261,7 @@ class AppointmentsController extends Controller
     public function update(Request $request, Appointment $appointment)
     {
         Gate::authorize('appointments.update');
+
         $validator = Validator::make($request->all(), [
             'appointment_id' => 'required|exists:appointments,id',
             'service_id' => 'required|exists:services,id',
@@ -201,7 +274,7 @@ class AppointmentsController extends Controller
             'gender' => 'required|in:male,female',
             'phone' => 'required|string',
             'email' => 'required|email',
-            'cancellation_reason' => 'required_if:status,canceled',
+            'notes' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -215,16 +288,39 @@ class AppointmentsController extends Controller
             DB::beginTransaction();
 
             $patient = Patient::findOrFail($appointment->patient_id);
-            $this->validatePatientUpdate($request, $patient);
+
+            // Validate patient email uniqueness
+            if ($patient->email != $request->email) {
+                $emailExists = Patient::where('email', $request->email)
+                    ->where('id', '!=', $patient->id)
+                    ->exists();
+
+                if ($emailExists) {
+                    throw new \Exception('Email already exists for another patient.');
+                }
+            }
+
+            // Validate patient phone uniqueness
+            if ($patient->phone != $request->phone) {
+                $phoneExists = Patient::where('phone', $request->phone)
+                    ->where('id', '!=', $patient->id)
+                    ->exists();
+
+                if ($phoneExists) {
+                    throw new \Exception('Phone number already exists for another patient.');
+                }
+            }
+
+            // Update patient
             $patient->updateFromRequest($request);
 
+            // Update appointment
             $appointment->updateAppointment([
                 'staff_id' => $request->staff_id,
                 'service_id' => $request->service_id,
                 'appointment_date' => $request->appointment_date_time,
                 'status' => $request->status,
                 'notes' => $request->notes,
-                'cancellation_reason' => $request->cancellation_reason,
             ]);
 
             DB::commit();
@@ -316,73 +412,6 @@ class AppointmentsController extends Controller
         } catch (\Exception $e) {
             return redirect()->route('dashboard.appointments.trash')
                 ->with('error', 'Error permanently deleting: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Validate appointment request data
-     */
-    protected function validateAppointmentRequest(Request $request, bool $isWalkIn): \Illuminate\Validation\Validator
-{
-    $rules = [
-        'service_id' => 'required|exists:services,id',
-        'staff_id' => 'required|exists:staff,id',
-        'notes' => 'nullable|string',
-        'cancellation_reason' => 'nullable|string',
-    ];
-
-    if ($isWalkIn) {
-        // Walk-in specific validation
-        $rules['fname'] = 'required|string|max:255';
-        $rules['lname'] = 'required|string|max:255';
-        $rules['phone'] = 'required|string|max:20';
-        $rules['email'] = 'nullable|email|max:255';
-        $rules['gender'] = 'required|in:male,female';
-        $rules['cheif_complaint'] = 'required|string';
-    } else {
-        // Regular appointment validation
-        if ($request->filled('existing_patient_id')) {
-            $rules['existing_patient_id'] = 'required|exists:patients,id';
-        } else {
-            $rules['fname'] = 'required|string|max:255';
-            $rules['lname'] = 'required|string|max:255';
-            $rules['DOB'] = 'required|date';
-            $rules['gender'] = 'required|in:male,female';
-            $rules['phone'] = 'required|string|max:20';
-            $rules['email'] = 'nullable|email|max:255';
-            $rules['medical_history'] = 'nullable|string';
-            $rules['allergies'] = 'nullable|string';
-        }
-
-        $rules['appointment_date_time'] = 'required|date|after:now';
-    }
-
-    return Validator::make($request->all(), $rules);
-}
-
-    /**
-     * Validate patient update data
-     */
-    protected function validatePatientUpdate(Request $request, Patient $patient): void
-    {
-        if ($patient->email != $request->email) {
-            $emailExists = Patient::where('email', $request->email)
-                ->where('id', '!=', $patient->id)
-                ->exists();
-
-            if ($emailExists) {
-                throw new \Exception('Email already exists for another patient.');
-            }
-        }
-
-        if ($patient->phone != $request->phone) {
-            $phoneExists = Patient::where('phone', $request->phone)
-                ->where('id', '!=', $patient->id)
-                ->exists();
-
-            if ($phoneExists) {
-                throw new \Exception('Phone number already exists for another patient.');
-            }
         }
     }
 }

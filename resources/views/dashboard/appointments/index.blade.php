@@ -22,6 +22,7 @@
             </div>
 
             <div class="card-body">
+
                 @if (session()->has('success'))
                     <div id="flash-msg" class="alert alert-success alert-dismissible fade show">
                         {{ session('success') }}
@@ -35,17 +36,67 @@
                     </div>
                 @endif
 
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover small">
+                <div class="mb-4">
+                    <form class="row g-3">
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <input type="text" class="form-control" name="search"
+                                    placeholder="Search patients, dentists, services..." value="{{ request('search') }}">
+                                <button class="btn btn-outline-secondary" type="submit">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" name="status">
+                                <option value="">All Statuses</option>
+                                <option value="scheduled" {{ request('status') == 'scheduled' ? 'selected' : '' }}>Scheduled
+                                </option>
+                                <option value="walk_in" {{ request('status') == 'walk_in' ? 'selected' : '' }}>Walk In
+                                </option>
+                                <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed
+                                </option>
+                                <option value="rescheduled" {{ request('status') == 'rescheduled' ? 'selected' : '' }}>
+                                    Rescheduled</option>
+                                <option value="canceled" {{ request('status') == 'canceled' ? 'selected' : '' }}>Canceled
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <span class="input-group-text">From</span>
+                                <input type="date" class="form-control" name="date_from"
+                                    value="{{ request('date_from') }}">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <span class="input-group-text">To</span>
+                                <input type="date" class="form-control" name="date_to" value="{{ request('date_to') }}">
+                            </div>
+                        </div>
+                        <div class="col-md-12 d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-filter"></i> Filter
+                            </button>
+                            <a href="{{ route('dashboard.appointments.index') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-sync-alt"></i> Reset
+                            </a>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="table-responsive" style="overflow-x: auto;">
+                    <table class="table table-striped table-hover small" style="min-width: 1200px;">
                         <thead class="table-light">
                             <tr class="text-center">
-                                <th>ID</th>
-                                <th>Patient</th>
-                                <th>Staff</th>
+                                <th>#</th>
+                                <th>Patient </th>
+                                <th>Staff </th>
                                 <th>Service</th>
                                 <th>Appointment Date</th>
                                 <th>Duration</th>
-                                <th>Status</th>
+                                <th> Status </th>
                                 <th>Reminder Sent</th>
                                 @if (auth()->user()->can('appointments.show') ||
                                         auth()->user()->can('appointments.update') ||
@@ -64,7 +115,13 @@
                                     <td>{{ $appointment->appointment_date->format('M j, Y g:i A') ?? '' }}</td>
                                     <td>{{ $appointment->duration }} min</td>
                                     <td>{{ $appointment->status }}</td>
-                                    <td>{{ $appointment->reminder_sent == 1 ? 'Yes' : 'No' }}</td>
+                                    <td>
+                                        @if ($appointment->reminder_sent)
+                                            <span class="badge bg-success">Yes</span>
+                                        @else
+                                            <span class="badge bg-secondary">No</span>
+                                        @endif
+                                    </td>
                                     @if (auth()->user()->can('appointments.show') ||
                                             auth()->user()->can('appointments.update') ||
                                             auth()->user()->can('appointments.delete'))
@@ -100,7 +157,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="10" class="text-center py-4">No data found</td>
+                                    <td colspan="10" class="text-center py-4">No appointments found</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -108,13 +165,13 @@
                 </div>
 
                 <div class="mt-3">
-                    {{ $appointments->links() }}
+                    {{ $appointments->withQueryString()->links() }}
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Hidden Delete Form -->
+
     <form id="delete-form" method="POST" style="display: none;">
         @csrf
         @method('DELETE')
@@ -122,36 +179,9 @@
 @endsection
 
 @push('js')
-    <!-- Include SweetAlert Library -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    <script>
-        // Setup delete confirmation with SweetAlert
-        document.querySelectorAll('.delete-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const appointmentId = this.getAttribute('data-id');
-                const appointmentName = this.getAttribute('data-name');
-
-                Swal.fire({
-                    title: 'Are you sure?',
-                    html: `You are about to delete the appointment for: <strong>${appointmentName}</strong>`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#dc3545',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Yes, delete it!',
-                    cancelButtonText: 'Cancel',
-                    reverseButtons: true,
-                    focusCancel: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        const form = document.getElementById('delete-form');
-                        form.action = "{{ route('dashboard.appointments.destroy', '') }}/" +
-                            appointmentId;
-                        form.submit();
-                    }
-                });
-            });
-        });
-    </script>
+    <x-delete-alert
+        route="dashboard.appointments.destroy"
+        itemName="appointment"
+        deleteBtnClass="delete-btn"
+    />
 @endpush

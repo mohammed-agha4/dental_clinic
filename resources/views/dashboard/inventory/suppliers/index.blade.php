@@ -14,7 +14,7 @@
                 @endcan
             </div>
 
-            <!-- Flash Messages -->
+
             @if (session()->has('success'))
                 <div id="flash-msg" class="alert alert-success alert-dismissible fade show">
                     {{ session('success') }}
@@ -28,11 +28,36 @@
                 </div>
             @endif
 
+
+            <!-- Search and Filter Section -->
+            <div class="card-body border-bottom">
+                <form class="row g-3">
+                    <div class="col-md-8">
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="search"
+                                placeholder="Search suppliers by company, contact, email"
+                                value="{{ request('search') }}">
+                            <button class="btn btn-outline-secondary" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-4 d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-filter"></i> Search
+                        </button>
+                        <a href="{{ route('dashboard.inventory.suppliers.index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-sync-alt"></i> Reset
+                        </a>
+                    </div>
+                </form>
+            </div>
+
             <div class="table-responsive">
-                <table class="table small">
-                    <thead>
+                <table class="table small table-striped table-hover">
+                    <thead class="table-light">
                         <tr class="text-center">
-                            <th>ID</th>
+                            <th>#</th>
                             <th>Company Name</th>
                             <th>Contact Name</th>
                             <th>Email</th>
@@ -49,7 +74,7 @@
                                 <td>{{ $supplier->contact_name }}</td>
                                 <td>{{ $supplier->email }}</td>
                                 <td>{{ $supplier->phone }}</td>
-                                <td>{{ $supplier->address }}</td>
+                                <td>{{ Str::limit($supplier->address, 30) }}</td>
                                 <td>
                                     @can('suppliers.update')
                                         <a class="btn btn-outline-primary btn-sm"
@@ -67,7 +92,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center">No data found</td>
+                                <td colspan="7" class="text-center py-4">No suppliers found</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -75,13 +100,12 @@
             </div>
 
             <!-- Pagination Links -->
-            <div class="mt-3">
-                {{ $suppliers->links() }}
+            <div class="card-footer">
+                {{ $suppliers->withQueryString()->links() }}
             </div>
         </div>
     </div>
 
-    <!-- Hidden Delete Form -->
     <form id="delete-form" method="POST" style="display: none;">
         @csrf
         @method('DELETE')
@@ -89,37 +113,8 @@
 @endsection
 
 @push('js')
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Handle delete button clicks
-            document.querySelectorAll('.delete-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const supplierId = this.getAttribute('data-id');
-                    const supplierName = this.getAttribute('data-name');
-
-                    Swal.fire({
-                        title: 'Are you sure?',
-                        html: `You are about to delete the supplier: <strong>${supplierName}</strong>`,
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#dc3545',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Yes, delete it!',
-                        cancelButtonText: 'Cancel',
-                        reverseButtons: true,
-                        focusCancel: true
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            const form = document.getElementById('delete-form');
-                            form.action =
-                                "{{ route('dashboard.inventory.suppliers.destroy', '') }}/" +
-                                supplierId;
-                            form.submit();
-                        }
-                    });
-                });
-            });
-        });
-    </script>
+    <x-delete-alert
+    route="dashboard.inventory.suppliers.destroy"
+    itemName="supplier"
+    deleteBtnClass="delete-btn"/>
 @endpush

@@ -1,4 +1,5 @@
 @extends('layouts.master.master')
+
 @section('title', 'Link Staff to Service')
 
 @section('content')
@@ -21,14 +22,14 @@
                     </div>
                 @endif
                 @if (session()->has('error'))
-                    <div id="flash-msg" class="alert alert-danger alert-dismissible fade show ">
+                    <div id="flash-msg" class="alert alert-danger alert-dismissible fade show">
                         {{ session('error') }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 @endif
 
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover">
+                <div class="table-responsive" style="overflow-x: auto;">
+                    <table class="table table-striped table-hover small" style="min-width: 600px;">
                         <thead class="table-light">
                             <tr class="text-center">
                                 <th>#</th>
@@ -44,30 +45,30 @@
                                     <td>{{ ucfirst($staff_service->dentist->user->name) }}</td>
                                     <td>{{ ucfirst($staff_service->service->service_name) }}</td>
                                     <td>
-                                        @can('service_staff.update')
-                                            <a class="btn btn-outline-primary btn-sm"
-                                                href="{{ route('dashboard.service-staff.edit', $staff_service->id) }}">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                        @endcan
-                                        @can('service_staff.delete')
-                                            <button class="btn btn-outline-danger btn-sm delete-btn"
-                                                data-id="{{ $staff_service->id }}"
-                                                data-name="{{ ucfirst($staff_service->dentist->user->name) }} - {{ ucfirst($staff_service->service->service_name) }}">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        @endcan
-                                        <form id="delete-form-{{ $staff_service->id }}"
-                                            action="{{ route('dashboard.service-staff.destroy', $staff_service->id) }}"
-                                            method="post" style="display: none;">
-                                            @csrf
-                                            @method('DELETE')
-                                        </form>
+                                        <div class="d-flex flex-wrap justify-content-center gap-1">
+                                            @can('service_staff.update')
+                                                <a class="btn btn-outline-primary btn-sm"
+                                                    href="{{ route('dashboard.service-staff.edit', $staff_service->id) }}">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            @endcan
+                                            @can('service_staff.delete')
+                                                <button class="btn btn-outline-danger btn-sm delete-btn"
+                                                    data-id="{{ $staff_service->id }}"
+                                                    data-name="{{ ucfirst($staff_service->dentist->user->name) }} - {{ ucfirst($staff_service->service->service_name) }}">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            @endcan
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="text-center py-4">No data found</td>
+                                    <td colspan="4" class="text-center py-4">
+                                        <i class="fas fa-user-slash fa-3x text-muted mb-3"></i>
+                                        <h5>No staff-service links found</h5>
+                                        <p class="text-muted">Add new staff service links using the button above.</p>
+                                    </td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -80,33 +81,17 @@
             </div>
         </div>
     </div>
+
+    <form id="delete-form" method="POST" style="display: none;">
+        @csrf
+        @method('DELETE')
+    </form>
+
 @endsection
 
 @push('js')
-    <script>
-        // Setup delete confirmation with SweetAlert
-        document.querySelectorAll('.delete-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const staffServiceId = this.getAttribute('data-id');
-                const staffServiceName = this.getAttribute('data-name');
-
-                Swal.fire({
-                    title: 'Are you sure?',
-                    html: `You are about to delete : <strong>${staffServiceName}</strong>`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#dc3545',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Yes, delete it!',
-                    cancelButtonText: 'Cancel',
-                    reverseButtons: true,
-                    focusCancel: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        document.getElementById('delete-form-' + staffServiceId).submit();
-                    }
-                });
-            });
-        });
-    </script>
+    <x-delete-alert
+    route="dashboard.service-staff.destroy"
+    itemName="staff_service"
+    deleteBtnClass="delete-btn"/>
 @endpush

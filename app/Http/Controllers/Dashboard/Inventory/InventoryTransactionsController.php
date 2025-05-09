@@ -15,7 +15,6 @@ class InventoryTransactionsController extends Controller
     public function index()
     {
         Gate::authorize('transactions.view');
-        // dd('d');
         $inventory_transactions = InventoryTransaction::with(['inventory', 'staff.user'])->latest('id')->paginate(8);
         return view('dashboard.inventory.inventory_transactions.index', compact('inventory_transactions'));
     }
@@ -38,8 +37,8 @@ class InventoryTransactionsController extends Controller
     public function store(Request $request)
     {
         Gate::authorize('transactions.create');
-        $request->validate([
 
+        $validated = $request->validate([
             'inventory_id' => 'nullable|exists:inventories,id',
             'staff_id' => 'nullable|exists:staff,id',
             'type' => 'required|in:purchase,use,adjustment,return',
@@ -52,16 +51,8 @@ class InventoryTransactionsController extends Controller
 
         ]);
 
-        $inventory_transaction = InventoryTransaction::create($request->all()); // doesn't need save
+        InventoryTransaction::create($validated);
         return redirect()->route('dashboard.inventory.inventory-transactions.index')->with('success', 'Transaction Added Successfuly');
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
     }
 
     /**
@@ -70,7 +61,6 @@ class InventoryTransactionsController extends Controller
     public function edit(string $id)
     {
         Gate::authorize('transactions.update');
-        // dd($id);
         $inventory_transaction = InventoryTransaction::findOrFail($id);
         // $product = Product::find($id);
         // dd($inventory_transaction);
@@ -84,26 +74,24 @@ class InventoryTransactionsController extends Controller
      * Update the specified resource in storage.
      */
     public function update(Request $request, InventoryTransaction $inventory_transaction)
-{
-    Gate::authorize('transactions.update');
+    {
+        Gate::authorize('transactions.update');
 
-    $validated = $request->validate([
-        'inventory_id' => 'nullable|exists:inventories,id',
-        'staff_id' => 'nullable|exists:staff,id',
-        'quantity' => 'required|integer|min:1',
-        'unit_price' => 'required|numeric|min:0',
-        'transaction_date' => 'required|date',
-        'notes' => 'nullable|string',
-    ]);
+        $validated = $request->validate([
+            'inventory_id' => 'nullable|exists:inventories,id',
+            'staff_id' => 'nullable|exists:staff,id',
+            'quantity' => 'required|integer|min:1',
+            'unit_price' => 'required|numeric|min:0',
+            'transaction_date' => 'required|date',
+            'notes' => 'nullable|string',
+        ]);
 
-    // Merge the forced type into validated data
-    $inventory_transaction->update(array_merge($validated, [
-        'type' => 'adjustment'
-    ]));
+        $validated['type'] = 'adjustment';
+        $inventory_transaction->update($validated);
 
-    return redirect()->route('dashboard.inventory.inventory-transactions.index')
-        ->with('success', 'Transaction Updated Successfully');
-}
+        return redirect()->route('dashboard.inventory.inventory-transactions.index')
+            ->with('success', 'Transaction Updated Successfully');
+    }
 
     /**
      * Remove the specified resource from storage.
@@ -111,6 +99,7 @@ class InventoryTransactionsController extends Controller
     public function destroy(string $id)
     {
         Gate::authorize('transactions.delete');
+        
         $inventory_transaction = InventoryTransaction::findOrFail($id);
         $inventory_transaction->delete();
         return redirect()->route('dashboard.inventory.inventory-transactions.index')->with('success', 'Transaction Deleted Successfuly');

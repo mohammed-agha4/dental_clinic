@@ -28,11 +28,12 @@
                     </div>
                 @endif
 
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover small ">
+                <!-- Table with forced horizontal scrolling -->
+                <div class="table-responsive" style="overflow-x: auto;">
+                    <table class="table table-striped table-hover small" style="min-width: 1100px;">
                         <thead class="table-light">
                             <tr class="text-center">
-                                <th>ID</th>
+                                <th>#</th>
                                 <th>Inventory</th>
                                 <th>Staff</th>
                                 <th>Type</th>
@@ -56,15 +57,12 @@
                                     <td>{{ $inventory_transaction->notes }}</td>
                                     <td>
                                         @can('transactions.update')
-                                            <a class="btn btn-outline-primary btn-sm"
-                                                href="{{ route('dashboard.inventory.inventory-transactions.edit', $inventory_transaction->id) }}">
+                                            <a class="btn btn-outline-primary btn-sm" href="{{ route('dashboard.inventory.inventory-transactions.edit', $inventory_transaction->id) }}">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                         @endcan
                                         @can('transactions.delete')
-                                            <button class="btn btn-outline-danger btn-sm delete-btn"
-                                                data-id="{{ $inventory_transaction->id }}"
-                                                data-name="{{ $inventory_transaction->inventory->name }}">
+                                            <button class="btn btn-outline-danger btn-sm delete-btn" data-id="{{ $inventory_transaction->id }}" data-name="{{ $inventory_transaction->inventory->name }}">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         @endcan
@@ -80,12 +78,14 @@
                 </div>
 
                 {{-- Pagination --}}
-                {{ $inventory_transactions->links() }}
+                <div class="mt-3">
+                    {{ $inventory_transactions->links() }}
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Hidden Delete Form -->
+
     <form id="delete-form" method="POST" style="display: none;">
         @csrf
         @method('DELETE')
@@ -93,33 +93,8 @@
 @endsection
 
 @push('js')
-    <script>
-        document.querySelectorAll('.delete-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const transactionId = this.getAttribute('data-id');
-                const transactionName = this.getAttribute('data-name');
-
-                Swal.fire({
-                    title: 'Are you sure?',
-                    html: `You are about to delete the transaction for: <strong>${transactionName}</strong>`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#dc3545',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Yes, delete it!',
-                    cancelButtonText: 'Cancel',
-                    reverseButtons: true,
-                    focusCancel: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        const form = document.getElementById('delete-form');
-                        form.action =
-                            "{{ route('dashboard.inventory.inventory-transactions.destroy', '') }}/" +
-                            transactionId;
-                        form.submit();
-                    }
-                });
-            });
-        });
-    </script>
+    <x-delete-alert
+    route="dashboard.inventory.inventory-transactions.destroy"
+    itemName="transaction"
+    deleteBtnClass="delete-btn"/>
 @endpush

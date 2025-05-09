@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Dashboard\Payment;
 
+use Carbon\Carbon;
 use App\Models\Staff;
 use App\Models\Visit;
 use App\Models\Payment;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Gate;
@@ -16,38 +18,40 @@ class PaymentsController extends Controller
      * Display a listing of the resource.
      */
     public function index(Request $request)
-{
-    Gate::authorize('payments.view');
+    {
+        Gate::authorize('payments.view');
 
-    $query = Payment::with(['visit.patient', 'staff']);
+        $query = Payment::with(['visit.patient', 'staff.user']);
 
-    // If user is dentist but not admin
-    if (auth()->user()->hasAbility('view-own-payments') &&
-        !auth()->user()->hasAbility('view-all-payments')) {
-        $query->whereHas('visit', function($q) {
-            $q->where('staff_id', auth()->user()->staff->id);
-        });
+        if (
+            auth()->user()->hasAbility('view-own-payments') &&
+            !auth()->user()->hasAbility('view-all-payments')
+        ) {
+            $query->whereHas('visit', function ($q) {
+                $q->where('staff_id', auth()->user()->staff->id);
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('method')) {
+            $query->where('method', $request->method);
+        }
+
+        if ($request->filled('from_date')) {
+            $query->where('created_at', '>=', Carbon::parse($request->from_date)->startOfDay());
+        }
+
+        if ($request->filled('to_date')) {
+            $query->where('created_at', '<=', Carbon::parse($request->to_date)->endOfDay());
+        }
+
+        $payments = $query->latest()->paginate(8);
+
+        return view('dashboard.payments.index', compact('payments'));
     }
-
-    // Filter by status if provided
-    if ($request->has('status')) {
-        $query->where('status', $request->status);
-    }
-
-    // Filter by payment method if provided
-    if ($request->has('method')) {
-        $query->where('method', $request->method);
-    }
-
-    // Filter by date range if provided
-    if ($request->has('from_date') && $request->has('to_date')) {
-        $query->whereBetween('created_at', [$request->from_date, $request->to_date]);
-    }
-
-    $payments = $query->latest()->paginate(10);
-
-    return view('dashboard.Payments.index', compact('payments'));
-}
 
     /**
      * Show the form for creating a new resource.
@@ -56,7 +60,7 @@ class PaymentsController extends Controller
     {
         Gate::authorize('payments.create');
 
-        $visits = Visit::with(['patient', 'service'])
+        $visits = Visit::with(['patient', 'service', 'staff.user'])
             // ->whereDoesntHave('payments', function($query) {
             //     $query->where('status', 'completed');
             // })
@@ -75,6 +79,7 @@ class PaymentsController extends Controller
      */
     public function store(Request $request)
     {
+        // dd($request->all());
         Gate::authorize('payments.create');
         // dd($request->all());
         $validated = $request->validate([
@@ -82,7 +87,7 @@ class PaymentsController extends Controller
             'staff_id' => 'required|exists:staff,id',
             'amount' => 'required|numeric|min:0',
             'method' => 'required|in:cash,credit_card,bank_transfer',
-            'transaction_id' => 'nullable|string|max:255',
+            'transaction_id' => 'nullable|string|unique:payments,transaction_id|max:255',
             'status' => 'required|in:pending,completed,failed',
             'notes' => 'nullable|string',
         ]);
@@ -181,6 +186,10 @@ class PaymentsController extends Controller
         Gate::authorize('payments.delete');
         try {
             DB::beginTransaction();
+            if ($payment->status == 'completed') {
+                DB::rollBack();
+                return redirect()->route('dashboard.payments.index')->with('error', 'Completed payments status cannot be deleted');
+            }
 
             // Delete the payment
             $payment->delete();
@@ -193,5 +202,28 @@ class PaymentsController extends Controller
             DB::rollBack();
             return back()->with('error', 'Error deleting payment: ' . $e->getMessage());
         }
+    }
+
+
+    /**
+     * Generate payment receipt
+     */
+
+    /**
+     * Generate payment receipt
+     */
+    public function receipt(Payment $payment)
+    {
+        Gate::authorize('payments.show');
+
+        $payment->load(['visit.patient', 'visit.service', 'staff.user']);
+
+        // For PDF generation
+        if (request()->has('download')) {
+            return Pdf::loadView('dashboard.payments.receipt', compact('payment'))
+                ->download("receipt-{$payment->id}.pdf");
+        }
+
+        return view('dashboard.payments.receipt', compact('payment'));
     }
 }

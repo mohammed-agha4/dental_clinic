@@ -32,20 +32,30 @@
             </div>
 
             <div class="row mb-3">
-                <div class="col-md-6">
+                <div class="col-md-12">
                     <div class="form-group">
                         <label class="form-label">Services:</label>
-                        <select name="service_id" class="form-select @error('service_id') is-invalid @enderror">
-                            <option selected disabled>--select--</option>
-                            @foreach ($services as $service)
-                                <option value="{{ $service->id }}" @selected(old('service_id', $service_staff->service_id) == $service->id)>
-                                    {{ $service->service_name }}
-                                </option>
-                            @endforeach
-                        </select>
                         @error('service_id')
-                            <small class="text-danger">{{ $message }}</small>
+                            <div class="alert alert-danger">{{ $message }}</div>
                         @enderror
+
+                        <div class="row">
+                            @foreach ($services as $service)
+                                <div class="col-md-3 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input @error('service_id') is-invalid @enderror"
+                                               type="checkbox"
+                                               name="service_ids[]"
+                                               id="service_{{ $service->id }}"
+                                               value="{{ $service->id }}"
+                                               @checked(in_array($service->id, old('service_ids', $service_staff->service_id ? [$service_staff->service_id] : [])))>
+                                        <label class="form-check-label" for="service_{{ $service->id }}">
+                                            {{ $service->service_name }}
+                                        </label>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
             </div>

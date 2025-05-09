@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Dashboard\Visits;
 
 use Exception;
+use Carbon\Carbon;
 use App\Models\Staff;
 use App\Models\Visit;
 use App\Models\Patient;
@@ -18,16 +19,17 @@ use App\Http\Controllers\Controller;
 use App\Models\InventoryTransaction;
 use Illuminate\Support\Facades\Gate;
 
+
 class VisitsController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
-{
-    Gate::authorize('visits.view');
+    {
+        Gate::authorize('visits.view');
 
-    $query = Visit::with([
+        $query = Visit::with([
             'appointment',
             'patient',
             'staff.user',
@@ -35,14 +37,16 @@ class VisitsController extends Controller
             'inventoryItems'
         ])->latest('id');
 
-    if (auth()->user()->hasAbility('view-own-visits') &&
-        !auth()->user()->hasAbility('view-all-visits')) {
-        $query->where('staff_id', auth()->user()->staff->id);
-    }
+        if (
+            auth()->user()->hasAbility('view-own-visits') &&
+            !auth()->user()->hasAbility('view-all-visits')
+        ) {
+            $query->where('staff_id', auth()->user()->staff->id);
+        }
 
-    $visits = $query->paginate(8);
-    return view('dashboard.visits.index', compact('visits'));
-}
+        $visits = $query->paginate(8);
+        return view('dashboard.visits.index', compact('visits'));
+    }
 
     public function create(Appointment $appointment)
     {
@@ -76,8 +80,20 @@ class VisitsController extends Controller
 
         DB::beginTransaction();
 
+
+
         try {
             $appointment = Appointment::findOrFail($validated['appointment_id']);
+
+
+            $visitDate = Carbon::parse($validated['visit_date']);
+            $appointmentDate = Carbon::parse($appointment->appointment_date);
+
+            if (!$visitDate->eq($appointmentDate)) {
+                DB::rollBack();
+                return redirect()->back()
+                    ->with('error', 'Failed to add visit: appointment date and visit date must be the same');
+            }
 
             // Create the visit record
             $visit = Visit::createVisit($validated);
@@ -89,6 +105,7 @@ class VisitsController extends Controller
             if ($request->has('transaction_inventory_ids')) {
                 $visit->processInventoryTransactions(Visit::prepareInventoryData($request));
             }
+
 
             DB::commit();
 
@@ -199,6 +216,9 @@ class VisitsController extends Controller
                 throw new Exception('Cannot delete - visit has payment records');
             }
 
+            // Restore inventory quantities before deleting
+            $visit->restoreInventoryQuantities();
+
             // Delete related inventory visits
             InventoryVisit::where('visit_id', $visit->id)->delete();
 
@@ -296,30 +316,134 @@ class VisitsController extends Controller
      */
     protected function validateVisitRequest(Request $request): array
     {
-        return $request->validate([
+        $rules = [
             'appointment_id' => 'required|exists:appointments,id',
             'patient_id' => 'required|exists:patients,id',
             'staff_id' => 'required|exists:staff,id',
             'service_id' => 'required|exists:services,id',
-            'visit_date' => 'required|date',
+            'visit_date' => [
+                'required',
+                'date',
+                function ($attribute, $value, $fail) use ($request) {
+                    $appointment = Appointment::find($request->appointment_id);
+                    if (
+                        $appointment && Carbon::parse($value)->format('Y-m-d') !=
+                        Carbon::parse($appointment->appointment_date)->format('Y-m-d')
+                    ) {
+                        $fail('Visit date must match the appointment date.');
+                    }
+                }
+            ],
             'status' => 'required|in:scheduled,walk_in,completed,rescheduled,canceled',
-            'cheif_complaint' => 'nullable|string',
-            'diagnosis' => 'nullable|string',
-            'treatment_notes' => 'nullable|string',
-            'next_visit_notes' => 'nullable|string',
+            'cheif_complaint' => 'nullable|string|max:1000',
+            'diagnosis' => 'nullable|string|max:1000',
+            'treatment_notes' => 'nullable|string|max:1000',
+            'next_visit_notes' => 'nullable|string|max:1000',
 
             // Inventory transaction validations
-            'transaction_inventory_ids' => 'nullable|array',
-            'transaction_inventory_ids.*' => 'required_with:transaction_inventory_ids|exists:inventories,id',
+            'transaction_inventory_ids' => [
+                'nullable',
+                'array',
+                function ($attribute, $value, $fail) {
+                    if (empty($value)) return;
+
+                    $expiredItems = Inventory::whereIn('id', $value)
+                        ->whereNotNull('expiry_date')
+                        ->whereDate('expiry_date', '<', now())
+                        ->pluck('name')
+                        ->toArray();
+
+                    if (!empty($expiredItems)) {
+                        $fail('Cannot use expired items: ' . implode(', ', $expiredItems));
+                    }
+                }
+            ],
+            'transaction_inventory_ids.*' => [
+                'required_with:transaction_inventory_ids',
+                'exists:inventories,id',
+                function ($attribute, $value, $fail) {
+                    $inventory = Inventory::find($value);
+                    if (!$inventory->is_active) {
+                        $fail("The item {$inventory->name} is not active.");
+                    }
+                }
+            ],
             'transaction_types' => 'nullable|array',
-            'transaction_types.*' => 'required_with:transaction_inventory_ids|in:purchase,use,adjustment,return',
+            'transaction_types.*' => [
+                'required_with:transaction_inventory_ids',
+                'in:purchase,use,adjustment,return',
+                function ($attribute, $value, $fail) use ($request) {
+                    $index = str_replace('transaction_types.', '', strstr($attribute, '.'));
+                    $inventoryId = $request->transaction_inventory_ids[$index] ?? null;
+
+                    if ($inventoryId && $value === 'use') {
+                        $inventory = Inventory::find($inventoryId);
+                        $quantity = $request->transaction_quantities[$index] ?? 0;
+
+                        if ($inventory->quantity < $quantity) {
+                            $fail("Not enough stock for {$inventory->name}. Available: {$inventory->quantity}");
+                        }
+                    }
+                }
+            ],
             'transaction_quantities' => 'nullable|array',
-            'transaction_quantities.*' => 'required_with:transaction_inventory_ids|integer|min:1',
+            'transaction_quantities.*' => [
+                'required_with:transaction_inventory_ids',
+                'integer',
+                'min:1',
+                function ($attribute, $value, $fail) {
+                    if ($value > 1000) {
+                        $fail('Quantity cannot exceed 1000 units.');
+                    }
+                }
+            ],
             'transaction_prices' => 'nullable|array',
-            'transaction_prices.*' => 'required_with:transaction_inventory_ids|numeric|min:0',
+            'transaction_prices.*' => [
+                'required_with:transaction_inventory_ids',
+                'numeric',
+                'min:0',
+                function ($attribute, $value, $fail) {
+                    if ($value > 100000) {
+                        $fail('Unit price cannot exceed 100,000.');
+                    }
+                }
+            ],
             'transaction_dates' => 'nullable|array',
-            'transaction_dates.*' => 'required_with:transaction_inventory_ids|date',
+            'transaction_dates.*' => [
+                'required_with:transaction_inventory_ids',
+                'date',
+                function ($attribute, $value, $fail) {
+                    if (Carbon::parse($value)->isFuture()) {
+                        $fail('Transaction date cannot be in the future.');
+                    }
+                }
+            ],
             'transaction_notes' => 'nullable|array',
-        ]);
+            'transaction_notes.*' => 'nullable|string|max:500',
+        ];
+
+        $messages = [
+            'visit_date.required' => 'Please select a visit date',
+            'transaction_inventory_ids.*.exists' => 'One or more selected inventory items are invalid',
+            'transaction_types.*.in' => 'Invalid transaction type selected',
+        ];
+
+        return $request->validate($rules, $messages);
+    }
+
+
+    protected function checkForExpiredItems(array $inventoryIds)
+    {
+        $expiredItems = [];
+
+        $inventories = Inventory::whereIn('id', $inventoryIds)->get();
+
+        foreach ($inventories as $inventory) {
+            if ($inventory->expiry_date && Carbon::parse($inventory->expiry_date)->isPast()) {
+                $expiredItems[] = $inventory->name;
+            }
+        }
+
+        return $expiredItems;
     }
 }

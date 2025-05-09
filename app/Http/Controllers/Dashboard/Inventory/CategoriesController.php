@@ -39,11 +39,11 @@ class CategoriesController extends Controller
     {
         Gate::authorize('categories.create');
 
-        $request->validate([
-            'name' => 'required|string',
+        $validated = $request->validate([
+            'name' => 'required|string|unique:categories,name',
         ]);
 
-        $category = Category::create($request->all());
+        Category::create($validated);
         return redirect()->route('dashboard.inventory.categories.index')->with('success', 'Category Created Successfuly');
     }
 
@@ -62,12 +62,12 @@ class CategoriesController extends Controller
     public function update(Request $request, Category $category)
     {
         Gate::authorize('categories.update');
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string',
 
         ]);
 
-        $category->update($request->all());
+        $category->update($validated);
         return redirect()->route('dashboard.inventory.categories.index')->with('success', 'Category updated Successfuly');
     }
 
@@ -79,7 +79,7 @@ class CategoriesController extends Controller
         Gate::authorize('categories.delete');
         $category->delete();
         return redirect()
-        ->route('dashboard.inventory.categories.index')
-        ->with('success', 'Category deleted successfully.');
+            ->route('dashboard.inventory.categories.index')
+            ->with('success', 'Category deleted successfully.');
     }
 }

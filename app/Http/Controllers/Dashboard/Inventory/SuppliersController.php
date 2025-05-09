@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Dashboard\Inventory;
 
 use App\Models\Supplier;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Database\QueryException;
 
 class SuppliersController extends Controller
 {
@@ -15,10 +17,20 @@ class SuppliersController extends Controller
     public function index()
     {
         Gate::authorize('suppliers.view');
-        $suppliers = Supplier::latest('id')->paginate(8);
+
+        $suppliers = Supplier::when(request('search'), function ($query, $search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('company_name', 'like', "%{$search}%")
+                    ->orWhere('contact_name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('address', 'like', "%{$search}%");
+            });
+        })->latest('id')->paginate(8);
+
+
         return view('dashboard.inventory.suppliers.index', compact('suppliers'));
     }
-
     /**
      * Show the form for creating a new resource.
      */
@@ -36,16 +48,27 @@ class SuppliersController extends Controller
     {
         Gate::authorize('suppliers.create');
 
-        $request->validate([
-            'company_name' => 'required|string',
-            'contact_name' => 'required|string',
-            'email'=> 'required|email',
-            'phone'=> 'required',
-            'address'=> 'required',
-        ]);
+        try {
 
-        $supplier = Supplier::create($request->all()); // doesn't need save
-        return redirect()->route('dashboard.inventory.suppliers.index')->with('success', 'Supplier Added Successfuly');
+            $validated = $request->validate([
+                'company_name' => 'required|string|max:255',
+                'contact_name' => 'required|string|max:255',
+                'email' => 'required|email|max:255|unique:suppliers,email',
+                'phone' => [
+                    'required',
+                    'string',
+                    'max:20',
+                    'unique:suppliers,phone',
+                    'regex:/^\+?[0-9\s\-\(\)]{7,20}$/'
+                ],
+                'address' => 'nullable|string|max:500',
+            ]);
+
+            Supplier::create($validated);
+            return redirect()->route('dashboard.inventory.suppliers.index')->with('success', 'Supplier Added Successfuly');
+        } catch (QueryException $e) {
+            return redirect()->route('dashboard.inventory.suppliers.index')->with('error', 'can\'t add supplier, something wrong');
+        }
     }
 
 
@@ -65,15 +88,22 @@ class SuppliersController extends Controller
     public function update(Request $request, Supplier $supplier)
     {
         Gate::authorize('suppliers.update');
-        $request->validate([
-            'company_name' => 'required',
-            'contact_name' => 'required',
-            'email'=> 'required',
-            'phone'=> 'required',
-            'address'=> 'required',
+
+        $validated = $request->validate([
+            'company_name' => 'required|string|max:255',
+            'contact_name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:suppliers,email,' . $supplier->id,
+            'phone' => [
+                'required',
+                'string',
+                'max:20',
+                Rule::unique('suppliers')->ignore($supplier->id),
+                'regex:/^\+?[0-9\s\-\(\)]{7,20}$/'
+            ],
+            'address' => 'nullable|string|max:500',
         ]);
 
-        $supplier->update($request->all());
+        $supplier->update($validated);
         return redirect()->route('dashboard.inventory.suppliers.index')->with('success', 'Supplier updated Successfuly');
     }
 
@@ -85,7 +115,7 @@ class SuppliersController extends Controller
         Gate::authorize('suppliers.delete');
         $supplier->delete();
         return redirect()
-        ->route('dashboard.inventory.suppliers.index')
-        ->with('success', 'Supplier deleted successfully.');
+            ->route('dashboard.inventory.suppliers.index')
+            ->with('success', 'Supplier deleted successfully.');
     }
 }

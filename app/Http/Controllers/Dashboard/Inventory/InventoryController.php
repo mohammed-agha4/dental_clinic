@@ -23,7 +23,40 @@ class InventoryController extends Controller
     public function index()
     {
         Gate::authorize('inventory.view');
-        $inventory = Inventory::with(['supplier', 'category'])->latest('id')->paginate(8);
+
+        $query = Inventory::with(['supplier', 'category']);
+
+        if ($search = request('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('SKU', 'like', "%{$search}%")
+                    ->orWhereHas('category', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('supplier', function ($q) use ($search) {
+                        $q->where('company_name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($status = request('status')) {
+            if ($status === 'active') {
+                $query->where('is_active', true);
+            } elseif ($status === 'inactive') {
+                $query->where('is_active', false);
+            }
+        }
+
+        if ($stock = request('stock')) {
+            if ($stock === 'low') {
+                $query->whereColumn('quantity', '<=', 'reorder_level');
+            } elseif ($stock === 'out') {
+                $query->where('quantity', 0);
+            }
+        }
+
+        $inventory = $query->latest('id')->paginate(8);
+
         return view('dashboard.inventory.inventory.index', compact('inventory'));
     }
 
@@ -46,7 +79,6 @@ class InventoryController extends Controller
     {
         Gate::authorize('inventory.update');
 
-
         $request->validate([
             'category_id' => 'exists:categories,id',
             'supplier_id' => 'exists:suppliers,id',
@@ -62,11 +94,8 @@ class InventoryController extends Controller
             'transaction_notes' => 'nullable|string',
         ]);
 
-
-
         DB::beginTransaction();
         try {
-
             $inventory = Inventory::create([
                 'category_id' => $request->category_id,
                 'supplier_id' => $request->supplier_id,
@@ -80,9 +109,6 @@ class InventoryController extends Controller
                 'is_active' => $request->is_active,
             ]);
 
-
-            // $inventory->checkReorderLevel(); // for the notifications
-
             $user = auth()->user();
 
             if ($user) {
@@ -92,11 +118,11 @@ class InventoryController extends Controller
             if (!$staff) {
                 Log::warning('User ID ' . ($user ? $user->id : 'null') . ' attempted to create inventory but has no associated staff record.');
             }
-            // dd($staff);
+
             InventoryTransaction::create([
                 'inventory_id' => $inventory->id,
                 'staff_id' => $staff ? $staff->id : null,
-                'type' => 'purchase', // Since this is a new item, it's always a purchase
+                'type' => 'purchase',
                 'quantity' => $request->quantity,
                 'unit_price' => $request->unit_price,
                 'transaction_date' => $request->transaction_date,
@@ -109,9 +135,9 @@ class InventoryController extends Controller
             return redirect()->route('dashboard.inventory.inventory.index')
                 ->with('success', 'Tool Added Successfully');
         } catch (\Exception $e) {
-            // DB::rollBack();
-            dd('error', 'Failed to add tool: ' . $e->getMessage())
-                ->withInput();
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Failed to add tool: ' . $e->getMessage())
+                ->withInput(); // to refill the form again with the data if error happened
         }
     }
 
@@ -160,11 +186,8 @@ class InventoryController extends Controller
             'is_active' => 'required|in:0,1',
 
         ]);
-        // dd();
 
-
-        $inventory->update($request->all());
-        // for the notifications
+        $inventory->update($validated);
         return redirect()->route('dashboard.inventory.inventory.index')->with('success', 'Tool Information Updated Successfuly');
     }
 
@@ -174,8 +197,14 @@ class InventoryController extends Controller
     public function destroy(Inventory $inventory)
     {
         Gate::authorize('inventory.delete');
+
+        if ($inventory->transactions()->exists()) {
+
+            return redirect()->route('dashboard.inventory.inventory.index')
+                ->with('error', "can't delete item with existing transactions");
+        }
         $inventory->delete();
-        return redirect()->route('dashboard.inventory.inventory.index')->with('success', 'Staff Deleted Successfuly');
+        return redirect()->route('dashboard.inventory.inventory.index')->with('success', 'Tool Deleted Successfuly');
     }
 
 
@@ -186,10 +215,7 @@ class InventoryController extends Controller
         $inventories = Inventory::onlyTrashed()
             ->with(['category', 'supplier'])
             ->latest('deleted_at')
-            ->paginate(10);
-
-
-
+            ->paginate(8);
         return view('dashboard.inventory.inventory.trash', compact('inventories'));
     }
 
@@ -201,7 +227,6 @@ class InventoryController extends Controller
         Gate::authorize('inventory.restore');
         try {
             DB::beginTransaction();
-
             $inventory = Inventory::onlyTrashed()->findOrFail($id);
             $inventory->restore();
 
@@ -222,6 +247,7 @@ class InventoryController extends Controller
     public function forceDelete($id)
     {
         Gate::authorize('inventory.force_delete');
+
         try {
             DB::beginTransaction();
 
@@ -231,34 +257,25 @@ class InventoryController extends Controller
 
             $itemName = $inventory->name;
 
-            // Check for related records
-            $errorMessages = [];
-
             if ($inventory->transactions()->exists()) {
-                $errorMessages[] = 'has transaction records';
+                return redirect()->back()
+                    ->with('error', 'Cannot delete: Item has associated transaction records.');
             }
 
             if ($inventory->visits()->exists()) {
-                $errorMessages[] = 'was used in patient visits';
-            }
-
-            if (!empty($errorMessages)) {
-                throw new Exception(
-                    'Cannot permanently delete inventory item that ' .
-                        implode(' and ', $errorMessages) .
-                        '. Please delete these records first.'
-                );
+                return redirect()->back()
+                    ->with('error', 'Cannot delete: Item was used in patient visits.');
             }
 
             $inventory->forceDelete();
 
             DB::commit();
 
-            return redirect()->route('dashboard.inventory.inventory.trash')
+            return redirect()->back()
                 ->with('success', "Inventory item '{$itemName}' permanently deleted");
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->route('dashboard.inventory.inventory.trash')
+            return redirect()->back()
                 ->with('error', 'Permanent deletion failed: ' . $e->getMessage());
         }
     }

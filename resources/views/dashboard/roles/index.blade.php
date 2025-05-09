@@ -12,7 +12,7 @@
                 </a>
             </div>
 
-            <!-- Flash Messages -->
+
             @if (session()->has('success'))
                 <div id="flash-msg" class="alert alert-success alert-dismissible fade show">
                     {{ session('success') }}
@@ -26,11 +26,12 @@
                 </div>
             @endif
 
-            <div class="table-responsive">
-                <table class="table small">
+            <!-- Table with forced horizontal scrolling -->
+            <div class="table-responsive" style="overflow-x: auto;">
+                <table class="table small" style="min-width: 600px;">
                     <thead>
                         <tr class="text-center">
-                            <th>ID</th>
+                            <th>#</th>
                             <th>Name</th>
                             <th>Created At</th>
                             <th>Action</th>
@@ -70,43 +71,16 @@
         </div>
     </div>
 
-    <!-- Hidden Delete Form -->
+
     <form id="delete-form" method="POST" style="display: none;">
         @csrf
         @method('DELETE')
     </form>
 @endsection
-
 @push('js')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Handle delete button clicks
-        document.querySelectorAll('.delete-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const roleId = this.getAttribute('data-id');
-                const roleName = this.getAttribute('data-name');
-
-                Swal.fire({
-                    title: 'Are you sure?',
-                    html: `You are about to delete the role: <strong>${roleName}</strong>`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#dc3545',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Yes, delete it!',
-                    cancelButtonText: 'Cancel',
-                    reverseButtons: true,
-                    focusCancel: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        const form = document.getElementById('delete-form');
-                        form.action = "{{ route('dashboard.roles.destroy', '') }}/" + roleId;
-                        form.submit();
-                    }
-                });
-            });
-        });
-    });
-</script>
+    <x-delete-alert
+        route="dashboard.roles.destroy"
+        itemName="role"
+        deleteBtnClass="delete-btn"
+    />
 @endpush

@@ -30,7 +30,7 @@
                     <table class="table table-striped table-hover small">
                         <thead class="table-light">
                             <tr class="text-center">
-                                <th>ID</th>
+                                <th>#</th>
                                 <th>User Name</th>
                                 <th>Phone</th>
                                 <th>License Number</th>

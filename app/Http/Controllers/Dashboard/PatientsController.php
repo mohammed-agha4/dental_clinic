@@ -16,33 +16,22 @@ class PatientsController extends Controller
      * Display a listing of the resource.
      */
     public function index()
-{
-    Gate::authorize('patients.view');
-
-    $query = Patient::query()->latest('id');
-
-    // If user is dentist but not admin
-    if (auth()->user()->hasAbility('view-own-patients') &&
-        !auth()->user()->hasAbility('view-all-patients')) {
-        $query->whereHas('appointments', function($q) {
-            $q->where('staff_id', auth()->user()->staff->id);
-        });
-    }
-
-    $patients = $query->paginate(8);
-    return view('dashboard.patients.index', compact('patients'));
-}
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
     {
-    Gate::authorize('patients.create');
+        Gate::authorize('patients.view');
 
-        $patient = Patient::all();
-        return view('dashboard.patients.create', compact('patient'));
+        $query = Patient::query()->latest('id');
+
+        // If user is dentist but not admin
+        if (auth()->user()->hasAbility('view-own-patients') && !auth()->user()->hasAbility('view-all-patients')) {
+            $query->whereHas('appointments', function ($q) {
+                $q->where('staff_id', auth()->user()->staff->id);
+            });
+        }
+
+        $patients = $query->paginate(8);
+        return view('dashboard.patients.index', compact('patients'));
     }
+
 
     public function show($id)
     {
@@ -58,7 +47,7 @@ class PatientsController extends Controller
     public function edit(Patient $patient)
     {
         Gate::authorize('patients.update');
-        return view('dashboard.patients.edit',compact('patient'));
+        return view('dashboard.patients.edit', compact('patient'));
     }
 
     /**
@@ -67,23 +56,23 @@ class PatientsController extends Controller
     public function update(Request $request, Patient $patient)
     {
         Gate::authorize('patients.update');
-        $rules = [
+
+        $validated = $request->validate([
             'fname' => 'required|string',
             'lname' => 'required|string',
             'DOB' => 'required|date',
             'gender' => 'required|in:male,female',
-            'phone' => 'required|string|unique:patients,phone|max:20',
-            'email' => 'required|email|unique:patients,email',
+            'phone' => 'required|string|unique:patients,phone,' . $patient->id . '|max:20|regex:/^\+?[0-9\s\-\(\)]{7,20}$/',
+            'email' => 'required|email|unique:patients,email,' . $patient->id,
             'medical_history' => 'nullable|string',
             'allergies' => 'nullable|string',
             'Emergency_contact_name' => 'nullable|string',
             'Emergency_contact_phone' => 'nullable|string|max:20',
             'last_visit_date' => 'nullable|date',
-        ];
+        ]);
 
-
-        $patient->update($request->all());
-        return redirect()->route('dashboard.patients.index');
+        $patient->update($validated);
+        return redirect()->route('dashboard.patients.index')->with('success', 'patient info updated successfully');
     }
 
     /**
@@ -93,40 +82,38 @@ class PatientsController extends Controller
     public function destroy(Patient $patient)
     {
         Gate::authorize('patients.delete');
-            DB::beginTransaction();
 
 
-            // Check if patient has appointments
-            $hasAppointments = Appointment::where('patient_id', $patient->id)->exists();
-            $hasVisitation = Visit::where('patient_id', $patient->id)->exists();
+        DB::beginTransaction();
 
-            if ($hasAppointments || $hasVisitation) {
-                // dd($hasAppointments);
-                $activeAppointments = Appointment::where('patient_id', $patient->id)
-                    ->where('status', ['scheduled', 'rescheduled'])
-                    ->exists();
-                $activeVisits = Visit::where('patient_id', $patient->id)->exists();
+        $hasAppointments = Appointment::where('patient_id', $patient->id)->exists();
+        $hasVisitation = Visit::where('patient_id', $patient->id)->exists();
 
-                // dd($activeVisits);
+        if ($hasAppointments || $hasVisitation) {
+            // dd($hasAppointments);
+            $activeAppointments = Appointment::where('patient_id', $patient->id)
+                ->where('status', ['scheduled', 'rescheduled'])
+                ->exists();
+            $activeVisits = Visit::where('patient_id', $patient->id)->exists();
 
-                if ($activeAppointments || $activeVisits) {
-                    // dd('d');
-                    DB::rollBack();
-                    return redirect()->route('dashboard.patients.index')
-                        ->with('error', 'Cannot delete patient. They have active appointments or a visitation.');
-                }
+            // dd($activeVisits);
 
-                // If all appointments are cancelled, soft delete them first
-                Appointment::where('patient_id', $patient->id)->get()->each(function ($appointment) {
-                    $appointment->delete();
-                });
+            if ($activeAppointments || $activeVisits) {
+                // dd('d');
+                DB::rollBack();
+                return redirect()->route('dashboard.patients.index')
+                    ->with('error', 'Cannot delete patient. They have active appointments or a visitation.');
             }
 
-            $patient->delete();
-            DB::commit();
-            return redirect()->route('dashboard.patients.index')
-                ->with('success', 'Patient and their appointments deleted successfully.');
+            Appointment::where('patient_id', $patient->id)->get()->each(function ($appointment) {
+                $appointment->delete();
+            });
+        }
 
+        $patient->delete();
+        DB::commit();
+        return redirect()->route('dashboard.patients.index')
+            ->with('success', 'Patient and their appointments deleted successfully.');
     }
 
 
@@ -140,68 +127,66 @@ class PatientsController extends Controller
         return view('dashboard.patients.trash', compact('patients'));
     }
 
-    /**
-     * Restore a soft-deleted patient
-     */
+
+
     public function restore($id)
     {
         Gate::authorize('patients.restore');
         try {
             $patient = Patient::onlyTrashed()->findOrFail($id);
+            $appointment = Appointment::where('patient_id', $patient->id);
             $patient->restore();
+            $appointment->restore();
 
             return redirect()->route('dashboard.patients.trash')
                 ->with('success', 'Patient restored successfully');
-
         } catch (\Exception $e) {
             return redirect()->route('dashboard.patients.trash')
                 ->with('error', 'Error restoring patient: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Permanently delete a patient
-     */
+
     public function forceDelete($id)
     {
         Gate::authorize('patients.force_delete');
         try {
             $patient = Patient::onlyTrashed()->findOrFail($id);
 
-            // Check for existing appointments before permanent deletion
             if ($patient->appointments()->count() > 0) {
                 return redirect()->route('dashboard.patients.trash')
                     ->with('error', 'Cannot permanently delete - patient has existing appointments');
             }
 
-            $patientName = $patient->fname . ' ' . $patient->lname;
+            $patientName = $patient->FullName;
             $patient->forceDelete();
 
             return redirect()->route('dashboard.patients.trash')
                 ->with('success', "Patient $patientName permanently deleted");
-
         } catch (\Exception $e) {
             return redirect()->route('dashboard.patients.trash')
                 ->with('error', 'Error deleting patient: ' . $e->getMessage());
         }
     }
+
+
     public function search(Request $request)
-{
-    $query = Patient::query();
+    {
+        $query = Patient::query();
 
-    if ($request->phone) {
-        $query->where('phone', $request->phone);
+        if ($request->phone) {
+            $query->where('phone', $request->phone);
+        }
+
+        if ($request->email && !$request->phone) {
+            $query->where('email', $request->email);
+        }
+
+        $patient = $query->first();
+
+        return response()->json([
+            'patient' => $patient,
+            'success' => $patient !== null
+        ]);
     }
-
-    if ($request->email && !$request->phone) {
-        $query->where('email', $request->email);
-    }
-
-    $patient = $query->first();
-
-    return response()->json([
-        'patient' => $patient,
-        'success' => $patient !== null
-    ]);
-}
 }

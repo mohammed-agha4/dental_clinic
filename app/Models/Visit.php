@@ -58,8 +58,8 @@ class Visit extends Model
     public function inventoryItems()
     {
         return $this->belongsToMany(Inventory::class, 'inventory_visits')
-                    ->withPivot('quantity_used', 'notes')
-                    ->withTimestamps();
+            ->withPivot('quantity_used', 'notes')
+            ->withTimestamps();
     }
 
     public function payments()
@@ -121,6 +121,10 @@ class Visit extends Model
             $note = $transactions['transaction_notes'][$index] ?? null;
 
             $inventoryItem = Inventory::findOrFail($inventoryId);
+
+            if ($inventoryItem->is_expired) {
+                throw new \Exception("Cannot use expired item: {$inventoryItem->name}");
+            }
 
             // Create inventory transaction
             $transaction = InventoryTransaction::create([
@@ -197,10 +201,38 @@ class Visit extends Model
 
 
     public function scopeForDentist($query, $userId)
-{
-    return $query->whereHas('staff', function($q) use ($userId) {
-        $q->where('user_id', $userId);
-    });
-}
+    {
+        return $query->whereHas('staff', function ($q) use ($userId) {
+            $q->where('user_id', $userId);
+        });
+    }
 
+    /**
+     * Restore inventory quantities for items used in this visit
+     */
+    public function restoreInventoryQuantities(): void
+    {
+        // Get all inventory items used in this visit
+        $inventoryVisits = InventoryVisit::where('visit_id', $this->id)->get();
+
+        foreach ($inventoryVisits as $inventoryVisit) {
+            $inventoryItem = Inventory::find($inventoryVisit->inventory_id);
+
+            if ($inventoryItem) {
+                // Restore the quantity that was used
+                $inventoryItem->increment('quantity', $inventoryVisit->quantity_used);
+
+                // Create a transaction record for the restoration
+                InventoryTransaction::create([
+                    'inventory_id' => $inventoryItem->id,
+                    'staff_id' => $this->staff_id,
+                    'type' => self::TRANSACTION_RETURN,
+                    'quantity' => $inventoryVisit->quantity_used,
+                    'unit_price' => $inventoryItem->unit_price,
+                    'transaction_date' => now(),
+                    'notes' => "Quantity restored from deleted visit #{$this->id}"
+                ]);
+            }
+        }
+    }
 }

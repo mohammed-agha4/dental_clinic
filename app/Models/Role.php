@@ -15,6 +15,10 @@ class Role extends Model
     public function abilities() {
         return $this->hasMany(RoleAbility::class);
     }
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'role_user', 'role_id', 'user_id');
+    }
 
 
     public static function createWithAbilities(Request $request) {

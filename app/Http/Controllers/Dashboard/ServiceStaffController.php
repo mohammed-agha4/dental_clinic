@@ -30,15 +30,23 @@ class ServiceStaffController extends Controller
     public function store(Request $request)
     {
         Gate::authorize('service_staff.create');
+
         $validated = $request->validate([
             'staff_id' => 'required|exists:staff,id',
-            'service_id' => 'required|exists:services,id',
+            'service_ids' => 'required|array|min:1',
+            'service_ids.*' => 'exists:services,id',
         ]);
 
-        ServiceStaff::create($validated);
+        // Create a record for each selected service
+        foreach ($validated['service_ids'] as $service_id) {
+            ServiceStaff::create([
+                'staff_id' => $validated['staff_id'],
+                'service_id' => $service_id
+            ]);
+        }
 
         return redirect()->route('dashboard.service-staff.index')
-            ->with('success', 'Staff service assigned successfully.');
+            ->with('success', 'Staff services assigned successfully.');
     }
 
     public function edit(ServiceStaff $service_staff)
@@ -65,6 +73,7 @@ class ServiceStaffController extends Controller
 
     public function destroy(ServiceStaff $service_staff)
     {
+        dd('');
         Gate::authorize('service_staff.delete');
         $service_staff->delete();
 

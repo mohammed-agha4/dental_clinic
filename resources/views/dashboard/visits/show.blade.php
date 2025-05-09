@@ -36,7 +36,7 @@
                                     </tr>
                                     <tr>
                                         <td class="p-1">Phone:</td>
-                                        <td class="p-1">{{ $visit->patient->phone ?? 'N/A' }}</td>
+                                        <td class="p-1">{{ $visit->patient->phone ?? 'Not Recorded' }}</td>
                                     </tr>
                                     <tr>
                                         <td class="p-1">Email:</td>
@@ -53,13 +53,14 @@
                                     @if ($visit->appointment)
                                     <tr>
                                         <td class="p-1">Appointment:</td>
-                                        <td class="p-1">{{ $visit->appointment->appointment_date->format('M j, Y g:i A')m }}</td>
+                                        <td class="p-1">{{ $visit->appointment->appointment_date->format('M j, Y g:i A') }}</td>
                                     </tr>
                                     @endif
                                     @if ($visit->service)
                                     <tr>
                                         <td class="p-1">Service:</td>
                                         <td class="p-1">{{ $visit->service->service_name }}</td>
+                                        <td class="p-1">{{ $visit->service->service_price }}</td>
                                     </tr>
                                     @endif
                                 </table>
@@ -140,7 +141,7 @@
         </div>
     </div>
 
-    <!-- Hidden Delete Form -->
+
     <form id="delete-form" method="POST" style="display: none;">
         @csrf
         @method('DELETE')

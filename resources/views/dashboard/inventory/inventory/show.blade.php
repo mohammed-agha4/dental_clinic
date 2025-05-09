@@ -8,15 +8,16 @@
                 <h5>Inventory Item Details</h5>
                 <div>
                     @can('inventory.update')
-                    <a href="{{ route('dashboard.inventory.inventory.edit', $inventory->id) }}" class="btn btn-outline-primary btn-sm">
-                        <i class="fas fa-edit fa-sm"></i> Edit
-                    </a>
+                        <a href="{{ route('dashboard.inventory.inventory.edit', $inventory->id) }}"
+                            class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-edit fa-sm"></i> Edit
+                        </a>
                     @endcan
                     @can('inventory.delete')
-                    <button type="button" class="btn btn-outline-danger btn-sm delete-btn" data-id="{{ $inventory->id }}"
-                        data-name="{{ $inventory->name }}">
-                        <i class="fas fa-trash fa-sm"></i> Delete
-                    </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm delete-btn" data-id="{{ $inventory->id }}"
+                            data-name="{{ $inventory->name }}">
+                            <i class="fas fa-trash fa-sm"></i> Delete
+                        </button>
                     @endcan
                     <a href="{{ route('dashboard.inventory.inventory.index') }}" class="btn btn-secondary btn-sm">
                         <i class="fas fa-arrow-left fa-sm"></i> Back
@@ -25,7 +26,6 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <!-- Item Information -->
                     <div class="col-md-6">
                         <div class="card mb-4 h-100">
                             <div class="card-header">
@@ -58,7 +58,6 @@
                         </div>
                     </div>
 
-                    <!-- Stock Information -->
                     <div class="col-md-6">
                         <div class="card mb-4 h-100">
                             <div class="card-header">
@@ -68,10 +67,11 @@
                                 <table class="table table-sm table-borderless">
                                     <tr>
                                         <td class="p-1 font-weight-bold">Quantity:</td>
-                                        <td class="p-1 {{ $inventory->quantity <= $inventory->reorder_level ? 'text-danger font-weight-bold' : '' }}">
+                                        <td
+                                            class="p-1 {{ $inventory->quantity <= $inventory->reorder_level ? 'text-danger font-weight-bold' : '' }}">
                                             {{ $inventory->quantity }}
                                             @if ($inventory->quantity <= $inventory->reorder_level)
-                                            <span class="small">(Low stock!)</span>
+                                                <span class="small">(Low stock!)</span>
                                             @endif
                                         </td>
                                     </tr>
@@ -85,7 +85,7 @@
                                     </tr>
                                     <tr>
                                         <td class="p-1 font-weight-bold">Expiry Date:</td>
-                                        <td class="p-1">{{ $inventory->expiry_date->format('M j, Y g:i A') ?: 'N/A' }}</td>
+                                        <td class="p-1">{{ $inventory->expiry_date->format('M j, Y g: i A') }}</td>
                                     </tr>
                                 </table>
                             </div>
@@ -94,7 +94,6 @@
                 </div>
 
                 <div class="row">
-                    <!-- Category Information -->
                     <div class="col-md-6">
                         <div class="card mb-4 h-100">
                             <div class="card-header">
@@ -102,74 +101,54 @@
                             </div>
                             <div class="card-body">
                                 @if ($inventory->category)
-                                <table class="table table-sm table-borderless">
-                                    <tr>
-                                        <td class="p-1 font-weight-bold">Name:</td>
-                                        <td class="p-1">{{ $inventory->category->name }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="p-1 font-weight-bold">Description:</td>
-                                        <td class="p-1">{{ $inventory->category->description ?? 'No Description' }}</td>
-                                    </tr>
-                                </table>
+                                    <table class="table table-sm table-borderless">
+                                        <tr>
+                                            <td class="p-1 font-weight-bold">Name:</td>
+                                            <td class="p-1">{{ $inventory->category->name ?? 'No Category' }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="p-1 font-weight-bold">Description:</td>
+                                            <td class="p-1">{{ $inventory->category->description ?? 'No Description' }}
+                                            </td>
+                                        </tr>
+                                    </table>
                                 @else
-                                <p class="small text-muted">No category assigned</p>
+                                    <p class="small text-muted">No category assigned</p>
                                 @endif
                             </div>
                         </div>
                     </div>
 
-                    <!-- Supplier Information -->
                     <div class="col-md-6">
                         <div class="card mb-4 h-100">
                             <div class="card-header">
                                 <h6 class="m-0 font-weight-bold text-success">Supplier Information</h6>
                             </div>
                             <div class="card-body">
-                                @if ($inventory->supplier)
-                                <table class="table table-sm table-borderless">
-                                    <tr>
-                                        <td class="p-1 font-weight-bold">Name:</td>
-                                        <td class="p-1">{{ $inventory->supplier->contact_name }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="p-1 font-weight-bold">Company:</td>
-                                        <td class="p-1">{{ $inventory->supplier->company_name ?? 'N/A' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="p-1 font-weight-bold">Phone:</td>
-                                        <td class="p-1">{{ $inventory->supplier->phone ?? 'N/A' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="p-1 font-weight-bold">Email:</td>
-                                        <td class="p-1">{{ $inventory->supplier->email ?? 'N/A' }}</td>
-                                    </tr>
-                                </table>
+                                @if ($inventory->supplier->id)
+                                    <table class="table table-sm table-borderless">
+                                        <tr>
+                                            <td class="p-1 font-weight-bold">Name:</td>
+                                            <td class="p-1">{{ $inventory->supplier->contact_name ?? 'Not Recorded' }}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="p-1 font-weight-bold">Company:</td>
+                                            <td class="p-1">{{ $inventory->supplier->company_name ?? 'Not Recorded' }}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="p-1 font-weight-bold">Phone:</td>
+                                            <td class="p-1">{{ $inventory->supplier->phone ?? 'Not Recorded' }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="p-1 font-weight-bold">Email:</td>
+                                            <td class="p-1">{{ $inventory->supplier->email ?? 'Not Recorded' }}</td>
+                                        </tr>
+                                    </table>
                                 @else
-                                <p class="small text-muted">No supplier assigned</p>
+                                    <p class="small text-muted">No supplier assigned</p>
                                 @endif
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Additional Information -->
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="card">
-                            <div class="card-header">
-                                <h6 class="m-0 font-weight-bold text-success">Additional Information</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <p class="small mb-1"><span class="font-weight-bold">Created:</span> {{ $inventory->created_at->format('M d, Y H:i') }}</p>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <p class="small mb-1"><span class="font-weight-bold">Updated:</span> {{ $inventory->updated_at->format('M d, Y H:i') }}</p>
-                                    </div>
-
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -178,7 +157,6 @@
         </div>
     </div>
 
-    <!-- Hidden Delete Form -->
     <form id="delete-form" method="POST" style="display: none;">
         @csrf
         @method('DELETE')
@@ -186,7 +164,6 @@
 @endsection
 
 @push('js')
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.querySelector('.delete-btn').addEventListener('click', function() {
             const inventoryId = this.getAttribute('data-id');
@@ -206,7 +183,8 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     const form = document.getElementById('delete-form');
-                    form.action = "{{ route('dashboard.inventory.inventory.destroy', '') }}/" + inventoryId;
+                    form.action = "{{ route('dashboard.inventory.inventory.destroy', '') }}/" +
+                    inventoryId;
                     form.submit();
                 }
             });

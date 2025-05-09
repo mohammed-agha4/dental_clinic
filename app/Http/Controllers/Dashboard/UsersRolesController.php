@@ -45,7 +45,7 @@ class UsersRolesController extends Controller
         Gate::authorize('user_roles.create');
         // dd($request->all());
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
+            'user_id' => 'required|unique:role_user,user_id|exists:users,id',
             'role_id' => 'required|exists:roles,id',
         ]);
 

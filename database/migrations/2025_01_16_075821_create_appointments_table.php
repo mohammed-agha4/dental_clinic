@@ -20,7 +20,6 @@ return new class extends Migration
             $table->integer('duration')->default(30); // in minutes
             $table->enum('status', ['scheduled', 'rescheduled', 'completed', 'canceled', 'walk_in']);
             $table->text('notes')->nullable();
-            $table->string('cancellation_reason')->nullable();
             $table->boolean('reminder_sent')->default(false);
             $table->softDeletes();
             $table->timestamps();

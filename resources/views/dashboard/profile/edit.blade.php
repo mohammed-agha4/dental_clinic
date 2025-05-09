@@ -4,6 +4,7 @@
 
 @section('content')
 
+{{-- @dd('storage/app/private/public/',$user->profile->profile_photo) --}}
 
     @if (session()->has('success'))
         <div id="flash-msg" class="alert alert-success alert-dismissible fade show">
@@ -44,7 +45,9 @@
                         <div class="col-md-6">
                             <label >Profile Photo</label>
                             <input type="file" name="profile_photo" class="form-control">
+                            <img src="{{ asset('storage/' . $user->profile->profile_photo) }}" height="60" alt="">
                         </div>
+
                     </div>
 
 

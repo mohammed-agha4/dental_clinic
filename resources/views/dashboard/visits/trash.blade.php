@@ -30,7 +30,7 @@
                     <table class="table table-striped table-hover small">
                         <thead class="table-light">
                             <tr class="text-center">
-                                <th>ID</th>
+                                <th>#</th>
                                 <th>Appointment</th>
                                 <th>Patient</th>
                                 <th>Staff</th>

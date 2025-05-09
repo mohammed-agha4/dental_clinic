@@ -15,6 +15,7 @@ class ExpensesController extends Controller
     /**
      * Display a listing of the resource.
      */
+    // Controller
     public function index(Request $request)
     {
         Gate::authorize('expenses.view');
@@ -26,9 +27,9 @@ class ExpensesController extends Controller
             ->category($request->category)
             ->byStaff($request->staff_id)
             ->latest()
-            ->paginate(8);
+            ->paginate(8)
+            ->withQueryString();
 
-        // Calculate total for filtered expenses
         $totalAmount = Expense::dateRange($request->start_date, $request->end_date)
             ->category($request->category)
             ->byStaff($request->staff_id)

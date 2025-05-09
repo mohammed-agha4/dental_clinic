@@ -16,21 +16,15 @@
                                         <i class="fas fa-trash-alt fa-sm"></i> Trash
                                     </a>
                                 @endcan
-                                @can('expenses.report')
-                                    <a href="{{ route('dashboard.expenses.report') }}" class="btn btn-success btn-sm">
-                                        <i class="fas fa-file-pdf"></i> Generate Report
-                                    </a>
-                                @endcan
                                 @can('expenses.create')
                                     <a href="{{ route('dashboard.expenses.create') }}" class="btn btn-dark btn-sm">
                                         <i class="fas fa-plus"></i> Add New Expense
                                     </a>
                                 @endcan
-
                             </div>
                         </div>
                         <div class="card-body">
-                            <!-- Flash Messages -->
+
                             @if (session()->has('success'))
                                 <div id="flash-msg" class="alert alert-success alert-dismissible fade show">
                                     {{ session('success') }}
@@ -46,13 +40,56 @@
                                 </div>
                             @endif
 
+                            <!-- Replace the current filter div with this: -->
+                            <form action="{{ route('dashboard.expenses.index') }}" method="GET">
+                                <div class="row mb-3">
+                                    <div class="col-md-3">
+                                        <input type="date" class="form-control form-control-sm" name="start_date"
+                                            value="{{ request('start_date') }}" placeholder="From Date">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="date" class="form-control form-control-sm" name="end_date"
+                                            value="{{ request('end_date') }}" placeholder="To Date">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select class="form-control form-control-sm" name="category">
+                                            <option value="">All Categories</option>
+                                            @foreach ($categories as $category)
+                                                <option value="{{ $category }}"
+                                                    {{ request('category') == $category ? 'selected' : '' }}>
+                                                    {{ ucfirst($category) }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select class="form-control form-control-sm" name="staff_id">
+                                            <option value="">All Staff</option>
+                                            @foreach ($staffMembers as $staff)
+                                                <option value="{{ $staff->id }}"
+                                                    {{ request('staff_id') == $staff->id ? 'selected' : '' }}>
+                                                    {{ $staff->user->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-12 mt-2">
+                                        <button type="submit" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-filter"></i> Filter
+                                        </button>
+                                        <a href="{{ route('dashboard.expenses.index') }}" class="btn btn-secondary btn-sm">
+                                            <i class="fas fa-sync-alt"></i> Reset
+                                        </a>
+                                    </div>
+                                </div>
+                            </form>
+
                             <!-- Expenses Table -->
                             <div class="table-responsive ">
                                 <table class="table small table-striped">
-
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
+                                            <th>#</th>
                                             <th>Title</th>
                                             <th>Staff</th>
                                             <th>Amount</th>
@@ -74,9 +111,9 @@
                                                 <td>{{ number_format($expense->amount, 2) }}</td>
                                                 <td>{{ $expense->category }}</td>
                                                 <td>{{ $expense->expense_date->format('M d, Y') }}</td>
-                                                @if (auth()->user()->can('inventory.show') ||
-                                                        auth()->user()->can('inventory.update') ||
-                                                        auth()->user()->can('inventory.delete'))
+                                                @if (auth()->user()->can('expenses.show') ||
+                                                        auth()->user()->can('expenses.update') ||
+                                                        auth()->user()->can('expenses.delete'))
                                                     <td>
                                                         <div class="btn-group">
                                                             @can('expenses.show')
@@ -122,7 +159,7 @@
             </div>
         </div>
 
-        <!-- Total Amount Summary -->
+        <!-- Original Total Amount Card -->
         <div class="col-2 card" style="max-height: 100px">
             <div class="info-box-content card-header">
                 <h6 class="card-text text-center"><i class="fas fa-money-bill"></i> Total Expenses</h6>
@@ -133,7 +170,7 @@
         </div>
     </div>
 
-    <!-- Hidden Delete Form -->
+
     <form id="delete-form" method="POST" style="display: none;">
         @csrf
         @method('DELETE')
@@ -141,37 +178,9 @@
 @endsection
 
 @push('js')
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Handle delete button clicks
-            document.querySelectorAll('.delete-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const expenseId = this.getAttribute('data-id');
-                    const expenseName = this.getAttribute('data-name');
-
-                    Swal.fire({
-                        title: 'Are you sure?',
-                        html: `You are about to delete the expense: <strong>${expenseName}</strong>`,
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#dc3545',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Yes, delete it!',
-                        cancelButtonText: 'Cancel',
-                        reverseButtons: true,
-                        focusCancel: true
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            const form = document.getElementById('delete-form');
-                            form.action =
-                                "{{ route('dashboard.expenses.destroy', '') }}/" +
-                                expenseId;
-                            form.submit();
-                        }
-                    });
-                });
-            });
-        });
-    </script>
+    <x-delete-alert
+        route="dashboard.expenses.destroy"
+        itemName="expense"
+        deleteBtnClass="delete-btn"
+    />
 @endpush

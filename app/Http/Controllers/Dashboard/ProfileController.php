@@ -12,7 +12,9 @@ class ProfileController extends Controller
     public function edit()
     {
         $user = Auth::user();
-        return view('dashboard.profile.edit', compact('user'));
+        $profile = Profile::all();
+        // dd($user->profile->profile_photo);
+        return view('dashboard.profile.edit', compact('user', 'profile'));
     }
 
 

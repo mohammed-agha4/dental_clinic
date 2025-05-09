@@ -14,7 +14,7 @@
                 @endcan
             </div>
 
-            <!-- Flash Messages -->
+
             @if (session()->has('success'))
                 <div id="flash-msg" class="alert alert-success alert-dismissible fade show">
                     {{ session('success') }}
@@ -32,7 +32,7 @@
                 <table class="table small">
                     <thead>
                         <tr class="text-center">
-                            <th>ID</th>
+                            <th>#</th>
                             <th>Name</th>
                             <th>Action</th>
                         </tr>
@@ -73,7 +73,7 @@
         </div>
     </div>
 
-    <!-- Hidden Delete Form -->
+
     <form id="delete-form" method="POST" style="display: none;">
         @csrf
         @method('DELETE')
@@ -81,37 +81,8 @@
 @endsection
 
 @push('js')
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Handle delete button clicks
-            document.querySelectorAll('.delete-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const categoryId = this.getAttribute('data-id');
-                    const categoryName = this.getAttribute('data-name');
-
-                    Swal.fire({
-                        title: 'Are you sure?',
-                        html: `You are about to delete the category: <strong>${categoryName}</strong>`,
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#dc3545',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Yes, delete it!',
-                        cancelButtonText: 'Cancel',
-                        reverseButtons: true,
-                        focusCancel: true
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            const form = document.getElementById('delete-form');
-                            form.action =
-                                "{{ route('dashboard.inventory.categories.destroy', '') }}/" +
-                                categoryId;
-                            form.submit();
-                        }
-                    });
-                });
-            });
-        });
-    </script>
+    <x-delete-alert
+    route="dashboard.inventory.categories.destroy"
+    itemName="category"
+    deleteBtnClass="delete-btn"/>
 @endpush

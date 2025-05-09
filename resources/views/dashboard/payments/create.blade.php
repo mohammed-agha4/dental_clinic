@@ -8,7 +8,6 @@
 
     <form action="{{ route('dashboard.payments.store') }}" method="post">
 
-
         <div class="container-fluid">
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
@@ -18,15 +17,7 @@
                     </a>
                 </div>
                 <div class="card-body">
-                    @if ($errors->any())
-                        <div class="alert alert-danger">
-                            <ul class="mb-0">
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
+
 
                     <form action="{{ route('dashboard.payments.store') }}" method="POST">
                         @csrf
@@ -36,15 +27,19 @@
                             <select name="visit_id" id="visit_id"
                                 class="form-control select2 @error('visit_id') is-invalid @enderror" required>
                                 <option value="">Select Visit</option>
+
                                 @foreach ($visits as $visit)
-                                    <option value="{{ $visit->id }}"
-                                        {{ old('visit_id') == $visit->id ? 'selected' : '' }}
-                                        data-service="{{ $visit->service->service_name ?? 'No service' }}"
-                                        data-price="{{ $visit->service->service_price ?? 0 }}">
-                                        {{ $visit->patient->fname }} {{ $visit->patient->lname }} -
-                                        {{ $visit->visit_date/*->format('M d, Y H:i') */}} -
-                                        {{ $visit->service->service_name ?? 'No service' }}
-                                    </option>
+                                    @if ($visit->staff->user->id == Auth::user()->id || Auth::user()->staff->role == 'admin')
+                                        <option value="{{ $visit->id }}"
+                                            {{ old('visit_id') == $visit->id ? 'selected' : '' }}
+                                            data-service="{{ $visit->service->service_name ?? 'No service' }}"
+                                            data-price="{{ $visit->service->service_price ?? 0 }}">
+                                            {{ $visit->patient->FullName }} -
+                                            {{ $visit->visit_date->format('M d, Y H:i') }} -
+                                            {{ $visit->service->service_name ?? 'No service' }}
+                                            {{ $visit->staff->user->name }}
+                                        </option>
+                                    @endif
                                 @endforeach
                             </select>
                             @error('visit_id')
@@ -52,25 +47,44 @@
                             @enderror
                         </div>
 
+
                         <div class="row">
+                            @if (Auth::user()->staff->role == 'admin')
+                                <div class="col-md-6 my-2">
+                                    <div class="form-group">
+                                        <label for="staff_id">Staff Member</label>
+                                        <select name="staff_id" id="staff_id"
+                                            class="form-control @error('staff_id') is-invalid @enderror" required>
+                                            <option value="">Select Staff</option>
+                                            @foreach ($staff as $member)
+                                                <option value="{{ $member->id }}"
+                                                    {{ old('staff_id') == $member->id ? 'selected' : '' }}>
+                                                    {{ $member->user->name }} ({{ $member->role }})
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @error('staff_id')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+                            @else
                             <div class="col-md-6 my-2">
                                 <div class="form-group">
                                     <label for="staff_id">Staff Member</label>
+
                                     <select name="staff_id" id="staff_id"
                                         class="form-control @error('staff_id') is-invalid @enderror" required>
-                                        <option value="">Select Staff</option>
-                                        @foreach ($staff as $member)
-                                            <option value="{{ $member->id }}"
-                                                {{ old('staff_id') == $member->id ? 'selected' : '' }}>
-                                                {{ $member->user->name }} ({{ $member->role }})
-                                            </option>
-                                        @endforeach
+                                        <option selected value="{{ Auth::user()->id }}">{{ Auth::user()->name }}</option>
+
                                     </select>
                                     @error('staff_id')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
                             </div>
+                            @endif
+
 
                             <div class="col-md-6 my-2">
                                 <div class="form-group">
@@ -166,11 +180,11 @@
 @push('js')
     <script>
         $(document).ready(function() {
-            // Initialize select2
-            $('.select2').select2({
-                placeholder: "Select a visit",
-                width: '100%'
-            });
+            // // Initialize select2
+            // $('.select2').select2({
+            //     placeholder: "Select a visit",
+            //     width: '100%'
+            // });
 
             // Auto-fill amount based on service price
             $('#visit_id').change(function() {

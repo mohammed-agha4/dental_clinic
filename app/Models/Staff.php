@@ -16,14 +16,16 @@ class Staff extends Model
     use SoftDeletes;
 
     protected $table = 'staff';
-
-
     protected $guarded = [];
-
     protected $casts = [
         'is_active' => 'boolean',
+        'created_at' => 'date',
     ];
 
+    public function scopeNonAdmin($query)
+    {
+        return $query->where('role', '!=', 'admin');
+    }
 
     public function transactions()
     {
@@ -54,12 +56,9 @@ class Staff extends Model
     {
         return $this->hasMany(Payment::class, 'staff_id');
     }
-
-
+    
     public function expenses()
     {
         return $this->hasMany(Expense::class, 'staff_id');
     }
-
-
 }
