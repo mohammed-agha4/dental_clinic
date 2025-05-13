@@ -69,7 +69,7 @@ class StaffController extends Controller
         ]);
 
         try {
-            DB::transaction();
+            DB::beginTransaction();
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],

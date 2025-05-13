@@ -13,15 +13,19 @@
             <div class="d-flex justify-content-between align-items-center px-3 py-2 bg-light border-bottom">
                 <h6 class="mb-0">Unread Notifications</h6>
                 @if (auth()->user()->unreadNotifications->count())
-                    <a href="{{ route('notifications.markAllRead') }}" class="text-decoration-none small">
-                        Mark all as read
-                    </a>
+                    <form action="{{ route('notifications.markAllRead') }}" method="POST">
+                        @csrf
+                        @can('notifications.mark_all_read')
+                            <button type="submit" class="btn btn-sm w-100">
+                                Mark All Read
+                            </button>
+                        @endcan
+                    </form>
                 @endif
             </div>
 
             @forelse(auth()->user()->unreadNotifications->take($maxNotifications) as $notification)
-                <a class="dropdown-item py-2 border-bottom"
-                    href="{{ route('notifications.index', $notification->id) }}">
+                <a class="dropdown-item py-2 border-bottom" href="{{ route('notifications.index', $notification->id) }}">
                     <div class="d-flex align-items-center">
                         <div class="flex-shrink-0 me-3">
                             @if (Str::contains($notification->type, 'ReorderNotification'))

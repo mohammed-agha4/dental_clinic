@@ -303,7 +303,7 @@ class AppointmentsController extends Controller
             // Validate patient phone uniqueness
             if ($patient->phone != $request->phone) {
                 $phoneExists = Patient::where('phone', $request->phone)
-                    ->where('id', '!=', $patient->id)
+                    ->where('id', '!=', $patient->id) // means there is an id for a petient holding the same number entered
                     ->exists();
 
                 if ($phoneExists) {

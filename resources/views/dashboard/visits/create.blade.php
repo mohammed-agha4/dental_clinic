@@ -25,11 +25,13 @@
                         <div class="col-3 mb-3">
                             <div class="form-group">
                                 <label class="form-label">Patient:</label>
-                                <select name="patient_id" class="form-select @error('patient_id') is-invalid @enderror">
+                                <select name="patient_id"
+                                    class="form-select select2 @error('patient_id') is-invalid @enderror">
                                     <option selected disabled>--select--</option>
                                     @foreach ($patients as $patient)
                                         <option value="{{ $patient->id }}" @selected(old('patient_id', $appointment->patient_id) == $patient->id)>
-                                            {{ $patient->fname }}</option>
+                                            {{ $patient->fname }}
+                                        </option>
                                     @endforeach
                                 </select>
                                 @error('patient_id')
@@ -139,12 +141,6 @@
                             </div>
                         </div>
                         <div class="card-body">
-                            {{-- <div class="alert alert-info mb-3">
-                                <i class="fas fa-info-circle me-2"></i>
-                                <strong>Note:</strong> Items will be automatically linked to this visit.
-                                Unit prices are loaded from inventory.
-                            </div> --}}
-
                             <div
                                 class="transaction-summary mb-3 d-flex justify-content-between align-items-center bg-light p-2 rounded">
                                 <div>
@@ -153,7 +149,7 @@
                             </div>
 
                             <div id="inventoryItemsContainer">
-                                <!-- Dynamic transactions will be added here -->
+                                {{-- transactions will be added here --}}
                             </div>
                         </div>
                     </div>
@@ -238,7 +234,7 @@
                 </div>
                 <div class="col-md-2">
                     <div class="form-group">
-                        <label class="form-label d-none d-md-block">&nbsp;</label>
+                        <label class="form-label d-none d-md-block">&nbsp;</label> {{-- - &nbsp;: This is a non-breaking space, ensuring the label isn't empty but doesn’t contain visible text. --}}
                         <button type="button" class="btn btn-outline-danger" onclick="removeInventoryItem(this)">
                             <i class="fas fa-trash"></i>
                         </button>
@@ -256,164 +252,191 @@
 
 @push('js')
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize item counters
+        // Initialize item counters
+        updateItemCounters();
+
+        // Add a new inventory item row
+        const addInventoryItemBtn = document.getElementById('addInventoryItemBtn');
+        if (addInventoryItemBtn) {
+            addInventoryItemBtn.addEventListener('click', function() {
+                addInventoryItem();
+            });
+        }
+
+        // Function to add a new inventory item
+        function addInventoryItem() {
+            const template = document.getElementById('inventoryItemTemplate');
+            const container = document.getElementById('inventoryItemsContainer');
+
+            // Clone the template content
+            // make a clone of the content inside <template>. and (true): allow deep cloning(all child nodes within the template are copied)
+            const clone = document.importNode(template.content, true);
+
+            // Add event listeners to the new item
+            setupInventoryItemEventListeners(clone);
+
+            // Append the new item to the container
+            container.appendChild(clone);
+
+            // Update counters
             updateItemCounters();
+        }
 
-            // Add a new inventory item row
-            const addInventoryItemBtn = document.getElementById('addInventoryItemBtn');
-            if (addInventoryItemBtn) {
-                addInventoryItemBtn.addEventListener('click', function() {
-                    addInventoryItem();
-                });
-            }
+        // Function to set up event listeners for an inventory item
+        function setupInventoryItemEventListeners(itemElement) {
+            const inventorySelect = itemElement.querySelector('.inventory-select');
+            const quantityInput = itemElement.querySelector('.transaction-quantity');
+            const priceInput = itemElement.querySelector('.transaction-price');
+            const typeSelect = itemElement.querySelector('.transaction-type');
+            const skuSpan = itemElement.querySelector('.item-sku');
+            const availableQtySpan = itemElement.querySelector('.available-qty');
+            const quantityWarning = itemElement.querySelector('.quantity-warning');
+            const transactionIndicator = itemElement.querySelector('.transaction-indicator');
 
-            // Function to add a new inventory item
-            function addInventoryItem() {
-                const template = document.getElementById('inventoryItemTemplate');
-                const container = document.getElementById('inventoryItemsContainer');
+            // Event listener for inventory selection
+            inventorySelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
 
-                // Clone the template content
-                const clone = document.importNode(template.content, true);
 
-                // Add event listeners to the new item
-                setupInventoryItemEventListeners(clone);
+                if (selectedOption.value) {
+                    const price = selectedOption.getAttribute('data-price');
+                    const available = selectedOption.getAttribute('data-available');
+                    const sku = selectedOption.getAttribute('data-sku');
+                    const expiryDate = selectedOption.getAttribute('data-expiry');
+                    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
-                // Append the new item to the container
-                container.appendChild(clone);
+                    // Update fields
+                    priceInput.value = price;
+                    skuSpan.textContent = sku;
+                    availableQtySpan.textContent = `Available: ${available}`;
 
-                // Update counters
-                updateItemCounters();
-            }
-
-            // Function to set up event listeners for an inventory item
-            function setupInventoryItemEventListeners(itemElement) {
-                const inventorySelect = itemElement.querySelector('.inventory-select');
-                const quantityInput = itemElement.querySelector('.transaction-quantity');
-                const priceInput = itemElement.querySelector('.transaction-price');
-                const typeSelect = itemElement.querySelector('.transaction-type');
-                const skuSpan = itemElement.querySelector('.item-sku');
-                const availableQtySpan = itemElement.querySelector('.available-qty');
-                const quantityWarning = itemElement.querySelector('.quantity-warning');
-                const transactionIndicator = itemElement.querySelector('.transaction-indicator');
-
-                // Event listener for inventory selection
-                inventorySelect.addEventListener('change', function() {
-                    const selectedOption = this.options[this.selectedIndex];
-
-                    if (selectedOption.value) {
-                        const price = selectedOption.getAttribute('data-price');
-                        const available = selectedOption.getAttribute('data-available');
-                        const sku = selectedOption.getAttribute('data-sku');
-                        const expiryDate = selectedOption.getAttribute('data-expiry');
-                        const today = new Date().toISOString().split('T')[0];
-
-                        // Update fields
-                        priceInput.value = price;
-                        skuSpan.textContent = sku;
-                        availableQtySpan.textContent = `Available: ${available}`;
-
-                        // Check for expired item
-                        if (expiryDate && expiryDate < today) {
-                            transactionIndicator.innerHTML = `
+                    // Check for expired item
+                    if (expiryDate && expiryDate < today) {
+                        transactionIndicator.innerHTML = `
                         <div class="alert alert-danger p-2 mb-0">
                             <i class="fas fa-exclamation-triangle me-2"></i>
                             This item expired on ${new Date(expiryDate).toLocaleDateString()}
-                        </div>
-                    `;
-                            this.classList.add('is-invalid');
-                        } else {
-                            transactionIndicator.innerHTML = '';
-                            this.classList.remove('is-invalid');
-                        }
+                        </div> `;
 
-                        // Check quantity against available
-                        validateQuantity(quantityInput, available, quantityWarning);
+                        this.classList.add('is-invalid');
                     } else {
-                        // Reset fields if no option selected
-                        priceInput.value = '';
-                        skuSpan.textContent = '-';
-                        availableQtySpan.textContent = 'Available: -';
-                        quantityWarning.style.display = 'none';
                         transactionIndicator.innerHTML = '';
                         this.classList.remove('is-invalid');
                     }
-                });
 
-                // Event listener for quantity changes
-                quantityInput.addEventListener('input', function() {
-                    const selectedOption = inventorySelect.options[inventorySelect.selectedIndex];
-
-                    if (selectedOption.value) {
-                        const available = selectedOption.getAttribute('data-available');
-                        validateQuantity(this, available, quantityWarning);
-                    }
-                });
-
-
-
-                // Trigger change events to initialize the fields
-
-                typeSelect.dispatchEvent(new Event('change'));
-            }
-            // Add form submission validation
-            const form = document.querySelector('form');
-            if (form) {
-                form.addEventListener('submit', function(e) {
-                    const expiredItems = [];
-
-                    document.querySelectorAll('.inventory-select').forEach(select => {
-                        const selectedOption = select.options[select.selectedIndex];
-                        if (selectedOption.value) {
-                            const expiryDate = selectedOption.getAttribute('data-expiry');
-                            const today = new Date().toISOString().split('T')[0];
-
-                            if (expiryDate && expiryDate < today) {
-                                expiredItems.push(selectedOption.text.trim());
-                            }
-                        }
-                    });
-
-                    if (expiredItems.length > 0) {
-                        e.preventDefault();
-                        alert(`Cannot submit visit with expired items:\n\n${expiredItems.join('\n')}`);
-                    }
-                });
-            }
-
-            // Function to validate quantity against available stock
-            function validateQuantity(quantityInput, available, warningElement) {
-                const quantity = parseInt(quantityInput.value, 10);
-                const availableQty = parseInt(available, 10);
-                const transactionType = quantityInput.closest('.inventory-item').querySelector('.transaction-type')
-                    .value;
-
-                if (quantity > availableQty && transactionType === 'use') {
-                    warningElement.style.display = 'block';
-                    quantityInput.setCustomValidity('Quantity exceeds available stock.');
+                    // Check quantity against available
+                    validateQuantity(quantityInput, available, quantityWarning);
                 } else {
-                    warningElement.style.display = 'none';
-                    quantityInput.setCustomValidity('');
+                    // Reset fields if no option selected
+                    priceInput.value = '';
+                    skuSpan.textContent = '-';
+                    availableQtySpan.textContent = 'Available: -';
+                    quantityWarning.style.display = 'none';
+                    transactionIndicator.innerHTML = '';
+                    this.classList.remove('is-invalid');
                 }
-            }
-
-            // Function to remove an inventory item
-            function removeInventoryItem(button) {
-                const item = button.closest('.inventory-item');
-                item.remove();
-                updateItemCounters();
-            }
-
-            // Function to update the total items counter
-            function updateItemCounters() {
-                const totalItems = document.querySelectorAll('.inventory-item').length;
-                document.querySelector('.total-items').textContent = totalItems;
-            }
-
-            // Initialize any existing inventory items on page load
-            document.querySelectorAll('.inventory-item').forEach(item => {
-                setupInventoryItemEventListeners(item);
             });
+
+            // Event listener for quantity changes
+            quantityInput.addEventListener('input', function() { // input: triggeres any change on the input
+                const selectedOption = inventorySelect.options[inventorySelect.selectedIndex];
+
+                if (selectedOption.value) {
+                    const available = selectedOption.getAttribute('data-available');
+                    validateQuantity(this, available, quantityWarning);
+                }
+            });
+
+            // Trigger change events to initialize the fields
+
+            //Normally, when a user selects an option in a dropdown (<select>), it fires a 'change' event. But what if you change the value using JavaScript? The 'change' event won’t happen automatically—this is where dispatchEvent() comes in. example bellow
+            // const select = document.getElementById('mySelect');
+            // select.value = 'newValue'; // Change value with JavaScript
+            // select.dispatchEvent(new Event('change')); // Tell the browser to act like the user changed it
+            typeSelect.dispatchEvent(new Event('change'));
+        }
+
+        // Add form submission validation
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const expiredItems = [];
+                let hasExpiredItems = false;
+
+                document.querySelectorAll('.inventory-select').forEach(select => {
+                    const selectedOption = select.options[select.selectedIndex];
+                    if (selectedOption && selectedOption.value && selectedOption.dataset.expiry) {
+                        const expiryDate = selectedOption.dataset.expiry;
+                        const today = new Date().toISOString().split('T')[0];
+                        console.log('Checking item:', selectedOption.text, 'Expiry:', expiryDate, 'Today:',
+                            today);
+
+                        if (expiryDate < today) {
+                            expiredItems.push(selectedOption.text.trim());
+                            hasExpiredItems = true;
+                            // Visually mark the expired item
+                            select.classList.add('is-invalid');
+                        }
+                    }
+                });
+
+                if (hasExpiredItems) {
+                    console.log('Found expired items:', expiredItems);
+                    e.preventDefault();
+                    alert(`Cannot submit visit with expired items:\n\n${expiredItems.join('\n')}`);
+                    // Scroll to the first expired item
+                    const firstExpired = document.querySelector('.inventory-select.is-invalid');
+                    if (firstExpired) {
+                        firstExpired.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
+                    }
+                }
+            });
+        }
+
+        // Function to validate quantity against available stock
+        function validateQuantity(quantityInput, available, warningElement) {
+            const quantity = parseInt(quantityInput.value, 10);
+            const availableQty = parseInt(available, 10);
+            const transactionType = quantityInput.closest('.inventory-item').querySelector('.transaction-type').value;
+
+            if (quantity > availableQty && transactionType === 'use') {
+                warningElement.style.display = 'block';
+                quantityInput.setCustomValidity('Quantity exceeds available stock.');
+            } else {
+                warningElement.style.display = 'none';
+                quantityInput.setCustomValidity('');
+            }
+        }
+
+        // Function to remove an inventory item
+        function removeInventoryItem(button) {
+            const item = button.closest('.inventory-item');
+            item.remove();
+            updateItemCounters();
+        }
+
+        // Function to update the total items counter
+        function updateItemCounters() {
+            const totalItems = document.querySelectorAll('.inventory-item').length;
+            document.querySelector('.total-items').textContent = totalItems;
+        }
+
+        // Initialize any existing inventory items on page load
+        document.querySelectorAll('.inventory-item').forEach(item => {
+            setupInventoryItemEventListeners(item);
         });
     </script>
+<script>
+    <script>
+    $(document).ready(function() {
+        $('.select2').select2({
+            placeholder: '--select--',
+            allowClear: true
+        });
+    });
+</script>
+</script>
 @endpush

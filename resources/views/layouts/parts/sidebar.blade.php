@@ -1,10 +1,13 @@
 <ul class="nav flex-column" id="sidebarAccordion">
     <!-- Main Navigation -->
-    <li class="nav-item">
-        <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
-            <i class="side-icon fas fa-home me-2"></i>Overview
-        </a>
-    </li>
+
+    @can('dashboard.overview')
+        <li class="nav-item">
+            <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
+                <i class="side-icon fas fa-home me-2"></i>Overview
+            </a>
+        </li>
+    @endcan
 
     <!-- Patient Care Section -->
     <li class="nav-item">
@@ -176,7 +179,7 @@
                         </a>
                     </li>
                 @endcan
-                
+
             </ul>
         </li>
     @endcan

@@ -10,16 +10,16 @@ use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use App\Models\Appointment;
 use Illuminate\Support\Facades\Gate;
 
 class PaymentsController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index(Request $request)
     {
         Gate::authorize('payments.view');
+
 
         $query = Payment::with(['visit.patient', 'staff.user']);
 
@@ -41,6 +41,7 @@ class PaymentsController extends Controller
         }
 
         if ($request->filled('from_date')) {
+            dd($request->from_date);
             $query->where('created_at', '>=', Carbon::parse($request->from_date)->startOfDay());
         }
 
@@ -61,11 +62,9 @@ class PaymentsController extends Controller
         Gate::authorize('payments.create');
 
         $visits = Visit::with(['patient', 'service', 'staff.user'])
-            // ->whereDoesntHave('payments', function($query) {
-            //     $query->where('status', 'completed');
-            // })
-            ->latest()
-            ->get();
+            ->whereDoesntHave('payments', function ($query) {
+                $query->where('status', 'completed');
+            })->latest()->get();
 
         // dd('d');
         $staff = Staff::where('is_active', true)->with('user')->get();
@@ -79,7 +78,7 @@ class PaymentsController extends Controller
      */
     public function store(Request $request)
     {
-        // dd($request->all());
+
         Gate::authorize('payments.create');
         // dd($request->all());
         $validated = $request->validate([
@@ -96,12 +95,11 @@ class PaymentsController extends Controller
         try {
             DB::beginTransaction();
 
-            // Create payment
             // dd($request->all());
             $payment = Payment::create($validated);
-            // If payment is completed, update the visit status or other related records if needed
+
             if ($payment->status === 'completed') {
-                // Additional business logic if needed
+                $payment->visit->appointment->update(['status' => 'completed']);
             }
 
             DB::commit();
@@ -164,7 +162,7 @@ class PaymentsController extends Controller
 
             // If payment status changed to completed, update related records if needed
             if ($oldStatus !== 'completed' && $payment->status === 'completed') {
-                // Additional business logic if needed
+                $payment->visit->appointment->update(['status' => 'completed']);
             }
 
             DB::commit();
@@ -205,9 +203,6 @@ class PaymentsController extends Controller
     }
 
 
-    /**
-     * Generate payment receipt
-     */
 
     /**
      * Generate payment receipt
@@ -217,12 +212,6 @@ class PaymentsController extends Controller
         Gate::authorize('payments.show');
 
         $payment->load(['visit.patient', 'visit.service', 'staff.user']);
-
-        // For PDF generation
-        if (request()->has('download')) {
-            return Pdf::loadView('dashboard.payments.receipt', compact('payment'))
-                ->download("receipt-{$payment->id}.pdf");
-        }
 
         return view('dashboard.payments.receipt', compact('payment'));
     }

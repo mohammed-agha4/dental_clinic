@@ -32,7 +32,7 @@
                     <div class="mb-4 border-bottom pb-3">
                         <form action="{{ route('dashboard.payments.index') }}" method="GET" class="row g-3">
                             <div class="col-md-3">
-                                <select class="form-select" name="status">
+                                <select class="form-select form-select-sm" name="status">
                                     <option value="">All Statuses</option>
                                     <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending
                                     </option>
@@ -46,7 +46,7 @@
                             </div>
 
                             <div class="col-md-3">
-                                <select class="form-select" name="method">
+                                <select class="form-select form-select-sm" name="method">
                                     <option value="">All Methods</option>
                                     <option value="cash" {{ request('method') == 'cash' ? 'selected' : '' }}>Cash</option>
                                     <option value="credit_card" {{ request('method') == 'credit_card' ? 'selected' : '' }}>
@@ -59,20 +59,20 @@
                             </div>
 
                             <div class="col-md-3">
-                                <input type="date" class="form-control" name="from_date"
+                                <input type="date" class="form-control form-control-sm" name="from_date"
                                     value="{{ request('from_date') }}" placeholder="From Date">
                             </div>
 
                             <div class="col-md-3">
-                                <input type="date" class="form-control" name="to_date" value="{{ request('to_date') }}"
+                                <input type="date" class="form-control form-control-sm" name="to_date" value="{{ request('to_date') }}"
                                     placeholder="To Date">
                             </div>
 
                             <div class="col-md-12 d-flex justify-content-end">
-                                <button type="submit" class="btn btn-primary me-2">
+                                <button type="submit" class="btn btn-sm btn-primary me-2">
                                     <i class="fas fa-filter"></i> Filter
                                 </button>
-                                <a href="{{ route('dashboard.payments.index') }}" class="btn btn-outline-secondary">
+                                <a href="{{ route('dashboard.payments.index') }}" class="btn btn-sm btn-outline-secondary">
                                     <i class="fas fa-sync-alt"></i> Reset
                                 </a>
                             </div>

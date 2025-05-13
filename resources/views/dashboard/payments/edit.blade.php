@@ -34,7 +34,7 @@
                             </div>
                             <div class="form-group col-4">
                                 <label>Visit Date</label>
-                                <input class="form-control" value="{{ $payment->visit->visit_date }}" disabled>
+                                <input class="form-control" value="{{ $payment->visit->visit_date->format('Y m,d g:i A') }}" disabled>
                             </div>
                             <div class="form-group col-4">
                                 <label>Service Name</label>
@@ -49,6 +49,7 @@
                         <h5 class="my-3">Payment Information:</h5>
                         <div class="border mx-3 p-3">
                             <div class="row">
+                                @if (Auth::user()->staff->role == 'admin')
                                 <div class="col-md-6 my-2">
                                     <div class="form-group">
                                         <label for="staff_id">Staff Member</label>
@@ -57,7 +58,7 @@
                                             <option value="">Select Staff</option>
                                             @foreach ($staff as $member)
                                                 <option value="{{ $member->id }}"
-                                                    {{ old('staff_id', $payment->staff_id) == $member->id ? 'selected' : '' }}>
+                                                    {{ old('staff_id') == $member->id ? 'selected' : '' }}>
                                                     {{ $member->user->name }} ({{ $member->role }})
                                                 </option>
                                             @endforeach
@@ -67,6 +68,18 @@
                                         @enderror
                                     </div>
                                 </div>
+                            @else
+                                <div class="col-md-6 my-2">
+                                    <div class="form-group">
+                                        <label for="staff_id">Staff Member</label>
+                                        <input type="text" class="form-control" value="{{ Auth::user()->name }}" readonly>
+                                        <input type="hidden" name="staff_id" value="{{ Auth::user()->id }}">
+                                        @error('staff_id')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+                            @endif
 
                                 <div class="col-md-6 my-2">
                                     <div class="form-group">

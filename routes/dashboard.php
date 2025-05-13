@@ -1,7 +1,9 @@
 <?php
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
+use App\Http\Middleware\RoleMiddleware;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PatientVisitController;
 use App\Http\Controllers\Dashboard\RolesController;
@@ -24,9 +26,13 @@ use App\Http\Controllers\Dashboard\Inventory\CategoriesController;
 use App\Http\Controllers\Dashboard\Inventory\InventoryTransactionsController;
 
 
+Route::middleware(['auth', RoleMiddleware::class . ':admin,dentist'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+});
 
 
-Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard')->middleware('auth');
+
+
 Route::prefix('dashboard')->middleware('auth')->name('dashboard.')->group(function () {
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

@@ -79,7 +79,7 @@ class Appointment extends Model
     /**
      * Create a new appointment
      */
-    public static function createAppointment(array $data, bool $isWalkIn = false): self
+    public static function createAppointment(array $data, bool $isWalkIn = false): self //array $data: holds the passed array from controller
     {
         $appointment = new self();
         $appointment->patient_id = $data['patient_id'];
@@ -114,9 +114,14 @@ class Appointment extends Model
         $this->notes = $data['notes'] ?? $this->notes;
         // $this->cancellation_reason = $data['cancellation_reason'] ?? $this->cancellation_reason;
 
-        if (in_array($data['status'], [self::STATUS_SCHEDULED, self::STATUS_RESCHEDULED])) {
+        if (in_array($data['status'], [self::STATUS_SCHEDULED, self::STATUS_RESCHEDULED])) { //if the request is scheduled or rescheduled, the condition returns true
+
             $this->appointment_date = $data['appointment_date'];
 
+
+            // $this->getOriginal('status'): This retrieves the original status of the appointment before any changes.
+            // !== self::STATUS_RESCHEDULED: This ensures the original status was NOT 'rescheduled'.
+            // $data['status'] === self::STATUS_RESCHEDULED: This checks if the new status being set is 'rescheduled'.
             if ($this->getOriginal('status') !== self::STATUS_RESCHEDULED && $data['status'] === self::STATUS_RESCHEDULED) {
                 $this->status = self::STATUS_RESCHEDULED;
             } else {

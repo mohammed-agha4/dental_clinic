@@ -41,30 +41,5 @@ class Expense extends Model
         return $this->belongsTo(Staff::class);
     }
 
-    // Scope to filter expenses by date range
-    public function scopeDateRange($query, $startDate, $endDate)
-    {
-        if ($startDate && $endDate) {
-            return $query->whereBetween('expense_date', [$startDate, $endDate]);
-        }
-        return $query;
-    }
 
-    // Scope to filter expenses by category
-    public function scopeCategory($query, $category)
-    {
-        if ($category) {
-            return $query->where('category', $category);
-        }
-        return $query;
-    }
-
-    // Scope to filter expenses by staff
-    public function scopeByStaff($query, $staffId)
-    {
-        if ($staffId) {
-            return $query->where('staff_id', $staffId);
-        }
-        return $query;
-    }
 }

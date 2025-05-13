@@ -12,28 +12,53 @@ use Illuminate\Support\Facades\Gate;
 
 class ExpensesController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    // Controller
+
+
+
     public function index(Request $request)
     {
+        // dd($request->all());
         Gate::authorize('expenses.view');
         $staffMembers = Staff::with('user')->where('is_active', true)->get();
         $categories = Expense::CATEGORIES;
 
-        $expenses = Expense::with('staff.user')
-            ->dateRange($request->start_date, $request->end_date)
-            ->category($request->category)
-            ->byStaff($request->staff_id)
-            ->latest()
-            ->paginate(8)
-            ->withQueryString();
+        // Base query
+        $query = Expense::with('staff.user');
 
-        $totalAmount = Expense::dateRange($request->start_date, $request->end_date)
-            ->category($request->category)
-            ->byStaff($request->staff_id)
-            ->sum('amount');
+        // Date range filter
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('expense_date', [$request->start_date, $request->end_date]);
+        }
+
+        // Category filter
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+
+        // Staff filter
+        if ($request->filled('staff_id')) {
+            $query->where('staff_id', $request->staff_id);
+        }
+
+        // Get paginated results
+        $expenses = $query->latest()->paginate(8);
+
+        // Calculate total amount with same filters
+        $totalQuery = Expense::query();
+
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $totalQuery->whereBetween('expense_date', [$request->start_date, $request->end_date]);
+        }
+
+        if ($request->filled('category')) {
+            $totalQuery->where('category', $request->category);
+        }
+
+        if ($request->filled('staff_id')) {
+            $totalQuery->where('staff_id', $request->staff_id);
+        }
+
+        $totalAmount = $totalQuery->sum('amount');
 
         return view('dashboard.expenses.index', compact(
             'expenses',
@@ -43,11 +68,9 @@ class ExpensesController extends Controller
         ));
     }
 
-    /**
-     * Show the form for creating a new expense.
-     *
-     * @return \Illuminate\Http\Response
-     */
+
+
+
     public function create()
     {
         Gate::authorize('expenses.create');
@@ -57,12 +80,9 @@ class ExpensesController extends Controller
         return view('dashboard.expenses.create', compact('staffMembers', 'categories'));
     }
 
-    /**
-     * Store a newly created expense in storage.
-     *
-     * @param  \App\Http\Requests\StoreExpenseRequest  $request
-     * @return \Illuminate\Http\Response
-     */
+
+
+
     public function store(Request $request)
     {
         Gate::authorize('expenses.create');
@@ -82,12 +102,9 @@ class ExpensesController extends Controller
             ->with('success', 'Expense created successfully.');
     }
 
-    /**
-     * Display the specified expense.
-     *
-     * @param  \App\Models\Expense  $expense
-     * @return \Illuminate\Http\Response
-     */
+
+
+
     public function show(Expense $expense)
     {
         Gate::authorize('expenses.show');
@@ -96,12 +113,9 @@ class ExpensesController extends Controller
         return view('dashboard.expenses.show', compact('expense'));
     }
 
-    /**
-     * Show the form for editing the specified expense.
-     *
-     * @param  \App\Models\Expense  $expense
-     * @return \Illuminate\Http\Response
-     */
+
+
+
     public function edit(Expense $expense)
     {
         Gate::authorize('expenses.update');
@@ -111,13 +125,8 @@ class ExpensesController extends Controller
         return view('dashboard.expenses.edit', compact('expense', 'staffMembers', 'categories'));
     }
 
-    /**
-     * Update the specified expense in storage.
-     *
-     * @param  \App\Http\Requests\UpdateExpenseRequest  $request
-     * @param  \App\Models\Expense  $expense
-     * @return \Illuminate\Http\Response
-     */
+
+
     public function update(Request $request, Expense $expense)
     {
         Gate::authorize('expenses.update');
@@ -153,43 +162,7 @@ class ExpensesController extends Controller
             ->with('success', 'Expense deleted successfully');
     }
 
-    /**
-     * Generate expense report
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function report(Request $request)
-    {
-        Gate::authorize('expenses.report');
 
-        // dd('dd');
-        // $request->validate([
-        //     'start_date' => 'required|date',
-        //     'end_date' => 'required|date|after_or_equal:start_date',
-        // ]);
-
-        $expenses = Expense::with('staff.user')
-            ->dateRange($request->start_date, $request->end_date)
-            ->category($request->category)
-            ->byStaff($request->staff_id)
-            ->get();
-
-        $totalAmount = $expenses->sum('amount');
-        $categoryTotals = $expenses->groupBy('category')
-            ->map(function ($group) {
-                return [
-                    'count' => $group->count(),
-                    'total' => $group->sum('amount')
-                ];
-            });
-
-        return view('dashboard.expenses.report', compact(
-            'expenses',
-            'totalAmount',
-            'categoryTotals'
-        ));
-    }
 
 
     public function trash()

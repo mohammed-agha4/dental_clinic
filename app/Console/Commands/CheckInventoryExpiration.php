@@ -53,7 +53,7 @@ class CheckInventoryExpiration extends Command
         // Get all admin users
         $adminUsers = User::whereHas('staff', function ($query) {
             $query->where('role', 'admin')
-                  ->where('is_active', true);
+                ->where('is_active', true);
         })->get();
 
         if ($adminUsers->isEmpty()) {

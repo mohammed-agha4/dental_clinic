@@ -40,15 +40,15 @@
                     <form class="row g-3">
                         <div class="col-md-4">
                             <div class="input-group">
-                                <input type="text" class="form-control" name="search"
+                                <input type="text" class="form-control form-control-sm" name="search"
                                     placeholder="Search patients, dentists, services..." value="{{ request('search') }}">
-                                <button class="btn btn-outline-secondary" type="submit">
+                                <button class="btn btn-sm btn-outline-secondary" type="submit">
                                     <i class="fas fa-search"></i>
                                 </button>
                             </div>
                         </div>
                         <div class="col-md-2">
-                            <select class="form-select" name="status">
+                            <select class="form-select form-select-sm" name="status">
                                 <option value="">All Statuses</option>
                                 <option value="scheduled" {{ request('status') == 'scheduled' ? 'selected' : '' }}>Scheduled
                                 </option>
@@ -64,22 +64,22 @@
                         </div>
                         <div class="col-md-3">
                             <div class="input-group">
-                                <span class="input-group-text">From</span>
-                                <input type="date" class="form-control" name="date_from"
+                                <span class="input-group-text text-sm">From</span>
+                                <input type="date" class="form-control form-control-sm" name="date_from"
                                     value="{{ request('date_from') }}">
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="input-group">
                                 <span class="input-group-text">To</span>
-                                <input type="date" class="form-control" name="date_to" value="{{ request('date_to') }}">
+                                <input type="date" class="form-control form-control-sm" name="date_to" value="{{ request('date_to') }}">
                             </div>
                         </div>
                         <div class="col-md-12 d-flex justify-content-end">
-                            <button type="submit" class="btn btn-primary me-2">
+                            <button type="submit" class="btn btn-sm btn-primary me-2">
                                 <i class="fas fa-filter"></i> Filter
                             </button>
-                            <a href="{{ route('dashboard.appointments.index') }}" class="btn btn-outline-secondary">
+                            <a href="{{ route('dashboard.appointments.index') }}" class="btn btn-sm btn-outline-secondary">
                                 <i class="fas fa-sync-alt"></i> Reset
                             </a>
                         </div>

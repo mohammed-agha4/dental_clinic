@@ -238,7 +238,7 @@
                     </div>
                 </div>
             </div>
-        @else
+        @elseif ($role == 'admin')
             {{-- ADMIN DASHBOARD --}}
             <div class="row">
                 <div class="col-lg-8">
@@ -310,23 +310,23 @@
                         <div class="card-body">
                             <div class="row g-4">
                                 <div class="col-md-6">
-                                    <div class="p-4 bg-light rounded">
+                                    <div class="bg-light rounded">
                                         <div class="d-flex flex-column">
                                             <div class="mb-4">
                                                 <p class="text-muted small mb-1">Total Revenue</p>
-                                                <h3 class="text-success mb-0">
-                                                    ${{ number_format($profitData['revenue'], 2) }}</h3>
+                                                <h4 class="text-success mb-0">
+                                                    ${{ number_format($profitData['revenue'], 2) }}</h4>
                                             </div>
                                             <div class="mb-4">
                                                 <p class="text-muted small mb-1">Total Expenses</p>
-                                                <h4 class="text-danger mb-0">
-                                                    ${{ number_format($profitData['totalExpenses'], 2) }}</h4>
+                                                <h5 class="text-danger mb-0">
+                                                    ${{ number_format($profitData['totalExpenses'], 2) }}</h5>
                                             </div>
                                             <div class="pt-2 border-top">
                                                 <p class="text-muted small mb-1">Net Profit</p>
-                                                <h4
+                                                <h5
                                                     class="{{ $profitData['profit'] >= 0 ? 'text-success' : 'text-danger' }} mb-0">
-                                                    ${{ number_format($profitData['profit'], 2) }}</h4>
+                                                    ${{ number_format($profitData['profit'], 2) }}</h5>
                                                 <p class="small text-muted mt-1">
                                                     {{ $profitData['profit'] >= 0 ? 'Profit Margin' : 'Loss Margin' }}:
                                                     {{ $profitData['revenue'] > 0 ? number_format(($profitData['profit'] / $profitData['revenue']) * 100, 1) : 0 }}%
@@ -336,7 +336,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card border-0 shadow-sm">
                                         <div class="card-header bg-white border-bottom">
                                             <h6 class="mb-0">Expense Breakdown</h6>
                                         </div>
@@ -388,34 +388,39 @@
                         </div> --}}
                     </div>
 
-                   <!-- Custom Period Modal -->
-<div class="modal fade" id="customPeriodModal" tabindex="-1" aria-labelledby="customPeriodModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-sm modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header py-2">
-                <h6 class="modal-title" id="customPeriodModalLabel">Custom Date Range</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="GET" class="m-0">
-                <div class="modal-body p-2">
-                    <div class="mb-2">
-                        <label for="startDate" class="form-label small mb-1">Start</label>
-                        <input type="date" class="form-control form-control-sm" id="startDate" name="start_date" required>
+                    <!-- Custom Period Modal -->
+                    <div class="modal fade" id="customPeriodModal" tabindex="-1"
+                        aria-labelledby="customPeriodModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-sm modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header py-2">
+                                    <h6 class="modal-title" id="customPeriodModalLabel">Custom Date Range</h6>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <form method="GET" class="m-0">
+                                    <div class="modal-body p-2">
+                                        <div class="mb-2">
+                                            <label for="startDate" class="form-label small mb-1">Start</label>
+                                            <input type="date" class="form-control form-control-sm" id="startDate"
+                                                name="start_date" required>
+                                        </div>
+                                        <div class="mb-1">
+                                            <label for="endDate" class="form-label small mb-1">End</label>
+                                            <input type="date" class="form-control form-control-sm" id="endDate"
+                                                name="end_date" required>
+                                        </div>
+                                        <input type="hidden" name="period" value="custom">
+                                    </div>
+                                    <div class="modal-footer py-1 px-2">
+                                        <button type="button" class="btn btn-sm btn-secondary"
+                                            data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-sm btn-primary">Apply</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-1">
-                        <label for="endDate" class="form-label small mb-1">End</label>
-                        <input type="date" class="form-control form-control-sm" id="endDate" name="end_date" required>
-                    </div>
-                    <input type="hidden" name="period" value="custom">
-                </div>
-                <div class="modal-footer py-1 px-2">
-                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-sm btn-primary">Apply</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
                     <!-- Custom Period Modal -->
                     <div class="modal fade" id="customPeriodModal" tabindex="-1"
@@ -568,6 +573,9 @@
                     </div>
                 </div>
             </div>
+        @else
+
+        <div>ddd</div>
         @endif
     </div>
 @endsection

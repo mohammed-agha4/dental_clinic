@@ -3,11 +3,7 @@
 @section('title', 'Create Payment')
 
 @section('content')
-
-
-
     <form action="{{ route('dashboard.payments.store') }}" method="post">
-
         <div class="container-fluid">
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
@@ -17,8 +13,6 @@
                     </a>
                 </div>
                 <div class="card-body">
-
-
                     <form action="{{ route('dashboard.payments.store') }}" method="POST">
                         @csrf
 
@@ -27,7 +21,6 @@
                             <select name="visit_id" id="visit_id"
                                 class="form-control select2 @error('visit_id') is-invalid @enderror" required>
                                 <option value="">Select Visit</option>
-
                                 @foreach ($visits as $visit)
                                     @if ($visit->staff->user->id == Auth::user()->id || Auth::user()->staff->role == 'admin')
                                         <option value="{{ $visit->id }}"
@@ -46,7 +39,6 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-
 
                         <div class="row">
                             @if (Auth::user()->staff->role == 'admin')
@@ -69,22 +61,17 @@
                                     </div>
                                 </div>
                             @else
-                            <div class="col-md-6 my-2">
-                                <div class="form-group">
-                                    <label for="staff_id">Staff Member</label>
-
-                                    <select name="staff_id" id="staff_id"
-                                        class="form-control @error('staff_id') is-invalid @enderror" required>
-                                        <option selected value="{{ Auth::user()->id }}">{{ Auth::user()->name }}</option>
-
-                                    </select>
-                                    @error('staff_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
+                                <div class="col-md-6 my-2">
+                                    <div class="form-group">
+                                        <label for="staff_id">Staff Member</label>
+                                        <input type="text" class="form-control" value="{{ Auth::user()->name }}" readonly>
+                                        <input type="hidden" name="staff_id" value="{{ Auth::user()->id }}">
+                                        @error('staff_id')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
                                 </div>
-                            </div>
                             @endif
-
 
                             <div class="col-md-6 my-2">
                                 <div class="form-group">
@@ -167,48 +154,41 @@
                 </div>
             </div>
         </div>
-
-
     </form>
-
 @endsection
-
-
-
-
 
 @push('js')
     <script>
-        $(document).ready(function() {
-            // // Initialize select2
-            // $('.select2').select2({
-            //     placeholder: "Select a visit",
-            //     width: '100%'
-            // });
-
+        document.addEventListener('DOMContentLoaded', function() {
             // Auto-fill amount based on service price
-            $('#visit_id').change(function() {
-                var selectedOption = $(this).find('option:selected');
-                var servicePrice = selectedOption.data('price');
+            const visitSelect = document.getElementById('visit_id');
+            const amountInput = document.getElementById('amount');
+
+            visitSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                const servicePrice = selectedOption.dataset.price;
 
                 if (servicePrice) {
-                    $('#amount').val(servicePrice);
+                    amountInput.value = servicePrice;
                 }
             });
 
             // Display transaction ID field only for card or bank transfer
-            $('#method').change(function() {
-                var method = $(this).val();
+            const methodSelect = document.getElementById('method');
+            const transactionIdField = document.getElementById('transaction_id').parentElement.parentElement;
+
+            methodSelect.addEventListener('change', function() {
+                const method = this.value;
                 if (method === 'credit_card' || method === 'bank_transfer') {
-                    $('#transaction_id').parent().parent().show();
+                    transactionIdField.style.display = 'block';
                 } else {
-                    $('#transaction_id').parent().parent().hide();
-                    $('#transaction_id').val('');
+                    transactionIdField.style.display = 'none';
+                    document.getElementById('transaction_id').value = '';
                 }
             });
 
             // Trigger change on page load
-            $('#method').trigger('change');
+            methodSelect.dispatchEvent(new Event('change'));
         });
     </script>
 @endpush

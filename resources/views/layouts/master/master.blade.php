@@ -8,35 +8,71 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.veryicon.com/path-to-icons.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css"
-        rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('front/css/style.css') }}">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400&family=Montserrat:wght@400&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400&family=Montserrat:wght@400&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
     <style>
         /* Variables for consistent theming */
         :root {
-    /* New color scheme */
-    --primary-color: #122e44;  /* Professional teal */
-    --primary-hover: #238F89;  /* Slightly darker teal */
-    --secondary-color: #E0F2F1;  /* Very light teal */
-    --accent-color: #567da8;  /* Warm orange for actions */
-    --text-dark: #2D3748;  /* Dark gray-blue */
-    --text-muted: #718096;  /* Medium gray */
-    --border-color: #E2E8F0;  /* Light gray */
-    --light-bg: #F8FAFC;  /* Very light gray */
-    --input-focus: rgba(42, 167, 160, 0.25);  /* Teal with transparency */
+            /* Your existing custom variables (keep these if you use them elsewhere) */
+            --primary-color: #124063;
+            --primary-hover: #238F89;
+            --secondary-color: #c2c7c7;
+            --accent-color: #567da8;
+            --text-dark: #2D3748;
+            --text-muted: #718096;
+            --border-color: #E2E8F0;
+            --light-bg: #F8FAFC;
+            --input-focus: rgba(42, 167, 160, 0.25);
 
-    /* Spacing and other variables remain the same */
-    --spacing-sm: 0.75rem;
-    --spacing-md: 1.5rem;
-    --spacing-lg: 2.5rem;
-    --border-radius: 0.375rem;
-    --box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-}
+            /* Bootstrap overrides using your colors */
+            --bs-primary: var(--primary-color);
+            /* #122e44 */
+            --bs-primary-rgb: 18, 46, 68;
+            --bs-primary-bg-subtle: #f8fafc;
+            /* Light version of your primary */
 
+            /* Link colors */
+            --bs-link-color: var(--primary-color);
+            --bs-link-hover-color: var(--primary-hover);
+
+            /* Focus styles */
+            --bs-focus-ring-color: var(--input-focus);
+        }
+
+        /* Outline button customization */
+        .btn-outline-primary {
+            --bs-btn-color: var(--primary-color);
+            --bs-btn-border-color: var(--primary-color);
+            --bs-btn-hover-color: #fff;
+            --bs-btn-hover-bg: var(--primary-color);
+            --bs-btn-hover-border-color: var(--primary-color);
+            --bs-btn-focus-shadow-rgb: var(--bs-primary-rgb);
+            --bs-btn-active-color: #fff;
+            --bs-btn-active-bg: var(--primary-color);
+            --bs-btn-active-border-color: var(--primary-color);
+            --bs-btn-disabled-color: var(--primary-color);
+            --bs-btn-disabled-border-color: var(--primary-color);
+        }
+
+        /* Solid primary button */
+        .btn-primary {
+            --bs-btn-bg: var(--primary-color);
+            --bs-btn-border-color: var(--primary-color);
+            --bs-btn-hover-bg: var(--primary-hover);
+            --bs-btn-hover-border-color: var(--primary-hover);
+            --bs-btn-active-bg: var(--primary-hover);
+            --bs-btn-active-border-color: var(--primary-hover);
+        }
+
+        /* Optional: Apply your secondary color to Bootstrap's secondary */
+        .btn-secondary {
+            --bs-btn-bg: var(--secondary-color);
+            --bs-btn-border-color: var(--secondary-color);
+            --bs-btn-color: var(--text-dark);
+        }
 
         body {
             font-family: 'Montserrat', sans-serif;
@@ -231,7 +267,7 @@
                 </div>
             @endauth
 
-            
+
             <!-- Main Content Area with Navbar -->
             <div class="col-md-9 col-lg-10">
                 <!-- Navbar -->
@@ -294,6 +330,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
     <script src="{{ asset('front/js/script.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     @stack('js')
     <script>
         let flash_msg = document.querySelector('#flash-msg');

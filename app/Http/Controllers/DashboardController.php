@@ -15,11 +15,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\InventoryTransaction;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class DashboardController extends Controller
 {
     public function index()
     {
+        Gate::authorize('dashboard.overview');
         $tomorrow = Carbon::tomorrow();
         $tomorrowStart = $tomorrow->copy()->startOfDay();
         $tomorrowEnd = $tomorrow->copy()->endOfDay();

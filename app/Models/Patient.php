@@ -82,14 +82,14 @@ class Patient extends Model
             ]);
         } else {
             // For existing patients, only update if request has new values
-            $patientData = array_merge($patientData, [
-                'DOB' => $request->DOB ?? $patient->DOB,
-                'gender' => $request->gender ?? $patient->gender,
-                'medical_history' => $request->medical_history ?? $patient->medical_history,
-                'allergies' => $request->allergies ?? $patient->allergies,
-                'Emergency_contact_name' => $request->Emergency_contact_name ?? $patient->Emergency_contact_name,
-                'Emergency_contact_phone' => $request->Emergency_contact_phone ?? $patient->Emergency_contact_phone,
-            ]);
+            // $patientData = array_merge($patientData, [
+            //     'DOB' => $request->DOB ?? $patient->DOB,
+            //     'gender' => $request->gender ?? $patient->gender,
+            //     'medical_history' => $request->medical_history ?? $patient->medical_history,
+            //     'allergies' => $request->allergies ?? $patient->allergies,
+            //     'Emergency_contact_name' => $request->Emergency_contact_name ?? $patient->Emergency_contact_name,
+            //     'Emergency_contact_phone' => $request->Emergency_contact_phone ?? $patient->Emergency_contact_phone,
+            // ]);
         }
 
         $patient->fill($patientData);

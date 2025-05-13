@@ -34,7 +34,6 @@ class AppointmentReminder extends Notification implements ShouldQueue
             ->line('Your dental appointment is scheduled for:')
             ->line('**Date:** ' . $this->appointment->appointment_date->format('l, F j, Y'))
             ->line('**Time:** ' . $this->appointment->appointment_date->format('g:i A'))
-            ->action('View Details', url("/appointments/{$this->appointment->id}"))
             ->line('Please arrive 10 minutes early.');
     }
 

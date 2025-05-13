@@ -287,7 +287,8 @@
                             <div class="col-md-6">
                                 <label class="form-label">Date Of Birth</label>
                                 <input type="date" name="DOB" class="form-control"
-                                    value="{{ old('DOB', $patient->DOB) }}" required>
+                                    value="{{ old('DOB', $patient->DOB ? \Carbon\Carbon::parse($patient->DOB)->format('Y-m-d') : '') }}"
+                                    required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Gender</label>
@@ -775,14 +776,15 @@
                     timeSlotContainer.classList.remove('active');
                     availabilityMessage.style.display = 'block';
                     availabilityMessage.textContent =
-                    'Please select a service to see available time slots.';
+                        'Please select a service to see available time slots.';
                 }
             });
 
             // Form submission validation
             form.addEventListener('submit', function(e) {
-                
-                let originalDate = "{{ \Carbon\Carbon::parse($appointment->appointment_date)->format('Y-m-d') }}";
+
+                let originalDate =
+                    "{{ \Carbon\Carbon::parse($appointment->appointment_date)->format('Y-m-d') }}";
                 let selectedDate = appointmentDateInput.value;
                 let dateHasChanged = originalDate !== selectedDate;
 

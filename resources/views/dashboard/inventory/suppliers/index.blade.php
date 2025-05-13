@@ -34,7 +34,7 @@
                 <form class="row g-3">
                     <div class="col-md-8">
                         <div class="input-group">
-                            <input type="text" class="form-control" name="search"
+                            <input type="text" class="form-control form-control-sm" name="search"
                                 placeholder="Search suppliers by company, contact, email"
                                 value="{{ request('search') }}">
                             <button class="btn btn-outline-secondary" type="submit">

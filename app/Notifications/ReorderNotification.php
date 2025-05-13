@@ -16,7 +16,7 @@ class ReorderNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database']; // Only use the database channel
+        return ['database'];
     }
 
     public function toDatabase($notifiable)

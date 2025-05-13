@@ -29,13 +29,7 @@ class VisitsController extends Controller
     {
         Gate::authorize('visits.view');
 
-        $query = Visit::with([
-            'appointment',
-            'patient',
-            'staff.user',
-            'service',
-            'inventoryItems'
-        ])->latest('id');
+        $query = Visit::with(['appointment','patient','staff.user','service','inventoryItems'])->latest('id');
 
         if (
             auth()->user()->hasAbility('view-own-visits') &&
@@ -74,6 +68,7 @@ class VisitsController extends Controller
      */
     public function store(Request $request)
     {
+        // dd($request->all());
         Gate::authorize('visits.create');
 
         $validated = $this->validateVisitRequest($request);
@@ -89,7 +84,7 @@ class VisitsController extends Controller
             $visitDate = Carbon::parse($validated['visit_date']);
             $appointmentDate = Carbon::parse($appointment->appointment_date);
 
-            if (!$visitDate->eq($appointmentDate)) {
+            if (!$visitDate->eq($appointmentDate)) { // eq: carbon method, (eaquals)
                 DB::rollBack();
                 return redirect()->back()
                     ->with('error', 'Failed to add visit: appointment date and visit date must be the same');
@@ -143,25 +138,25 @@ class VisitsController extends Controller
      * Show the form for editing the specified resource.
      */
     public function edit(Visit $visit)
-    {
-        Gate::authorize('visits.update');
-        $visit->load(['appointment', 'inventoryItems']);
+{
+    Gate::authorize('visits.update');
+    $visit->load(['appointment', 'inventoryItems']); // This loads the appointment relationship
 
-        $appointments = Appointment::all();
-        $services = Service::all();
-        $patients = Patient::all();
-        $staff = Staff::with('user')->get();
-        $inventory = Inventory::where('is_active', true)->get();
+    $appointments = Appointment::all();
+    $services = Service::all();
+    $patients = Patient::all();
+    $staff = Staff::with('user')->get();
+    $inventory = Inventory::where('is_active', true)->get();
 
-        return view('dashboard.visits.edit', compact(
-            'visit',
-            'appointments',
-            'services',
-            'patients',
-            'staff',
-            'inventory'
-        ));
-    }
+    return view('dashboard.visits.edit', compact(
+        'visit', // This contains the appointment via the relationship
+        'appointments',
+        'services',
+        'patients',
+        'staff',
+        'inventory'
+    ));
+}
 
     /**
      * Update the specified resource in storage.
@@ -369,7 +364,7 @@ class VisitsController extends Controller
                 }
             ],
             'transaction_types' => 'nullable|array',
-            'transaction_types.*' => [
+            'transaction_types.*' => [  //tells Laravel that each item inside transaction_types array should be validated separately.
                 'required_with:transaction_inventory_ids',
                 'in:purchase,use,adjustment,return',
                 function ($attribute, $value, $fail) use ($request) {
@@ -432,6 +427,7 @@ class VisitsController extends Controller
     }
 
 
+    //useless i think
     protected function checkForExpiredItems(array $inventoryIds)
     {
         $expiredItems = [];

@@ -104,6 +104,7 @@ class Visit extends Model
         $this->save();
 
         return $this;
+
     }
 
     /**
@@ -112,6 +113,7 @@ class Visit extends Model
     public function processInventoryTransactions(array $transactions): void
     {
         foreach ($transactions['transaction_inventory_ids'] as $index => $inventoryId) {
+
             if (empty($inventoryId)) continue;
 
             $type = $transactions['transaction_types'][$index] ?? self::TRANSACTION_USE;
