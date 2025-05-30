@@ -29,8 +29,8 @@
             @endif
 
             <div class="table-responsive">
-                <table class="table small">
-                    <thead>
+                <table class="table small table-striped table-hover">
+                    <thead class="table-light">
                         <tr class="text-center">
                             <th>#</th>
                             <th>Name</th>

@@ -92,7 +92,7 @@
                     <div class="row mb-3">
                         <div class="col-md-12">
                             <div class="emergency-contact">
-                                <div class="emergency-title h6">Emergency Contact Information</div>
+                                <div class="h6 my-2" style="font-weight: 600;">Emergency Contact Information</div>
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">

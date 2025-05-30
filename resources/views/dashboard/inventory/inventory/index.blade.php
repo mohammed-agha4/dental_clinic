@@ -104,7 +104,7 @@
                                     <td>{{ $inv->category->name }}</td>
                                     <td>{{ Str::limit($inv->supplier->company_name, 15) }}</td>
                                     <td>{{ $inv->SKU }}</td>
-                                    <td class="{{ $inv->quantity <= $inv->reorder_level ? 'text-danger fw-bold' : '' }}">
+                                    <td class="{{ $inv->quantity <= $inv->reorder_level ? 'text-danger fw-semibold' : '' }}">
                                         {{ $inv->quantity }}
                                     </td>
                                     <td>{{ $inv->reorder_level }}</td>
@@ -148,8 +148,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="11" class="text-center py-4">
-                                        <h5>No inventory items found</h5>
+                                    <td colspan="11" class="text-center py-4">No data found
                                     </td>
                                 </tr>
                             @endforelse

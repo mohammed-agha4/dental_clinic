@@ -92,7 +92,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center py-4">No suppliers found</td>
+                                <td colspan="7" class="text-center py-4">No data found</td>
                             </tr>
                         @endforelse
                     </tbody>

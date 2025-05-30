@@ -21,7 +21,7 @@ class ServiceStaffController extends Controller
     public function create()
     {
         Gate::authorize('service_staff.create');
-        $staff = Staff::with('user')->get();
+        $staff = Staff::where('role', 'dentist')->with('user')->get();
         $services = Service::all();
         $service_staff = new ServiceStaff;
         return view('dashboard.service_staff.create', compact('service_staff', 'staff', 'services'));
@@ -62,8 +62,8 @@ class ServiceStaffController extends Controller
     {
         Gate::authorize('service_staff.update');
         $validated = $request->validate([
-            'staff_id' => 'required|exists:staff,id',
-            'service_id' => 'required|exists:services,id',
+            'staff_id' => 'nullable|exists:staff,id',
+            'service_id' => 'nullable|exists:services,id',
         ]);
 
         $service_staff->update($validated);
@@ -73,7 +73,7 @@ class ServiceStaffController extends Controller
 
     public function destroy(ServiceStaff $service_staff)
     {
-        dd('');
+
         Gate::authorize('service_staff.delete');
         $service_staff->delete();
 

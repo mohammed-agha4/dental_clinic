@@ -22,26 +22,20 @@
             animation: fadeIn 0.3s ease-in-out;
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
-            }
-        }
-
         .progress-container {
             padding: 1rem;
             background-color: #f8f9fa;
             border-bottom: 1px solid #eee;
         }
 
+        .progress {
+            --bs-progress-height: .5rem;
+        }
+
         .progress-bar {
             height: 6px;
             border-radius: 3px;
-            background-color: #0d6efd;
+            background-color: var(--primary-color);
             transition: width 0.5s ease-in-out;
         }
 
@@ -67,8 +61,8 @@
 
         .step-indicator.active {
             background-color: #e7f1ff;
-            color: #0d6efd;
-            border-color: #0d6efd;
+            color: var(--primary-color);
+            border-color: var(--primary-color);
         }
 
         .step-indicator.completed {
@@ -96,7 +90,7 @@
             border-color: #86b7fe;
         }
 
-        /* Time slot styling */
+
         .time-slot-container {
             display: none;
             margin-top: 1rem;
@@ -132,9 +126,9 @@
         }
 
         .time-slot.selected {
-            background-color: #0d6efd;
+            background-color: var(--primary-color);
             color: white;
-            border-color: #0d6efd;
+            border-color: var(--primary-color);
             font-weight: 500;
         }
 
@@ -179,7 +173,7 @@
 
         .current-appointment {
             background-color: #e7f1ff;
-            border-left: 4px solid #0d6efd;
+            border-left: 4px solid var(--primary-color);
             padding: 0.75rem;
             border-radius: 6px;
             margin-bottom: 1rem;
@@ -236,15 +230,15 @@
                     {{ ucfirst($appointment->status) }}
                 </div>
             </div>
-            <p class="text-muted mt-2">
+            {{-- <p class="text-muted mt-2">
                 Appointment #{{ $appointment->id }} | Created: {{ $appointment->created_at->format('M d, Y') }}
-            </p>
+            </p> --}}
         </div>
 
         <div class="booking-form">
             <div class="progress-container">
-                <div class="progress rounded-pill bg-light">
-                    <div class="progress-bar" role="progressbar" style="width: 33%"></div>
+                <div class="progress rounded-pill bg-secondary-subtle">
+                    <div class="progress-bar" style="width: 33%"></div>
                 </div>
 
                 <div class="steps-indicator">
@@ -269,10 +263,8 @@
                 @method('PUT')
                 <input type="hidden" name="appointment_id" value="{{ $appointment->id }}">
 
-                <!-- Step 1: Patient Information -->
                 <div class="form-step active" id="step1">
                     <div class="form-section">
-                        <div class="form-section-title">Patient Information</div>
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">First Name</label>
@@ -313,18 +305,15 @@
                             </div>
                         </div>
                     </div>
-                    <div class="form-navigation">
-                        <div></div>
-                        <button type="button" class="btn btn-primary btn-nav" onclick="nextStep(1)">
-                            Next <i class="fas fa-arrow-right"></i>
-                        </button>
-                    </div>
+
+                    <button type="button" class="btn btn-primary float-end mb-4" onclick="nextStep(1)">
+                        Next <i class="fas fa-arrow-right"></i>
+                    </button>
                 </div>
 
-                <!-- Step 2: Medical History -->
+
                 <div class="form-step" id="step2">
                     <div class="form-section">
-                        <div class="form-section-title">Medical History</div>
                         <div class="row g-3">
                             <div class="col-12">
                                 <label class="form-label">Medical History</label>
@@ -356,13 +345,12 @@
                     </div>
                 </div>
 
-                <!-- Step 3: Appointment Details -->
+
                 <div class="form-step" id="step3">
                     <div class="form-section">
-                        <div class="form-section-title">Appointment Details</div>
 
                         <div class="current-appointment">
-                            <div class="fw-bold mb-1">Current Appointment</div>
+                            <div class="fw-semibold mb-1">Current Appointment</div>
                             {{ \Carbon\Carbon::parse($appointment->appointment_date)->format('M d, Y') }} at
                             {{ \Carbon\Carbon::parse($appointment->appointment_date)->format('h:i A') }}
                         </div>
@@ -370,7 +358,7 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">Status</label>
-                                <select class="form-select" name="status" id="status_select">
+                                <select class="form-select" name="status">
                                     <option value="scheduled"
                                         {{ $appointment->status === 'scheduled' ? 'selected' : '' }}>Scheduled</option>
                                     <option value="completed"
@@ -412,11 +400,10 @@
                                     value="{{ old('appointment_date', \Carbon\Carbon::parse($appointment->appointment_date)->format('Y-m-d')) }}">
                             </div>
 
-                            <!-- Time Slots -->
                             <div class="col-12 time-slot-container" id="timeSlotContainer">
-                                <label class="form-label fw-bold">Available Time Slots</label>
+                                <label class="form-label fw-semibold">Available Time Slots</label>
                                 <div class="time-slots" id="timeSlots">
-                                    <!-- Time slots will be dynamically populated -->
+                                    {{-- Time slots will appear here --}}
                                 </div>
                                 <input type="hidden" name="appointment_time" id="appointment_time"
                                     value="{{ old('appointment_time', \Carbon\Carbon::parse($appointment->appointment_date)->format('H:i')) }}">
@@ -437,17 +424,6 @@
                                 </select>
                             </div>
 
-                            @if ($appointment->status === 'canceled')
-                                <div class="col-12" id="cancellationReasonDiv">
-                                    <label class="form-label">Cancellation Reason</label>
-                                    <textarea class="form-control" name="cancellation_reason" rows="2">{{ old('cancellation_reason', $appointment->cancellation_reason) }}</textarea>
-                                </div>
-                            @else
-                                <div class="col-12" id="cancellationReasonDiv" style="display: none;">
-                                    <label class="form-label">Cancellation Reason</label>
-                                    <textarea class="form-control" name="cancellation_reason" rows="2">{{ old('cancellation_reason', $appointment->cancellation_reason) }}</textarea>
-                                </div>
-                            @endif
 
                             <div class="col-12">
                                 <label class="form-label">Additional Notes</label>
@@ -472,31 +448,18 @@
 @push('js')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Multi step form navigation setup
+
             let form = document.getElementById('editAppointmentForm');
             let steps = document.querySelectorAll('.form-step');
             let progressBar = document.querySelector('.progress-bar');
             let indicators = document.querySelectorAll('.step-indicator');
 
-            // Show/hide cancellation reason based on status
-            let statusSelect = document.getElementById('status_select');
-            let cancellationReasonDiv = document.getElementById('cancellationReasonDiv');
 
-            statusSelect.addEventListener('change', function() {
-                if (this.value === 'canceled') {
-                    cancellationReasonDiv.style.display = 'block';
-                } else {
-                    cancellationReasonDiv.style.display = 'none';
-                }
-            });
-
-            // Next step with validation function
             window.nextStep = function(currentStep) {
                 let currentStepElement = document.getElementById(`step${currentStep}`);
                 let inputs = currentStepElement.querySelectorAll(
                     'input[required], select[required], textarea[required]');
 
-                // Validate inputs
                 let isValid = true;
                 inputs.forEach(input => {
                     if (!input.value.trim()) {
@@ -512,20 +475,19 @@
                     return;
                 }
 
-                // Move to next step
                 currentStepElement.classList.remove('active');
                 document.getElementById(`step${currentStep + 1}`).classList.add('active');
                 updateProgress(currentStep + 1);
             };
 
-            // Previous button function
+
             window.prevStep = function(currentStep) {
                 document.getElementById(`step${currentStep}`).classList.remove('active');
                 document.getElementById(`step${currentStep - 1}`).classList.add('active');
                 updateProgress(currentStep - 1);
             };
 
-            // Progress bar update function
+
             function updateProgress(stepNumber) {
                 let progress = ((stepNumber - 1) / (steps.length - 1)) * 100;
                 progressBar.style.width = `${progress}%`;
@@ -543,7 +505,7 @@
                 });
             }
 
-            // Form elements
+
             let serviceSelect = document.getElementById('service_select');
             let durationInput = document.getElementById('duration_input');
             let appointmentDateInput = document.getElementById('appointment_date');
@@ -562,31 +524,24 @@
             let formattedToday = `${yyyy}-${mm}-${dd}`;
             appointmentDateInput.min = formattedToday;
 
-            // Initialize duration input based on selected service
+
             if (serviceSelect.selectedIndex > -1) {
                 let selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
                 durationInput.value = selectedOption.dataset.duration || '30';
             }
 
-            // Initialize the time slots on page load
+
             if (serviceSelect.value && appointmentDateInput.value) {
-                console.log('Initializing time slots');
                 generateTimeSlots();
             }
 
-            // Generate time slots based on service and date
+
             function generateTimeSlots() {
                 let serviceId = serviceSelect.value;
                 let selectedDate = appointmentDateInput.value;
                 let duration = parseInt(serviceSelect.options[serviceSelect.selectedIndex].dataset.duration || 30);
                 let currentAppointmentId = {{ $appointment->id }};
 
-                console.log('Generating time slots with:', {
-                    serviceId,
-                    selectedDate,
-                    duration,
-                    currentAppointmentId
-                });
 
                 if (!serviceId || !selectedDate) {
                     timeSlotContainer.classList.remove('active');
@@ -603,7 +558,7 @@
                 availabilityMessage.textContent = 'Loading available time slots...';
                 timeSlots.innerHTML = '';
 
-                // AJAX call to get available time slots
+
                 $.ajax({
                     url: `/dashboard/appointments/get-available-slots`,
                     method: 'GET',
@@ -611,31 +566,22 @@
                         service_id: serviceId,
                         date: selectedDate,
                         duration: duration,
-                        current_appointment_id: currentAppointmentId // Include current appointment ID to exclude it from availability check
-                    },
-                    beforeSend: function() {
-                        console.log('Sending request with:', {
-                            serviceId,
-                            selectedDate,
-                            duration,
-                            currentAppointmentId
-                        });
+                        current_appointment_id: currentAppointmentId
                     },
                     success: function(response) {
-                        console.log('Time slots response:', response);
+                        // console.log('Time slots:', response);
 
                         if (response.success && response.slots && response.slots.length > 0) {
                             timeSlotContainer.classList.add('active');
                             availabilityMessage.style.display = 'none';
 
-                            // Clear previous slots
+                            // to clear old slots
                             timeSlots.innerHTML = '';
 
-                            // Get current time from hidden input
-                            let currentTime = appointmentTimeInput.value;
-                            console.log('Current appointment time:', currentTime);
 
-                            // Create time slots based on response
+                            let currentTime = appointmentTimeInput.value;
+                            // console.log(currentTime);
+
                             response.slots.forEach(slot => {
                                 let timeSlot = document.createElement('div');
                                 timeSlot.classList.add('time-slot');
@@ -651,16 +597,15 @@
                                     }
 
                                     timeSlot.addEventListener('click', function() {
-                                        // Remove selection from all slots
                                         document.querySelectorAll('.time-slot').forEach(
                                             s => s.classList.remove('selected'));
-                                        // Add selection to this slot
+
                                         this.classList.add('selected');
-                                        // Update hidden inputs with selected time
+
                                         appointmentTimeInput.value = this.dataset.time;
                                         appointmentDateTimeInput.value = this.dataset
                                             .dateTime;
-                                        // Update available dentists for this time slot
+
                                         updateAvailableDentists(serviceId, this.dataset
                                             .dateTime);
                                     });
@@ -696,7 +641,6 @@
                 });
             }
 
-            // Update available dentists based on service and time
             function updateAvailableDentists(serviceId, dateTime) {
                 staffSelect.disabled = true;
                 staffSelect.innerHTML = '<option value="">Loading...</option>';
@@ -711,18 +655,10 @@
                         appointment_date: dateTime,
                         current_appointment_id: currentAppointmentId
                     },
-                    beforeSend: function() {
-                        console.log('Getting available dentists with:', {
-                            serviceId,
-                            dateTime,
-                            currentAppointmentId
-                        });
-                    },
                     success: function(data) {
                         console.log('Dentists response:', data);
 
                         if (data.success && data.dentists) {
-                            // Filter to ensure only active dentists are shown
                             let activeDentists = data.dentists.filter(dentist => dentist.is_active);
                             console.log('Active dentists:', activeDentists);
 
@@ -755,7 +691,6 @@
                 });
             }
 
-            // Event listeners for the appointment form
             serviceSelect.addEventListener('change', function() {
                 let selectedOption = this.options[this.selectedIndex];
                 durationInput.value = selectedOption.dataset.duration || '30';
@@ -780,7 +715,6 @@
                 }
             });
 
-            // Form submission validation
             form.addEventListener('submit', function(e) {
 
                 let originalDate =

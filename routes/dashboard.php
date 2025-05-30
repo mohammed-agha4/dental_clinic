@@ -27,7 +27,7 @@ use App\Http\Controllers\Dashboard\Inventory\InventoryTransactionsController;
 
 
 Route::middleware(['auth', RoleMiddleware::class . ':admin,dentist'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 });
 
 

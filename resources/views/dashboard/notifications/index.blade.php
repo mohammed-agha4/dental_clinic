@@ -25,7 +25,7 @@
 
     .icon-appointment {
         background-color: rgba(13, 110, 253, 0.2);
-        color: #0d6efd;
+        color: var(--primary-color);
     }
 </style>
 @endsection
@@ -69,7 +69,7 @@
                             <div class="flex-grow-1">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
-                                        <p class="mb-1 @if(!$notification->read_at) fw-bold @endif">
+                                        <p class="mb-1 @if(!$notification->read_at) fw-semibold @endif">
                                             {{ $notification->data['message'] }}
                                         </p>
 

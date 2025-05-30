@@ -30,7 +30,7 @@
 
             <!-- Table with forced horizontal scrolling -->
             <div class="table-responsive" style="overflow-x: auto;">
-                <table class="table small" style="min-width: 1000px;">
+                <table class="table small table-striped" style="min-width: 1000px;">
                     <thead>
                         <tr class="text-center">
                             <th>#</th>
@@ -97,13 +97,9 @@
                             <tr>
                                 <td colspan="9" class="text-center py-4">
                                     @if (auth()->user()->hasAbility('view-own-visits') && !auth()->user()->hasAbility('view-all-visits'))
-                                        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
-                                        <h5>No visits scheduled for you</h5>
-                                        <p class="text-muted">When you complete appointments, the visits will appear here.</p>
+                                        <p>No visits scheduled for you</p>
                                     @else
-                                        <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
-                                        <h5>No visits found</h5>
-                                        <p class="text-muted">When visits are recorded, they'll appear here.</p>
+                                        <p>No visits found</p>
                                     @endif
                                 </td>
                             </tr>

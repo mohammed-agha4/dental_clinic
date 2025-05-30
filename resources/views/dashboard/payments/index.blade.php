@@ -140,9 +140,7 @@
                                                 <p class="text-muted">When payments are recorded for your visits, they'll
                                                     appear here.</p>
                                             @else
-                                                <i class="fas fa-money-bill-alt fa-3x text-muted mb-3"></i>
-                                                <h5>No payments found</h5>
-                                                <p class="text-muted">When payments are recorded, they'll appear here.</p>
+                                                <p>No payments found</p>
                                             @endif
                                         </td>
                                     </tr>

@@ -4,7 +4,7 @@
 
 @section('content')
 
-{{-- @dd('storage/app/private/public/',$user->profile->profile_photo) --}}
+    {{-- @dd('storage/app/private/public/',$user->profile->profile_photo) --}}
 
     @if (session()->has('success'))
         <div id="flash-msg" class="alert alert-success alert-dismissible fade show">
@@ -43,9 +43,10 @@
                             <x-form.input label='Date Of Birth:' type='date' name='birthday' :value='$user->profile->birthday' />
                         </div>
                         <div class="col-md-6">
-                            <label >Profile Photo</label>
+                            <label>Profile Photo</label>
                             <input type="file" name="profile_photo" class="form-control">
-                            <img src="{{ asset('storage/' . $user->profile->profile_photo) }}" height="60" alt="">
+                            <img src="{{ asset('storage/' . $user->profile->profile_photo) }}" height="60"
+                                alt="">
                         </div>
 
                     </div>
@@ -54,15 +55,15 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Gender:</label>
-                            <div class="gender-options">
+                            <div class="d-flex">
                                 <div class="form-check">
                                     <label><input type="radio" class="form-check-input" id="gender-male" name="gender"
-                                        value="male" @checked(old('gender', $user->profile->gender) == 'male')></label>
+                                            value="male" @checked(old('gender', $user->profile->gender) == 'male')></label>
                                     <label class="form-check-label" for="gender-male">Male</label>
                                 </div>
                                 <div class="form-check">
-                                    <label><input type="radio" class="form-check-input" id="gender-female" name="gender"
-                                        value="female" @checked(old('gender', $user->profile->gender) == 'female')></label>
+                                    <label><input type="radio" class="form-check-input ms-2" id="gender-female" name="gender"
+                                            value="female" @checked(old('gender', $user->profile->gender) == 'female')></label>
                                     <label class="form-check-label" for="gender-female">Female</label>
                                 </div>
                             </div>

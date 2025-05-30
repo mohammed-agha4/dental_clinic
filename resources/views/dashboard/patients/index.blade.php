@@ -28,7 +28,7 @@
         @endif
 
         <div class="table-responsive" style="overflow-x: auto;">
-            <table class="table small" style="min-width: 1000px;">
+            <table class="table small table-striped " style="min-width: 1000px;">
                 <thead>
                     <tr class="text-center">
                         <th>#</th>
@@ -85,12 +85,9 @@
                         <tr>
                             <td colspan="9" class="text-center py-4">
                                 @if (auth()->user()->hasAbility('view-own-patients') && !auth()->user()->hasAbility('view-all-patients'))
-                                    <i class="fas fa-user-times fa-3x text-muted mb-3"></i>
-                                    <h5>No patients assigned to you</h5>
+                                    <p>No patients assigned to you</p>
                                 @else
-                                    <i class="fas fa-users-slash fa-3x text-muted mb-3"></i>
-                                    <h5>No patients found</h5>
-                                    <p class="text-muted">When patients are registered, they'll appear here.</p>
+                                    <p>No data found</p>
                                 @endif
                             </td>
                         </tr>

@@ -22,11 +22,11 @@ class AuthServiceProvider extends ServiceProvider
     {
         foreach(config('abilities') as $code => $lable ){
             Gate::define($code, function($user) use ($code){
-                return $user->hasAbility($code);
+                return $user->hasAbility($code); // concerns
             });
         }
 
 
-        
+
     }
 }

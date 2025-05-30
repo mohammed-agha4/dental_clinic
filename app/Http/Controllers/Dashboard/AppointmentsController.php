@@ -16,9 +16,7 @@ use Illuminate\Support\Facades\Validator;
 
 class AppointmentsController extends Controller
 {
-    /**
-     * Display a listing of all appointments.
-     */
+
     public function index()
     {
         Gate::authorize('appointments.view');
@@ -72,7 +70,15 @@ class AppointmentsController extends Controller
     public function create()
     {
         Gate::authorize('appointments.create');
-        $services = Service::where('is_active', true)->orderBy('service_name')->get();
+
+        $user = auth()->user();
+
+        if ($user->staff->role == 'admin') {
+            $services = Service::where('is_active', true)->orderBy('service_name')->get();
+        } else {
+            $services = $user->staff->services()->where('is_active', true)->orderBy('service_name')->get();
+        }
+
         $patients = new Patient();
 
         return view('dashboard.appointments.create', compact('services', 'patients'));
@@ -86,7 +92,6 @@ class AppointmentsController extends Controller
         Gate::authorize('appointments.create');
         $isWalkIn = $request->has('appointment_type') && $request->appointment_type === 'walk_in';
 
-        // Define base validation rules that apply to all appointment types
         $rules = [
             'service_id' => 'required|exists:services,id',
             'staff_id' => 'required|exists:staff,id',
@@ -94,7 +99,6 @@ class AppointmentsController extends Controller
         ];
 
         if ($isWalkIn) {
-            // Walk-in specific validation
             $rules['fname'] = 'required|string|max:255';
             $rules['lname'] = 'required|string|max:255';
             $rules['phone'] = 'required|string|max:20';
@@ -102,7 +106,7 @@ class AppointmentsController extends Controller
             $rules['gender'] = 'required|in:male,female';
             $rules['cheif_complaint'] = 'required|string';
         } else {
-            // Regular appointment validation
+
             if ($request->filled('existing_patient_id')) {
                 $rules['existing_patient_id'] = 'required|exists:patients,id';
             } else {
@@ -119,15 +123,9 @@ class AppointmentsController extends Controller
             $rules['appointment_date_time'] = 'required|date|after:now';
         }
 
-        // Perform the validation with the defined rules
         $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
-            Log::error('Appointment validation failed', [
-                'errors' => $validator->errors()->all(),
-                'input' => $request->all()
-            ]);
-
             return redirect()->back()
                 ->withErrors($validator)
                 ->withInput()
@@ -137,17 +135,15 @@ class AppointmentsController extends Controller
         try {
             DB::beginTransaction();
 
-            // Handle existing patient
+            // existing patient
             if ($request->filled('existing_patient_id')) {
                 $patient = Patient::findOrFail($request->existing_patient_id);
 
-                // Verify patient exists
                 if (!$patient) {
                     throw new \Exception('Patient not found');
                 }
 
-                // Create appointment using existing patient
-                $appointment = Appointment::create([
+                Appointment::create([
                     'patient_id' => $patient->id,
                     'staff_id' => $request->staff_id,
                     'service_id' => $request->service_id,
@@ -156,10 +152,10 @@ class AppointmentsController extends Controller
                     'status' => $isWalkIn ? 'completed' : 'scheduled',
                 ]);
             } else {
-                // Handle new patient
+                // new patient
                 $patient = Patient::findOrCreateFromRequest($request, $isWalkIn);
 
-                $appointment = Appointment::createAppointment([
+                Appointment::createAppointment([
                     'patient_id' => $patient->id,
                     'staff_id' => $request->staff_id,
                     'service_id' => $request->service_id,
@@ -174,7 +170,6 @@ class AppointmentsController extends Controller
                 ->with('success', $isWalkIn ? 'Walk-in appointment created successfully.' : 'Appointment scheduled successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Appointment creation failed: ' . $e->getMessage());
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Error creating appointment: ' . $e->getMessage());
@@ -211,10 +206,10 @@ class AppointmentsController extends Controller
     {
         try {
             $dentists = Appointment::getAvailableDentists(
-                $request->input('service_id'),
-                $request->input('appointment_date'),
-                $request->input('current_appointment_id'),
-                $request->input('is_walk_in', false)
+                $request->service_id,
+                $request->appointment_date,
+                $request->current_appointment_id,
+                $request->is_walk_in ?? false
             );
 
             return response()->json(['success' => true, 'dentists' => $dentists]);
@@ -229,11 +224,11 @@ class AppointmentsController extends Controller
     /**
      * Display the specified appointment
      */
-    public function show($id)
+    public function show(Appointment $appointment)
     {
         Gate::authorize('appointments.show');
-        $appointment = Appointment::with(['patient', 'dentist.user', 'service'])
-            ->findOrFail($id);
+
+        $appointment->load(['patient', 'dentist.user', 'service']);
 
         return view('dashboard.appointments.show', compact('appointment'));
     }
@@ -248,11 +243,7 @@ class AppointmentsController extends Controller
         $patient = Patient::findOrFail($appointment->patient_id);
         $services = Service::where('is_active', true)->get();
 
-        return view('dashboard.appointments.edit', [
-            'appointment' => $appointment,
-            'patient' => $patient,
-            'services' => $services
-        ]);
+        return view('dashboard.appointments.edit', compact('appointment', 'patient', 'services'));
     }
 
     /**
@@ -289,7 +280,6 @@ class AppointmentsController extends Controller
 
             $patient = Patient::findOrFail($appointment->patient_id);
 
-            // Validate patient email uniqueness
             if ($patient->email != $request->email) {
                 $emailExists = Patient::where('email', $request->email)
                     ->where('id', '!=', $patient->id)
@@ -300,10 +290,9 @@ class AppointmentsController extends Controller
                 }
             }
 
-            // Validate patient phone uniqueness
             if ($patient->phone != $request->phone) {
                 $phoneExists = Patient::where('phone', $request->phone)
-                    ->where('id', '!=', $patient->id) // means there is an id for a petient holding the same number entered
+                    ->where('id', '!=', $patient->id)
                     ->exists();
 
                 if ($phoneExists) {
@@ -311,10 +300,8 @@ class AppointmentsController extends Controller
                 }
             }
 
-            // Update patient
             $patient->updateFromRequest($request);
 
-            // Update appointment
             $appointment->updateAppointment([
                 'staff_id' => $request->staff_id,
                 'service_id' => $request->service_id,
@@ -349,7 +336,7 @@ class AppointmentsController extends Controller
             }
 
             $patient = $appointment->patient;
-            $patientName = $patient->fname . ' ' . $patient->lname;
+            $patientName = $patient->FullName;
 
             $appointment->delete();
             $patient->delete();

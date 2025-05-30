@@ -176,7 +176,7 @@
 
             <div class="financial-summary">
                 <span class="text-muted small">Filtered Total</span>
-                <h5 class="mb-0 fw-bold text-primary">
+                <h5 class="mb-0 fw-semibold text-primary">
                     ${{ number_format($totalAmount, 2) }}
                 </h5>
             </div>

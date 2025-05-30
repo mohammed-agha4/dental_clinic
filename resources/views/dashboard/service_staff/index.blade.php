@@ -64,11 +64,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="text-center py-4">
-                                        <i class="fas fa-user-slash fa-3x text-muted mb-3"></i>
-                                        <h5>No staff-service links found</h5>
-                                        <p class="text-muted">Add new staff service links using the button above.</p>
-                                    </td>
+                                    <td colspan="4" class="text-center py-4">No Data Found </td>
                                 </tr>
                             @endforelse
                         </tbody>

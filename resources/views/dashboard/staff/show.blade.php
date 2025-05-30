@@ -109,12 +109,12 @@
                         <div class="card mb-4">
                             <div class="card-header bg-light d-flex justify-content-between align-items-center">
                                 <h6 class="m-0 font-weight-bold text-primary">Assigned Services</h6>
-                                @can('service_staff.create')
+                                {{-- @can('service_staff.create')
                                     <a href="{{ route('dashboard.service-staff.create', ['staff_id' => $staff->id]) }}"
                                         class="btn btn-sm btn-primary">
                                         <i class="fas fa-plus"></i> Assign Services
                                     </a>
-                                @endcan
+                                @endcan --}}
                             </div>
                             <div class="card-body">
                                 @if ($staff->services->count() > 0)
@@ -157,7 +157,6 @@
                                     </div>
                                 @else
                                     <div class="alert alert-info mb-0 text-center">
-                                        <i class="fas fa-info-circle me-2"></i>
                                         This staff member has no assigned services.
                                     </div>
                                 @endif

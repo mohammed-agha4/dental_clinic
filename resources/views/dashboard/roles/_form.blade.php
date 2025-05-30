@@ -27,20 +27,20 @@
                         {{ $ability_name }}
                     </div>
 
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <label><input type="radio" name="abilities[{{ $ability_code }}]" value="allow" checked
                             @checked(($role_abilities[$ability_code] ?? '') == 'allow')> Allow</label>
                     </div>
 
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <label><input type="radio" name="abilities[{{ $ability_code }}]" value="deny"
                             @checked(($role_abilities[$ability_code] ?? '') == 'deny')> Deny</label>
                     </div>
 
-                    <div class="col-md-2">
+                    {{-- <div class="col-md-2">
                         <label><input type="radio" name="abilities[{{ $ability_code }}]" value="inherit"
                             @checked(($role_abilities[$ability_code] ?? '') == 'inherit')> Inherit</label>
-                    </div>
+                    </div> --}}
                     <hr class="my-2">
                 </div>
             @endforeach

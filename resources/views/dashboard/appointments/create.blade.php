@@ -4,7 +4,7 @@
 @section('css')
     <style>
         .booking-form {
-            max-width: 800px;
+            max-width: 1000px;
             margin: 2rem auto;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
             border-radius: 15px;
@@ -20,8 +20,13 @@
         }
 
         .progress-bar {
-            height: 10px;
+            height: 6px;
             transition: width 0.5s ease-in-out;
+            background-color: var(--primary-color);
+        }
+
+        .progress {
+            --bs-progress-height: .5rem;
         }
 
         .step-indicator {
@@ -37,7 +42,7 @@
         }
 
         .step-indicator.active {
-            background-color: #0d6efd;
+            background-color: var(--primary-color);
             color: white;
         }
 
@@ -46,12 +51,6 @@
             color: white;
         }
 
-        .form-control:focus {
-            box-shadow: none;
-            border-color: #0d6efd;
-        }
-
-        /* Time slot styling */
         .time-slot-container {
             display: none;
             margin-top: 15px;
@@ -82,9 +81,9 @@
         }
 
         .time-slot.selected {
-            background-color: #0d6efd;
+            background-color: var(--primary-color);
             color: white;
-            border-color: #0d6efd;
+            border-color: var(--primary-color);
         }
 
         .time-slot.disabled {
@@ -126,10 +125,10 @@
 
 
     <div class="container">
-        <div class="booking-header mb-4">
+        <div class="mb-4">
             <div class="d-flex justify-content-between align-items-center">
                 <h2 class="mb-0">Appointment Management</h2>
-                <div class="btn-group" role="group">
+                <div class="btn-group">
                     <button type="button" class="btn btn-outline-primary active" id="regularBookingBtn">
                         <i class="fas fa-calendar-alt me-2"></i>Regular Booking
                     </button>
@@ -138,14 +137,14 @@
                     </button>
                 </div>
             </div>
-            <p class="text-muted mt-2 mb-0" id="bookingDescription">
+            <p class="mt-2 mb-0" id="bookingDescription">
                 Schedule a new appointment with complete patient information
             </p>
         </div>
 
         <div id="regularBookingForm" class="booking-form bg-white p-4">
             <div class="progress mb-4">
-                <div class="progress-bar" role="progressbar" style="width: 25%"></div>
+                <div class="progress-bar" style="width: 25%"></div>
             </div>
 
             <div class="d-flex justify-content-between mb-4">
@@ -217,6 +216,9 @@
                             <label>First Name:</label>
                             <input type="text" name="fname" class="form-control fname"
                                 value="{{ old('fname', $patients->fname) }}" required>
+                                @error('fname')
+                                <small class="text-danger">{{ $message }}</small>
+                                @enderror
                         </div>
                         <div class="col-md-6">
                             <label>Last Name:</label>
@@ -321,22 +323,21 @@
                             <input type="text" class="form-control" id="duration_input" name="duration" readonly>
                         </div>
 
-                        <!-- Date/Time Selection -->
                         <div class="col-12 date-picker-container">
                             <label class="form-label">Appointment Date </label>
                             <input type="date" class="form-control" id="appointment_date" name="appointment_date"
                                 required>
                         </div>
 
-                        <!-- Time Slots -->
+
                         <div class="col-12 time-slot-container" id="timeSlotContainer">
                             <label class="form-label">Available Time Slots </label>
                             <div class="time-slots" id="timeSlots">
-                                <!-- Time slots will be dynamically populated -->
+                                {{-- Time slots appears here --}}
                             </div>
-                            <!-- Hidden input to store the selected time -->
+
                             <input type="hidden" name="appointment_time" id="appointment_time" required>
-                            <!-- Hidden input to store the combined date and time -->
+
                             <input type="hidden" name="appointment_date_time" id="appointment_date_time" required>
                         </div>
 
@@ -356,7 +357,8 @@
 
 
                         <div class="col-12">
-                            <x-form.textarea label='Additional Notes' name='notes' rows="2" :value='$patients->notes' />
+                            <label >Additional Notes</label>
+                            <textarea class="form-control" name="notes" rows="2">{{ old('notes') }}</textarea>
                         </div>
                     </div>
                     <div class="mt-4 d-flex justify-content-between">
@@ -369,14 +371,13 @@
             </form>
         </div>
 
-        <!-- Walk-in Form -->
+        {{-- Walk-in Form --}}
         <div id="walkInForm" class="booking-form bg-white p-4" style="display: none;">
             <form method="POST" action="{{ route('dashboard.appointments.store') }}" id="walkInAppointmentForm">
                 @csrf
                 <input type="hidden" name="appointment_type" value="walk_in">
 
                 <div class="row g-3">
-                    <!-- Patient Information Section -->
                     <div class="col-12">
                         <div class="card bg-light">
                             <div class="card-body">
@@ -412,7 +413,7 @@
                         </div>
                     </div>
 
-                    <!-- Service Selection Section -->
+
                     <div class="col-12">
                         <div class="card">
                             <div class="card-body">
@@ -448,7 +449,7 @@
                         </div>
                     </div>
 
-                    <!-- Additional Information -->
+
                     <div class="col-12">
                         <div class="card">
                             <div class="card-body">
@@ -469,7 +470,7 @@
                     </div>
                 </div>
 
-                <!-- Form Actions -->
+
                 <div class="mt-4 d-flex justify-content-end gap-2">
                     <button type="button" class="btn btn-outline-secondary" id="resetWalkInForm">
                         <i class="fas fa-redo me-2"></i>Reset
@@ -486,16 +487,12 @@
 @push('js')
     {{-- handling the steps and validation script --}}
     <script>
-        // ----//----//----//----//----//----// handling the steps and validation   ----//----//----//----//----//
-
-
         // give each input and select under the step1 id a custom attribute "data-was-required" with value "true"
         document.querySelectorAll('#step1 input[required], #step1 select[required]').forEach(field => {
             field.setAttribute('data-was-required', 'true');
         });
 
 
-        // Multi-step form navigation
         let form = document.getElementById('appointmentForm');
         let steps = document.querySelectorAll('.form-step');
         let progressBar = document.querySelector('.progress-bar');
@@ -515,8 +512,6 @@
         }
 
 
-        // Go to specific step
-        // in html directly
         window.goToStep = function(stepNumber) {
             steps.forEach((step, index) => {
                 if (index === stepNumber) {
@@ -530,15 +525,13 @@
         };
 
 
-        // Next step with validation
         window.nextStep = function(currentStepNumber) {
             let currentStepElement = document.getElementById(`step${currentStepNumber}`);
             let inputs = currentStepElement.querySelectorAll(
-                // select required inputs, select, textarea without the disabled ones
                 'input[required]:not(:disabled), select[required]:not(:disabled), textarea[required]:not(:disabled)'
             );
 
-            // Validate required fields
+
             let isValid = true;
             inputs.forEach(input => {
                 if (!input.value.trim()) {
@@ -557,13 +550,13 @@
             goToStep(currentStepNumber + 1);
         };
 
-        // Previous step
+
         window.prevStep = function(currentStepNumber) {
             goToStep(currentStepNumber - 1);
         };
 
 
-        // Update progress bar and indicators
+
         function updateProgress(stepNumber) {
             let progress = ((stepNumber) / (steps.length - 1)) * 100; // (4  / 4 steps - 1) * 100
             // console.log(stepNumber);
@@ -589,14 +582,12 @@
 
     {{-- handling the search and its functionality --}}
     <script>
-        // ------/------/------/------/------/handling the search and its functionality------/------/------/------/------/
-
         let patientSearchResponse = null;
 
-        // Patient Search Functionality
+
         document.getElementById('searchPatientBtn').addEventListener('click', function() {
-            const phone = document.getElementById('patientSearchPhone').value;
-            const email = document.getElementById('patientSearchEmail').value;
+            let phone = document.getElementById('patientSearchPhone').value;
+            let email = document.getElementById('patientSearchEmail').value;
 
             if (!phone && !email) {
                 Swal.fire({
@@ -611,12 +602,11 @@
             $.ajax({
                 url: '/dashboard/patients/search',
                 method: 'GET',
-                data: { // Data to send to the server
+                data: {
                     phone,
                     email
                 },
                 beforeSend: function() {
-                    // Show loading state
                     $('#searchPatientBtn').html(
                             '<i class="fas fa-spinner fa-spin me-2"></i>Searching...')
                         .prop( // Disables the button to prevent multiple requests.
@@ -625,12 +615,12 @@
                             'disabled', true);
                 },
                 success: function(response) {
-                    patientSearchResponse = response; // Store the response
+                    console.log('f');
+
+                    patientSearchResponse = response;
                     if (response.success && response.patient) {
-                        // Set the existing patient ID
                         document.getElementById('existingPatientId').value = response.patient.id;
 
-                        // Show patient details
                         document.getElementById('patientDetails').innerHTML =
                             `
                             <div class="patient-info">
@@ -642,7 +632,6 @@
                             </div>
                         `;
 
-                        // Show the results and next button
                         document.getElementById('patientSearchResults').style.display = 'block';
                     } else {
                         Swal.fire({
@@ -653,8 +642,8 @@
                         });
                     }
                 },
-                error: function(
-                    xhr) { //  XMLHttpRequest (XHR) object (holding the error and the request status)
+                error: function(xhr) { //  XMLHttpRequest
+
                     console.error('Search error:', xhr);
                     Swal.fire({
                         icon: 'error',
@@ -664,41 +653,36 @@
                         confirmButtonText: 'OK'
                     });
                 },
-                complete: function() { // Code to run after request finishes (success or error)
-                    // Reset button state
+                complete: function() {
                     $('#searchPatientBtn').html('<i class="fas fa-search me-2"></i>Search Patient')
                         .prop('disabled', false);
                 }
             });
         });
 
-        // Use existing patient button
         document.getElementById('useExistingPatient').addEventListener('click', function() {
-            const patientId = document.getElementById('existingPatientId').value;
+            let patientId = document.getElementById('existingPatientId').value;
 
             if (patientId) {
-                const patient = patientSearchResponse.patient;
+                let patient = patientSearchResponse.patient;
 
-                // Disable all input and textarea fields in Step 1 and Step 2
                 document.querySelectorAll('#step1 input, #step1 select, #step2 input, #step2 textarea')
                     .forEach(field => {
                         field.disabled = true;
                     });
 
-                // Remove 'required' attributes (optional, if form validation should be skipped)
                 document.querySelectorAll('[required]').forEach(field => {
                     field.removeAttribute('required');
                 });
 
-                // Fill the form fields with patient data
                 document.querySelector('input[name="fname"]').value = patient.fname || '';
                 document.querySelector('input[name="lname"]').value = patient.lname || '';
                 document.querySelector('input[name="phone"]').value = patient.phone || '';
                 document.querySelector('input[name="email"]').value = patient.email || '';
 
                 if (patient.DOB) {
-                    const cleanedDOB = patient.DOB.split('T')[0].replace(/\D+$/,
-                        ''); // to seperate the date form the time
+                    let cleanedDOB = patient.DOB.split('T')[0].replace(/\D+$/,
+                    ''); // to seperate the date form the time
                     document.querySelector('input[name="DOB"]').value = cleanedDOB;
                 }
 
@@ -706,7 +690,7 @@
                     document.querySelector('select[name="gender"]').value = patient.gender;
                 }
 
-                // Fill Step 2 fields (medical history, allergies, emergency contacts)
+
                 document.querySelector('textarea[name="medical_history"]').value = patient.medical_history || '';
                 document.querySelector('textarea[name="allergies"]').value = patient.allergies || '';
                 document.querySelector('input[name="Emergency_contact_name"]').value = patient
@@ -714,44 +698,37 @@
                 document.querySelector('input[name="Emergency_contact_phone"]').value = patient
                     .Emergency_contact_phone || '';
 
-                // Proceed to Step 3
                 goToStep(3);
             }
         });
 
-        // New patient button
         document.getElementById('newPatientBtn').addEventListener('click', function() {
-            // 1. Clear existing patient ID
+
             document.getElementById('existingPatientId').value = '';
 
-            // 2. Reset Step 1 (Personal Info)
-            const step1Fields = document.querySelectorAll('#step1 input, #step1 select, #step1 textarea');
+            let step1Fields = document.querySelectorAll('#step1 input, #step1 select, #step1 textarea');
             step1Fields.forEach(field => {
-                field.value = ''; // Clear value
-                field.disabled = false; // Re-enable if disabled
-                field.classList.remove('is-invalid'); // Remove validation errors
+                field.value = '';
+                field.disabled = false;
+                field.classList.remove('is-invalid');
 
-                // Restore required status if it was originally required
                 if (field.hasAttribute('data-was-required')) {
                     field.setAttribute('required', '');
                     field.removeAttribute('data-was-required');
                 }
             });
 
-            // 3. Reset Step 2 (Medical History)
-            const step2Fields = document.querySelectorAll('#step2 input, #step2 select, #step2 textarea');
+            let step2Fields = document.querySelectorAll('#step2 input, #step2 select, #step2 textarea');
             step2Fields.forEach(field => {
-                field.value = ''; // Clear all medical history fields
-                field.disabled = false; // Ensure enabled
-                field.classList.remove('is-invalid'); // Clear validation
+                field.value = '';
+                field.disabled = false;
+                field.classList.remove('is-invalid');
             });
 
-            // 4. Clear search results and inputs
             document.getElementById('patientSearchResults').style.display = 'none';
             document.getElementById('patientSearchPhone').value = '';
             document.getElementById('patientSearchEmail').value = '';
 
-            // 5. Reset appointment step (Step 3) if needed
             document.getElementById('service_select').selectedIndex = 0;
             document.getElementById('duration_input').value = '';
             document.getElementById('appointment_date').value = '';
@@ -762,7 +739,6 @@
             document.getElementById('staff_select').innerHTML =
                 '<option value="">Select service, date and time first</option>';
 
-            // 6. Go to Step 1
             goToStep(1);
         });
     </script>
@@ -771,8 +747,8 @@
 
     {{-- handling the walk ins --}}
     <script>
-        const regularBookingBtn = document.getElementById('regularBookingBtn');
-        const walkInBtn = document.getElementById('walkInBtn');
+        let regularBookingBtn = document.getElementById('regularBookingBtn');
+        let walkInBtn = document.getElementById('walkInBtn');
 
         if (regularBookingBtn) {
             regularBookingBtn.addEventListener('click', function() {
@@ -787,13 +763,12 @@
         }
 
 
-        // Form switching between regular and walk-in
         function switchForm(isWalkIn) {
-            const regularBookingBtn = document.getElementById('regularBookingBtn');
-            const walkInBtn = document.getElementById('walkInBtn');
-            const regularBookingForm = document.getElementById('regularBookingForm');
-            const walkInForm = document.getElementById('walkInForm');
-            const bookingDescription = document.getElementById('bookingDescription');
+            let regularBookingBtn = document.getElementById('regularBookingBtn');
+            let walkInBtn = document.getElementById('walkInBtn');
+            let regularBookingForm = document.getElementById('regularBookingForm');
+            let walkInForm = document.getElementById('walkInForm');
+            let bookingDescription = document.getElementById('bookingDescription');
 
 
             // element.classList.toggle('active');
@@ -823,15 +798,12 @@
                     'Schedule a new appointment with complete patient information';
             }
 
-            // Reset forms when switching
             if (isWalkIn) {
-                // Reset regular booking form if the walk in is choosen
                 if (document.getElementById('appointmentForm')) {
                     document.getElementById('appointmentForm').reset();
                     initSteps();
                 }
             } else {
-                // Reset walk-in form if the regular is choosen
                 if (document.getElementById('walkInAppointmentForm')) {
                     document.getElementById('walkInAppointmentForm').reset();
                 }
@@ -842,7 +814,6 @@
 
     {{-- handling the slots and dentists appearing and submitting the form --}}
     <script>
-        // Time slot selection functionality
         let serviceSelect = document.getElementById('service_select');
         let durationInput = document.getElementById('duration_input');
         let appointmentDateInput = document.getElementById('appointment_date');
@@ -853,26 +824,20 @@
         let staffSelect = document.getElementById('staff_select');
         let availabilityMessage = document.getElementById('availabilityMessage');
 
-        // Set minimum date to today
         if (appointmentDateInput) {
             let today = new Date();
             let yyyy = today.getFullYear();
-            let mm = String(today.getMonth() + 1).padStart(2,
-                '0'); //today.getMonth(); retrieves the months by index,so january = 0
+            let mm = String(today.getMonth() + 1).padStart(2, '0'); //today.getMonth(); retrieves the months by index,so january = 0
             let dd = String(today.getDate()).padStart(2, '0');
             let formattedToday = `${yyyy}-${mm}-${dd}`;
-            appointmentDateInput.min =
-                formattedToday; // the minimum value of the appointment_date input is todays appointment
-            console.log(formattedToday);
+            appointmentDateInput.min = formattedToday; // the minimum value of the appointment_date input is todays appointment
+            // console.log(formattedToday);
         }
 
-        // Generate time slots based on service duration
         function generateTimeSlots() {
             let serviceId = serviceSelect.value;
             let selectedDate = appointmentDateInput.value;
-            let duration = parseInt(serviceSelect.options[serviceSelect.selectedIndex].dataset.duration ||
-                30); //selectedIndex returns the index of the currently selected option.
-
+            let duration = parseInt(serviceSelect.options[serviceSelect.selectedIndex].dataset.duration || 30);
 
             if (!serviceId || !selectedDate) {
                 timeSlotContainer.classList.remove('active');
@@ -888,7 +853,6 @@
             availabilityMessage.textContent = 'Loading available time slots...';
             timeSlots.innerHTML = '';
 
-            // AJAX call to get available time slots
             $.ajax({
                 url: `/dashboard/appointments/get-available-slots`,
                 method: 'GET',
@@ -903,10 +867,8 @@
                         timeSlotContainer.classList.add('active');
                         availabilityMessage.style.display = 'none';
 
-                        // Clear previous slots
                         timeSlots.innerHTML = '';
 
-                        // Create time slots based on response
                         response.slots.forEach(slot => {
                             let timeSlot = document.createElement('div');
                             timeSlot.classList.add('time-slot');
@@ -916,15 +878,15 @@
                                 timeSlot.dataset.dateTime = `${selectedDate}T${slot.time}`;
 
                                 timeSlot.addEventListener('click', function() {
-                                    // Remove selection from all slots
+
                                     document.querySelectorAll('.time-slot')
                                         .forEach(s => s.classList.remove('selected'));
-                                    // Add selection to this slot
+
                                     this.classList.add('selected');
-                                    // Update hidden inputs with selected time
+
                                     appointmentTimeInput.value = this.dataset.time;
                                     appointmentDateTimeInput.value = this.dataset.dateTime;
-                                    // Update available dentists for this time slot
+
                                     updateAvailableDentists(serviceId, this.dataset.dateTime);
                                 });
                             } else {
@@ -951,7 +913,6 @@
             });
         }
 
-        // Update available dentists
         function updateAvailableDentists(serviceId, dateTime) {
             staffSelect.disabled = true;
             staffSelect.innerHTML = '<option value="">Loading...</option>';
@@ -965,22 +926,30 @@
                 },
                 success: function(data) {
                     if (data.success && data.dentists) {
-                        // console.log(data.dentists); // object
-                        // console.log(data.success); // true or false
-
-                        let activeDentists = data.dentists.filter(dentist => dentist
-                            .is_active); // retrieve dentists with active status
+                        let activeDentists = data.dentists.filter(dentist => dentist.is_active);
 
                         if (activeDentists.length > 0) {
                             staffSelect.innerHTML = '<option value="">Select Dentist</option>';
-                            activeDentists.forEach(dentist => {
-                                staffSelect.innerHTML +=
-                                    `<option value="${dentist.id}">${dentist.user ? dentist.user.name : 'Unknown'}</option>`;
-                            });
+
+                            // If user is a dentist, preselect themselves if available
+                            @if (auth()->user()->staff->role == 'dentist')
+                                let dentistId = {{ auth()->user()->staff->id }};
+                                let isDentistAvailable = activeDentists.some(d => d.id === dentistId);
+
+                                if (isDentistAvailable) {
+                                    staffSelect.innerHTML +=
+                                        `<option value="${dentistId}" selected>${activeDentists.find(d => d.id === dentistId).user.name}</option>`;
+                                }
+                            @else
+                                activeDentists.forEach(dentist => {
+                                    staffSelect.innerHTML +=
+                                        `<option value="${dentist.id}">${dentist.user ? dentist.user.name : 'Unknown'}</option>`;
+                                });
+                            @endif
+
                             staffSelect.disabled = false;
                         } else {
-                            staffSelect.innerHTML =
-                                '<option value="">No dentists available</option>';
+                            staffSelect.innerHTML = '<option value="">No dentists available</option>';
                             staffSelect.disabled = true;
                         }
                     } else {
@@ -995,13 +964,12 @@
             });
         }
 
-        // Event listeners for the appointment booking form
+
         if (serviceSelect) {
             serviceSelect.addEventListener('change', function() {
                 let selectedOption = this.options[this.selectedIndex];
                 if (durationInput) {
-                    durationInput.value = selectedOption.dataset.duration ||
-                        ''; // store in the duration field the value in the data-duration in the service select
+                    durationInput.value = selectedOption.dataset.duration || '';
                 }
                 if (appointmentTimeInput) {
                     appointmentTimeInput.value = '';
@@ -1046,9 +1014,7 @@
 
 
 
-        // Form submission validation
         if (form) {
-            // In your form submission event listener
             form.addEventListener('submit', function(e) {
                 // If using existing patient, remove required attributes from step 1 fields
                 // if (document.getElementById('existingPatientId').value) {
@@ -1075,7 +1041,6 @@
     {{-- walk in for handling --}}
 
     <script>
-        // Walk-in form handling
         let walkInServiceSelect = document.getElementById('walkInServiceSelect');
         let walkInStaffSelect = document.getElementById('walkInStaffSelect');
         let serviceDurationInput = document.getElementById('serviceDuration');
@@ -1090,7 +1055,7 @@
 
         function updateServiceDetails() {
             let selectedOption = walkInServiceSelect.options[walkInServiceSelect.selectedIndex];
-            if (selectedOption && selectedOption.value) {
+            if (selectedOption.value) {
                 let duration = selectedOption.getAttribute('data-duration');
                 // let price = selectedOption.getAttribute('data-price');
                 serviceDurationInput.value = duration ? `${duration} minutes` : '';
@@ -1105,6 +1070,7 @@
             }
         }
 
+        // In your walk-in form handling script
         function updateWalkInDentists() {
             let serviceId = walkInServiceSelect.value;
 
@@ -1118,42 +1084,50 @@
             walkInStaffSelect.innerHTML = '<option value="">Loading...</option>';
 
             $.ajax({
-                url: `/dashboard/appointments/get-available-dentists?service_id=${serviceId}&is_walk_in=true`, // query parameters
+                url: `/dashboard/appointments/get-available-dentists?service_id=${serviceId}&is_walk_in=true`,
                 method: 'GET',
                 success: function(data) {
-                    // console.log('Walk-in API Response:', data);
-                    // console.log('All walk-in dentists returned:', data.dentists);
-
                     if (data.success && data.dentists) {
                         // Filter to ensure only active dentists are shown
                         let activeDentists = data.dentists.filter(dentist => dentist.is_active);
-                        // console.log('Filtered active walk-in dentists:', activeDentists);
 
                         if (activeDentists.length > 0) {
-                            walkInStaffSelect.innerHTML =
-                                '<option value="">Select Dentist</option>';
-                            activeDentists.forEach(dentist => {
-                            //     console.log(
-                            //         `Adding walk-in dentist: ${dentist.id}, Name: ${dentist.user ? dentist.user.name : 'Unknown'}, Active: ${dentist.is_active}`
-                            //     );
-                                walkInStaffSelect.innerHTML +=
-                                    `<option value="${dentist.id}">${dentist.user ? dentist.user.name : 'Unknown'}</option>`;
-                            });
+                            walkInStaffSelect.innerHTML = '<option value="">Select Dentist</option>';
+
+                            // If user is a dentist, preselect themselves
+                            @if (auth()->user()->staff->role == 'dentist')
+                                let dentistId = {{ auth()->user()->staff->id }};
+                                let isDentistAvailable = activeDentists.some(d => d.id === dentistId);
+
+                                if (isDentistAvailable) {
+                                    walkInStaffSelect.innerHTML +=
+                                        `<option value="${dentistId}" selected>${activeDentists.find(d => d.id === dentistId).user.name}</option>`;
+                                } else {
+                                    activeDentists.forEach(dentist => {
+                                        walkInStaffSelect.innerHTML +=
+                                            `<option value="${dentist.id}">${dentist.user ? dentist.user.name : 'Unknown'}</option>`;
+                                    });
+                                }
+                            @else
+                                // For admin, show all available dentists
+                                activeDentists.forEach(dentist => {
+                                    walkInStaffSelect.innerHTML +=
+                                        `<option value="${dentist.id}">${dentist.user ? dentist.user.name : 'Unknown'}</option>`;
+                                });
+                            @endif
+
                             walkInStaffSelect.disabled = false;
                         } else {
-                            // console.log('no active dentists available');
-                            walkInStaffSelect.innerHTML ='<option value="">No dentists available</option>';
+                            walkInStaffSelect.innerHTML = '<option value="">No dentists available</option>';
                             walkInStaffSelect.disabled = true;
                         }
                     } else {
-                        // console.log('No walk-in dentists data in the response or response not successful');
                         walkInStaffSelect.innerHTML = '<option value="">No dentists available</option>';
                         walkInStaffSelect.disabled = true;
                     }
                 },
                 error: function(error) {
-                    console.error('Walk-in AJAX Error:', error);
-                    walkInStaffSelect.innerHTML ='<option value="">Error loading dentists</option>';
+                    walkInStaffSelect.innerHTML = '<option value="">Error loading dentists</option>';
                     walkInStaffSelect.disabled = true;
                 }
             });
@@ -1173,7 +1147,7 @@
             });
         }
 
-        // Walk-in form submission
+
         document.getElementById('walkInAppointmentForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
@@ -1193,128 +1167,4 @@
     </script>
 
 
-    {{-- <script>
-        // Walk-in form handling
-        let walkInServiceSelect = document.getElementById('walkInServiceSelect');
-        let walkInStaffSelect = document.getElementById('walkInStaffSelect');
-        let serviceDurationInput = document.getElementById('serviceDuration');
-        // let servicePriceInput = document.getElementById('servicePrice');
-
-        if (walkInServiceSelect) {
-            walkInServiceSelect.addEventListener('change', function() {
-                updateWalkInDentists();
-                updateServiceDetails();
-            });
-        }
-
-        function updateServiceDetails() {
-            let selectedOption = selectedOption walkInServiceSelect.options[walkInServiceSelect.selectedIndex];
-            if (selectedOption && selectedOption.value) {
-                let duration = selectedOption.getAttribute('data-duration');
-                // let price = selectedOption.getAttribute('data-price');
-                serviceDurationInput.value = duration ? `${duration} minutes` : '';
-                // if (servicePriceInput) {
-                //     servicePriceInput.value = price ? `${price}` : '';
-                // }
-            } else {
-                serviceDurationInput.value = '';
-                if (servicePriceInput) {
-                    servicePriceInput.value = '';
-                }
-            }
-        }
-
-        function updateWalkInDentists() {
-            let serviceId = walkInServiceSelect.value;
-            // window.alert(serviceId);
-            if (!serviceId) {
-                // window.alert(5);
-                walkInStaffSelect.innerHTML = '<option value="">Select service first</option>';
-                walkInStaffSelect.disabled = true;
-                return;
-            }
-
-            walkInStaffSelect.disabled = true;
-            walkInStaffSelect.innerHTML = '<option value="">Loading...</option>';
-
-            $.ajax({
-                url: `/dashboard/appointments/get-available-dentists?service_id=${serviceId}&is_walk_in=true`,
-                method: 'GET',
-                success: function(data) {
-                    console.log('Walk-in API Response:', data);
-                    console.log('All walk-in dentists returned:', data.dentists);
-
-                    if (data.success && data.dentists) {
-                        // Filter to ensure only active dentists are shown
-                        let activeDentists = data.dentists.filter(dentist => dentist.is_active);
-                        console.log('Filtered active walk-in dentists:', activeDentists);
-
-                        if (activeDentists.length > 0) {
-                            walkInStaffSelect.innerHTML =
-                                '<option value="">Select Dentist</option>';
-                            activeDentists.forEach(dentist => {
-                                console.log(
-                                    `Adding walk-in dentist: ${dentist.id}, Name: ${dentist.user ? dentist.user.name : 'Unknown'}, Active: ${dentist.is_active}`
-                                );
-                                walkInStaffSelect.innerHTML +=
-                                    `<option value="${dentist.id}">${dentist.user ? dentist.user.name : 'Unknown'}</option>`;
-                            });
-                            walkInStaffSelect.disabled = false;
-                        } else {
-                            console.log('No active dentists available for walk-in after filtering');
-                            walkInStaffSelect.innerHTML =
-                                '<option value="">No dentists available</option>';
-                            walkInStaffSelect.disabled = true;
-
-                        }
-                    } else {
-                        console.log(
-                            'No walk-in dentists data in the response or response not successful'
-                        );
-                        walkInStaffSelect.innerHTML =
-                            '<option value="">No dentists available</option>';
-                        walkInStaffSelect.disabled = true;
-                    }
-                },
-                error: function(error) {
-                    console.error('Walk-in AJAX Error:', error);
-                    walkInStaffSelect.innerHTML =
-                        '<option value="">Error loading dentists</option>';
-                    walkInStaffSelect.disabled = true;
-                }
-            });
-        }
-
-        // Reset walk-in form
-        let resetWalkInFormBtn = document.getElementById('resetWalkInForm');
-        if (resetWalkInFormBtn) {
-            resetWalkInFormBtn.addEventListener('click', function() {
-                document.getElementById('walkInAppointmentForm').reset();
-                walkInStaffSelect.innerHTML = '<option value="">Select service first</option>';
-                walkInStaffSelect.disabled = true;
-                serviceDurationInput.value = '';
-                if (servicePriceInput) {
-                    servicePriceInput.value = '';
-                }
-            });
-        }
-
-        // Walk-in form submission
-        document.getElementById('walkInAppointmentForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            if (!this.checkValidity()) {
-                e.stopPropagation();
-                this.classList.add('was-validated');
-                return;
-            }
-
-            let submitBtn = this.querySelector('button[type="submit"]');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML =
-                '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
-
-            this.submit();
-        });
-    </script> --}}
 @endpush

@@ -2,7 +2,6 @@
 @section('title', 'Dashboard')
 @section('css')
     <style>
-        /* Base Styles */
         th {
             color: rgb(126, 121, 121) !important;
         }
@@ -82,22 +81,23 @@
             background-color: rgba(0, 0, 0, 0.2);
             border-radius: 3px;
         }
+
+        .adjust-height {
+            max-height: 35%
+        }
     </style>
 @endsection
 
 @section('content')
     <div class="container-fluid">
         @if ($role == 'dentist')
-            {{-- DENTIST DASHBOARD --}}
             <div class="row">
                 <div class="col-lg-8">
-                    <!-- Metrics Cards -->
                     <div class="metrics-container">
                         <div class="parent">
                             <div class="div1 text-light" style="background-color: rgb(25, 26, 90);">
                                 <div class="icon-container">
-                                    <img class="last-icon" src="{{ asset('front/assets/icons/noun-patient-visit.png') }}"
-                                        alt="Patients Icon">
+                                    <img class="last-icon" src="{{ asset('front/assets/icons/noun-patient-visit.png') }}">
                                 </div>
                                 <div>
                                     <small>Patients This Month</small> <br>
@@ -107,7 +107,7 @@
 
                             <div class="div1 text-light" style="background-color: rgb(72, 25, 90);">
                                 <div class="icon-container">
-                                    <img src="{{ asset('front/assets/icons/Tooth.png') }}" alt="Service Icon">
+                                    <img src="{{ asset('front/assets/icons/Tooth.png') }}">
                                 </div>
                                 <div>
                                     <small>Services Performed</small> <br>
@@ -117,7 +117,7 @@
 
                             <div class="div1 text-light" style="background-color: rgb(11, 74, 51);">
                                 <div class="icon-container">
-                                    <img src="{{ asset('front/assets/icons/money-bag-9.svg') }}" alt="Revenue Icon">
+                                    <img src="{{ asset('front/assets/icons/money-bag-9.svg') }}">
                                 </div>
                                 <div>
                                     <small>Revenue Generated</small> <br>
@@ -127,7 +127,6 @@
                         </div>
                     </div>
 
-                    <!-- Upcoming Appointments -->
                     <div class="card mb-4">
                         <div class="card-header">
                             <h5 class="mb-0">My Upcoming Appointments</h5>
@@ -146,8 +145,7 @@
                                     <tbody>
                                         @foreach ($doctorAppointments as $appointment)
                                             <tr>
-                                                <td>{{ $appointment->patient->fname }} {{ $appointment->patient->lname }}
-                                                </td>
+                                                <td>{{ $appointment->patient->FUllName }}</td>
                                                 <td>{{ $appointment->service->service_name ?? 'Not Recorded' }}</td>
                                                 <td>{{ \Carbon\Carbon::parse($appointment->appointment_date)->format('M d, Y h:i A') }}
                                                 </td>
@@ -175,8 +173,7 @@
                         style="background-color: rgb(11, 74, 51);"><i class="fa-solid fa-clock-rotate-left"></i> Schedule
                         Appointment</a>
 
-                    <!-- Today's Appointments -->
-                    <div class="card mb-4">
+                    <div class="card mb-4 adjust-height">
                         <div class="card-header">
                             <h5 class="mb-0">Today's Schedule</h5>
                         </div>
@@ -187,8 +184,7 @@
                                         @foreach ($todayAppointments as $appointment)
                                             <tr>
                                                 <td>
-                                                    <strong>{{ $appointment->patient->fname }}
-                                                        {{ $appointment->patient->lname }}</strong><br>
+                                                    <strong>{{ $appointment->patient->FullName }}</strong><br>
                                                     <small>{{ $appointment->service->service_name ?? 'Not Recorded' }}</small><br>
                                                     <small>{{ \Carbon\Carbon::parse($appointment->appointment_date)->format('h:i A') }}</small>
                                                 </td>
@@ -205,8 +201,8 @@
                         </div>
                     </div>
 
-                    <!-- Recent Visits -->
-                    <div class="card">
+
+                    <div class="card adjust-height">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">Recent Patient Visits</h5>
                             <a href="{{ route('dashboard.visits.index') }}" class="btn btn-sm btn-outline-primary">View
@@ -239,15 +235,13 @@
                 </div>
             </div>
         @elseif ($role == 'admin')
-            {{-- ADMIN DASHBOARD --}}
             <div class="row">
                 <div class="col-lg-8">
-                    <!-- Metrics Cards -->
                     <div class="metrics-container">
                         <div class="parent">
                             <div class="div1 text-light" style="background-color: rgb(11, 74, 51);">
                                 <div class="icon-container">
-                                    <img src="{{ asset('front/assets/icons/money-bag-9.svg') }}" alt="Revenue Icon">
+                                    <img src="{{ asset('front/assets/icons/money-bag-9.svg') }}">
                                 </div>
                                 <div>
                                     <small>Total Revenue</small> <br>
@@ -257,7 +251,7 @@
 
                             <div class="div1 text-light" style="background-color: rgb(72, 25, 90);">
                                 <div class="icon-container">
-                                    <img src="{{ asset('front/assets/icons/Tooth.png') }}" alt="Patient Icon">
+                                    <img src="{{ asset('front/assets/icons/Tooth.png') }}">
                                 </div>
                                 <div>
                                     <small>Total Patients</small> <br>
@@ -267,8 +261,7 @@
 
                             <div class="div1 text-light" style="background-color: rgb(25, 26, 90);">
                                 <div class="icon-container">
-                                    <img class="last-icon" src="{{ asset('front/assets/icons/noun-doctor-7015784.svg') }}"
-                                        alt="Doctor Icon">
+                                    <img class="last-icon" src="{{ asset('front/assets/icons/noun-doctor-7015784.svg') }}">
                                 </div>
                                 <div>
                                     <small>Total Dentists</small> <br>
@@ -278,16 +271,9 @@
                         </div>
                     </div>
 
-
-
-
-
-
-
-                    <!-- Profit Analysis Section -->
-                    <div class="card mb-4 shadow-sm">
+                    <div class="card mb-4 shadow-sm h-40">
                         <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-                            <h5 class="mb-0 fw-bold">Profit Analysis - {{ $profitData['period']['label'] }}</h5>
+                            <h5 class="mb-0 fw-semibold">Profit Analysis - {{ $profitData['period']['label'] }}</h5>
                             <div class="dropdown">
                                 <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
                                     id="profitPeriodDropdown" data-bs-toggle="dropdown" aria-expanded="false">
@@ -346,28 +332,28 @@
                                                     <tbody>
                                                         <tr>
                                                             <td>Direct Expenses</td>
-                                                            <td class="text-end fw-bold">
+                                                            <td class="text-end fw-semibold">
                                                                 ${{ number_format($profitData['expenses'], 2) }}</td>
                                                         </tr>
                                                         <tr>
                                                             <td>Supplies Used (COGS)</td>
-                                                            <td class="text-end fw-bold">
+                                                            <td class="text-end fw-semibold">
                                                                 ${{ number_format($profitData['cogs'], 2) }}</td>
                                                         </tr>
                                                         <tr>
                                                             <td>Inventory Purchases</td>
-                                                            <td class="text-end fw-bold">
+                                                            <td class="text-end fw-semibold">
                                                                 ${{ number_format($profitData['purchases'], 2) }}</td>
                                                         </tr>
                                                         <tr>
                                                             <td>Adjustments (Losses)</td>
-                                                            <td class="text-end fw-bold text-danger">
+                                                            <td class="text-end fw-semibold text-danger">
                                                                 ${{ number_format($profitData['negativeAdjustments'], 2) }}
                                                             </td>
                                                         </tr>
                                                         <tr>
                                                             <td>Returns (Credits)</td>
-                                                            <td class="text-end fw-bold text-success">
+                                                            <td class="text-end fw-semibold text-success">
                                                                 ${{ number_format($profitData['returns'], 2) }}</td>
                                                         </tr>
                                                     </tbody>
@@ -378,17 +364,9 @@
                                 </div>
                             </div>
                         </div>
-                        {{-- <div class="card-footer bg-white text-end">
-                            <button class="btn btn-sm btn-outline-secondary me-2" id="printReport">
-                                <i class="fas fa-print me-1"></i> Print
-                            </button>
-                            <button class="btn btn-sm btn-outline-secondary" id="exportReport">
-                                <i class="fas fa-download me-1"></i> Export
-                            </button>
-                        </div> --}}
+
                     </div>
 
-                    <!-- Custom Period Modal -->
                     <div class="modal fade" id="customPeriodModal" tabindex="-1"
                         aria-labelledby="customPeriodModalLabel" aria-hidden="true">
                         <div class="modal-dialog modal-sm modal-dialog-centered">
@@ -423,7 +401,7 @@
                     </div>
 
                     <!-- Custom Period Modal -->
-                    <div class="modal fade" id="customPeriodModal" tabindex="-1"
+                    {{-- <div class="modal fade" id="customPeriodModal" tabindex="-1"
                         aria-labelledby="customPeriodModalLabel" aria-hidden="true">
                         <div class="modal-dialog">
                             <div class="modal-content">
@@ -454,7 +432,7 @@
                                 </form>
                             </div>
                         </div>
-                    </div>
+                    </div> --}}
 
 
 
@@ -467,11 +445,11 @@
 
 
                     <!-- Upcoming Appointments -->
-                    <div class="card mb-4">
+                    <div class="card mb-4 adjust-height">
                         <div class="card-header">
                             <h5 class="mb-0">Tomorrow's Appointments</h5>
                         </div>
-                        <div class="card-body p-0 scrollable-table-container">
+                        <div class="card-body p-0 scrollable-table-container ">
                             @if (isset($tomorrowAppointments) && count($tomorrowAppointments) > 0)
                                 <table class="table table-hover mb-0">
                                     <thead>
@@ -511,7 +489,7 @@
 
                 <div class="col-lg-4">
                     <!-- Recent Patients -->
-                    <div class="card mb-4">
+                    <div class="card mb-4 adjust-height">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">Recent Patients</h5>
                             <a href="{{ route('dashboard.patients.index') }}" class="btn btn-sm btn-outline-primary">View
@@ -542,7 +520,7 @@
                     </div>
 
                     <!-- Inventory Alerts -->
-                    <div class="card">
+                    <div class="card adjust-height">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">Low Stock Items</h5>
                             <a href="{{ route('dashboard.inventory.inventory.index') }}"
@@ -574,8 +552,7 @@
                 </div>
             </div>
         @else
-
-        <div>ddd</div>
+            <div>ddd</div>
         @endif
     </div>
 @endsection

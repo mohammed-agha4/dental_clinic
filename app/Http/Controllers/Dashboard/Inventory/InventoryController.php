@@ -198,11 +198,11 @@ class InventoryController extends Controller
     {
         Gate::authorize('inventory.delete');
 
-        if ($inventory->transactions()->exists()) {
+        // if ($inventory->transactions()->exists()) {
 
-            return redirect()->route('dashboard.inventory.inventory.index')
-                ->with('error', "can't delete item with existing transactions");
-        }
+        //     return redirect()->route('dashboard.inventory.inventory.index')
+        //         ->with('error', "can't delete item with existing transactions");
+        // }
         $inventory->delete();
         return redirect()->route('dashboard.inventory.inventory.index')->with('success', 'Tool Deleted Successfuly');
     }
@@ -245,38 +245,40 @@ class InventoryController extends Controller
      * Permanently delete an inventory item
      */
     public function forceDelete($id)
-    {
-        Gate::authorize('inventory.force_delete');
+{
+    Gate::authorize('inventory.force_delete');
 
-        try {
-            DB::beginTransaction();
+    try {
+        DB::beginTransaction();
 
-            $inventory = Inventory::onlyTrashed()
-                ->with(['transactions', 'visits'])
-                ->findOrFail($id);
+        $inventory = Inventory::onlyTrashed()
+            ->with(['transactions', 'visits'])
+            ->findOrFail($id);
 
-            $itemName = $inventory->name;
+        $itemName = $inventory->name;
 
-            if ($inventory->transactions()->exists()) {
-                return redirect()->back()
-                    ->with('error', 'Cannot delete: Item has associated transaction records.');
-            }
-
-            if ($inventory->visits()->exists()) {
-                return redirect()->back()
-                    ->with('error', 'Cannot delete: Item was used in patient visits.');
-            }
-
-            $inventory->forceDelete();
-
-            DB::commit();
-
-            return redirect()->back()
-                ->with('success', "Inventory item '{$itemName}' permanently deleted");
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()
-                ->with('error', 'Permanent deletion failed: ' . $e->getMessage());
+        // Delete related transactions first
+        if ($inventory->transactions()->exists()) {
+            $inventory->transactions()->delete(); // Use forceDelete if transactions are soft-deleted
+            // Or if not soft-deleted:
+            // $inventory->transactions()->delete();
         }
+
+        if ($inventory->visits()->exists()) {
+            return redirect()->back()
+                ->with('error', 'Cannot delete: Item was used in patient visits.');
+        }
+
+        $inventory->forceDelete();
+
+        DB::commit();
+
+        return redirect()->back()
+            ->with('success', "Inventory item '{$itemName}' and its associated transactions permanently deleted");
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return redirect()->back()
+            ->with('error', 'Permanent deletion failed: ' . $e->getMessage());
     }
+}
 }

@@ -173,6 +173,7 @@ class PatientsController extends Controller
     public function search(Request $request)
     {
         $query = Patient::query();
+        
 
         if ($request->phone) {
             $query->where('phone', $request->phone);

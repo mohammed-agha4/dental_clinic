@@ -35,7 +35,6 @@ class DashboardController extends Controller
         $staffId = $user->staff ? $user->staff->id : null;
 
         if ($role == 'dentist') {
-            // Dentist-specific data
             $doctorAppointments = Appointment::where('staff_id', $staffId)
                 ->where('appointment_date', '>=', Carbon::now())
                 ->where('appointment_date', '<=', Carbon::now()->addDays(7))
@@ -48,7 +47,7 @@ class DashboardController extends Controller
             $recentVisits = Visit::where('staff_id', $staffId)
                 ->with(['patient', 'service'])
                 ->orderBy('visit_date', 'desc')
-                ->take(2)
+                ->take(5)
                 ->get();
 
             $currentMonth = Carbon::now()->startOfMonth();
@@ -59,17 +58,19 @@ class DashboardController extends Controller
 
             $servicesPerformedCount = Visit::where('staff_id', $staffId)->count();
 
+
+            // the second parameter (function) isn't required if you just need to check for the existence of related records, it becomes necessary when applying constraints
             $revenueGenerated = Payment::whereHas('visit', function ($query) use ($staffId) {
                 $query->where('staff_id', $staffId);
             })
-                ->where('status', 'completed')
-                ->sum('amount');
+            ->where('status', 'completed')
+            ->sum('amount');
 
             $todayAppointments = Appointment::where('staff_id', $staffId)
                 ->whereBetween('appointment_date', [$todayStart, $todayEnd])
                 ->with(['patient', 'service'])
                 ->orderBy('appointment_date')
-                ->take(2)
+                ->take(5)
                 ->get();
 
             return view('dashboard.index', compact(
@@ -82,7 +83,6 @@ class DashboardController extends Controller
                 'todayAppointments'
             ));
         } else {
-            // Admin/staff data
             $tomorrowAppointments = Appointment::with(['patient', 'service', 'dentist'])
                 ->whereBetween('appointment_date', [$tomorrowStart, $tomorrowEnd])
                 ->orderBy('appointment_date')
@@ -92,10 +92,13 @@ class DashboardController extends Controller
             $totalPatients = Patient::count();
             $totalDentists = Staff::where('role', 'dentist')->count();
 
+            // counting the number of related appointments for each Patient.
+            // adds a dynamic column named appointments_count to each patient record, containing the total number of appointments that patient has.
             $recentPatients = Patient::withCount('appointments')
                 ->orderBy('created_at', 'desc')
                 ->take(5)
                 ->get();
+            // dd($recentPatients);
 
             $lowStockItems = Inventory::where('quantity', '<', DB::raw('reorder_level'))
                 ->where('is_active', true)
@@ -103,21 +106,21 @@ class DashboardController extends Controller
                 ->take(5)
                 ->get();
 
-            $expiringItems = Inventory::whereNotNull('expiry_date')
-                ->where('expiry_date', '>', now())
-                ->where('expiry_date', '<', now()->addDays(30))
-                ->orderBy('expiry_date')
-                ->take(5)
-                ->get();
+            // $expiringItems = Inventory::whereNotNull('expiry_date')
+            //     ->where('expiry_date', '>', now())
+            //     ->where('expiry_date', '<', now()->addDays(30))
+            //     ->orderBy('expiry_date')
+            //     ->take(5)
+            //     ->get();
 
             $payment = number_format(Payment::where('status', 'completed')->sum('amount') ?? 0, 2);
             $patient_count = Patient::count() ?? 0;
 
-            // Add profit calculation
             $profitData = $this->calculateProfit(
                 request('period', 'month'),
                 request('start_date'),
                 request('end_date')
+
             );
 
             return view('dashboard.index', compact(
@@ -128,7 +131,7 @@ class DashboardController extends Controller
                 'totalDentists',
                 'recentPatients',
                 'lowStockItems',
-                'expiringItems',
+                // 'expiringItems',
                 'payment',
                 'patient_count',
                 'profitData' // Add this
@@ -136,7 +139,6 @@ class DashboardController extends Controller
         }
     }
 
-    // Add this method to your DashboardController
     private function calculateProfit($timePeriod = 'month', $customStart = null, $customEnd = null)
     {
         // Determine date range

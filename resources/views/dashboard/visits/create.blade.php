@@ -30,8 +30,7 @@
                                     <option selected disabled>--select--</option>
                                     @foreach ($patients as $patient)
                                         <option value="{{ $patient->id }}" @selected(old('patient_id', $appointment->patient_id) == $patient->id)>
-                                            {{ $patient->fname }}
-                                        </option>
+                                            {{ $patient->FullName }} </option>
                                     @endforeach
                                 </select>
                                 @error('patient_id')
@@ -92,12 +91,19 @@
 
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <x-form.input label='Visit Date:' type='datetime-local' name='visit_date' :value='$appointment->appointment_date'
-                                placeholder='Visit Date' />
+
+                            <label>Visit Date:</label>
+                            <input type="datetime-local" name="visit_date"
+                                value="{{ old('visit_date', $appointment->appointment_date) }}" placeholder='Visit Date'
+                                class="form-control @error('visit_date') is-invalid @enderror">
+                            @error('visit_date')
+                                <small class="text-danger alert-danger">{{ $message }}</small>
+                            @enderror
                         </div>
+
                     </div>
 
-                    <!-- Visit Information Card -->
+
                     <div class="card mb-4 border-primary">
                         <div class="card-header bg-light text-white">
                             <h5 class="mb-0 text-dark">Visit Information</h5>
@@ -129,7 +135,7 @@
                         </div>
                     </div>
 
-                    <!-- Inventory Transactions Card -->
+
                     <div class="card mb-4 border-info">
                         <div
                             class="card-header bg-secondary-subtle text-white d-flex justify-content-between align-items-center">
@@ -154,7 +160,7 @@
                         </div>
                     </div>
 
-                    <!-- Submit Button -->
+
                     <div class="row mb-3">
                         <div class="col-md-12 d-flex justify-content-between">
                             <a href="{{ route('dashboard.visits.index') }}" class="btn btn-secondary">
@@ -170,7 +176,8 @@
         </div>
     </div>
 
-    <!-- Template for inventory transaction -->
+
+
     <template id="inventoryItemTemplate">
         <div class="inventory-item border p-3 mb-3 rounded">
             <div class="row">
@@ -184,7 +191,7 @@
                                     data-available="{{ $item->quantity }}" data-sku="{{ $item->SKU }}"
                                     data-expiry="{{ $item->expiry_date ? $item->expiry_date->format('Y-m-d') : '' }}"
                                     @if ($item->expiry_date && $item->expiry_date->isPast()) class="text-danger" @endif>
-                                    {{ $item->name }} ({{ $item->quantity }} available) - {{ $item->SKU }}
+                                    {{ $item->name }} ({{ $item->quantity }} available) -
                                     @if ($item->expiry_date)
                                         @if ($item->expiry_date->isPast())
                                             [EXPIRED]
@@ -234,7 +241,7 @@
                 </div>
                 <div class="col-md-2">
                     <div class="form-group">
-                        <label class="form-label d-none d-md-block">&nbsp;</label> {{-- - &nbsp;: This is a non-breaking space, ensuring the label isn't empty but doesn’t contain visible text. --}}
+                        <label class="form-label d-none d-md-block">&nbsp;</label> {{-- &nbsp;: This is a non-breaking space, ensuring the label isn't empty but doesn’t contain visible text. --}}
                         <button type="button" class="btn btn-outline-danger" onclick="removeInventoryItem(this)">
                             <i class="fas fa-trash"></i>
                         </button>
@@ -429,14 +436,14 @@
             setupInventoryItemEventListeners(item);
         });
     </script>
-<script>
     <script>
-    $(document).ready(function() {
-        $('.select2').select2({
-            placeholder: '--select--',
-            allowClear: true
-        });
-    });
-</script>
-</script>
+        < script >
+            $(document).ready(function() {
+                $('.select2').select2({
+                    placeholder: '--select--',
+                    allowClear: true
+                });
+            });
+    </script>
+    </script>
 @endpush
